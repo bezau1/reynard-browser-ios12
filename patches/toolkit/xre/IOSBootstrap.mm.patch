@@ -1,5 +1,5 @@
 diff --git a/toolkit/xre/IOSBootstrap.mm b/toolkit/xre/IOSBootstrap.mm
-index 264320aed775..2fc51beabfae 100644
+index 264320aed775..3638714054dd 100644
 --- a/toolkit/xre/IOSBootstrap.mm
 +++ b/toolkit/xre/IOSBootstrap.mm
 @@ -8,13 +8,24 @@
@@ -105,7 +105,22 @@ index 264320aed775..2fc51beabfae 100644
  int MainProcessInit(int aArgc, char** aArgv,
                      id<SwiftGeckoViewRuntime> aRuntime) {
    auto bootstrap = mozilla::GetBootstrap();
-@@ -85,6 +162,11 @@ void ChildProcessInit(xpc_connection_t aXpcConnection,
+@@ -56,8 +133,12 @@ void ChildProcessInit(xpc_connection_t aXpcConnection,
+   xpc_connection_set_event_handler(aXpcConnection, [](xpc_object_t aEvent) {
+     xpc_type_t type = xpc_get_type(aEvent);
+     if (type != XPC_TYPE_DICTIONARY) {
+-      NSLog(@"[%d] Received unexpected XPC event type: %s\n", getpid(),
+-            xpc_type_get_name(type));
++      if (@available(iOS 13.0, *)) {
++        NSLog(@"[%d] Received unexpected XPC event type: %s\n", getpid(),
++              xpc_type_get_name(type));
++      } else {
++        NSLog(@"[%d] Received unexpected XPC event type\n", getpid());
++      }
+       if (!geckoViewStarted && type == XPC_TYPE_ERROR &&
+           (aEvent == XPC_ERROR_CONNECTION_INVALID ||
+            aEvent == XPC_ERROR_TERMINATION_IMMINENT)) {
+@@ -85,6 +166,11 @@ void ChildProcessInit(xpc_connection_t aXpcConnection,
    xpc_connection_activate(aXpcConnection);
  }
  
@@ -117,7 +132,7 @@ index 264320aed775..2fc51beabfae 100644
  static int ChildProcessInitImpl(int aArgc, char** aArgv) {
    auto bootstrap = mozilla::GetBootstrap();
    if (bootstrap.isErr()) {
-@@ -111,12 +193,79 @@ static int ChildProcessInitImpl(int aArgc, char** aArgv) {
+@@ -111,12 +197,79 @@ static int ChildProcessInitImpl(int aArgc, char** aArgv) {
        /* aRandomizeSmall */ !XRE_IsContentProcess());
  #endif
  
@@ -197,7 +212,7 @@ index 264320aed775..2fc51beabfae 100644
  void HandleBootstrapMessage(xpc_object_t aEvent) {
    // Set up stdout and stderr if they were provided.
    int fd = xpc_dictionary_dup_fd(aEvent, "stdout");
-@@ -132,6 +281,11 @@ void HandleBootstrapMessage(xpc_object_t aEvent) {
+@@ -132,6 +285,11 @@ void HandleBootstrapMessage(xpc_object_t aEvent) {
      close(fd);
    }
  
@@ -209,7 +224,7 @@ index 264320aed775..2fc51beabfae 100644
    // Immediately send a reply with our pid
    auto reply = mozilla::AdoptDarwinObject(xpc_dictionary_create_reply(aEvent));
    xpc_dictionary_set_int64(reply.get(), "pid", getpid());
-@@ -198,6 +352,18 @@ void HandleBootstrapMessage(xpc_object_t aEvent) {
+@@ -198,6 +356,18 @@ void HandleBootstrapMessage(xpc_object_t aEvent) {
    }
    argv[argc] = nullptr;
  

@@ -1,11 +1,12 @@
 diff --git a/mobile/ios/app/mobile.js b/mobile/ios/app/mobile.js
-index e835b1c33d86..4a2bf184f651 100644
+index e835b1c33d86..59ecb1f8696e 100644
 --- a/mobile/ios/app/mobile.js
 +++ b/mobile/ios/app/mobile.js
-@@ -5,6 +5,36 @@
+@@ -5,14 +5,63 @@
  
  pref("toolkit.defaultChromeURI", "chrome://geckoview/content/geckoview.xhtml");
  
+-// Use software webrender on simulator due to missing APIs.
 +// Firefox add-on support, copied from Android's.
 +pref("extensions.isembedded", true);
 +pref("extensions.autoDisableScopes", 15);
@@ -36,10 +37,24 @@ index e835b1c33d86..4a2bf184f651 100644
 +pref("xpinstall.whitelist.add", "https://addons.mozilla.org");
 +pref("xpinstall.whitelist.fileRequest", false);
 +
- // Use software webrender on simulator due to missing APIs.
++// Use software webrender on the simulator, which lacks the GPU APIs hardware
++// webrender needs. On device, use GPU (hardware) webrender in the parent process.
  #if TARGET_OS_SIMULATOR
    pref("gfx.webrender.software", true);
-@@ -13,6 +43,12 @@ pref("toolkit.defaultChromeURI", "chrome://geckoview/content/geckoview.xhtml");
+ #endif
+ 
++// Run compositing in the parent process instead of a GPU child. The child runs
++// as an app extension, which cannot reliably create an OpenGL ES context; the
++// parent is a full app and can, so keep GL/compositing there.
++pref("layers.gpu-process.enabled", false);
++
++// Run networking (including DNS) in the parent process. On iOS the socket
++// process runs as an app extension whose sandbox cannot reach mDNSResponder
++// (/var/run/mDNSResponder), so DNS resolution fails there and every page load
++// reports the host as not found. The parent app has DNS access.
++pref("network.process.enabled", false);
++pref("network.http.network_access_on_socket_process.enabled", false);
++
  // Enable the restricted sandbox for content processes.
  pref("security.sandbox.content.level", 1);
  

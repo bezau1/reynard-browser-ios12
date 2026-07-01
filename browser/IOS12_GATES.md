@@ -71,8 +71,9 @@ ContextMenu / Chrome / ContentView (all `@available(iOS 13.0, *)` unless noted):
 - `ContentView/WebContent/SelectPicker/SelectPicker.swift` — `buildMenuElements` `@available(iOS 14)`
 - (no change) `ContextMenuTabActions.swift`, `WebContentView.swift`, `FilePickerMenuAnchorButton.swift`, `SelectPickerMenuAnchorButton.swift`, `LibrarySharedUtils.swift`, `SiteSettingsViewController.swift`
 
-## 3. SF Symbols + symbol configuration (iOS 13+) — [GATE]
-Shims: `UIImage+Symbol.swift` (`UIImage.appSymbol` → nil on iOS 12). Pattern for configured images: iOS-12 branch loads via `UIImage(named:in:compatibleWith:nil)` (unstyled); `setPreferredSymbolConfiguration`/`applyingSymbolConfiguration` wrapped in `if #available(iOS 13)`.
+## 3. SF Symbols + symbol configuration (iOS 13+) — [FIXED — icons now render on iOS 12]
+The `reynard.*` icons were 60 `.symbolset` assets, which iOS 12 cannot load (`UIImage(named:)` → nil → blank icons). They are now converted to universal **template `.imageset`s** (same asset names, so all `UIImage(named: "reynard.…")` call sites are unchanged and work on iOS 12 and iOS 13+). Regenerate with `tools/development/generate-ios12-icons.py` (extracts each symbol's Regular glyph from the SF Symbols export SVG and rasterizes @1x/2x/3x template PNGs via qlmanage). Trade-off: iOS 13+ also uses the raster icons, so `setPreferredSymbolConfiguration`/`applyingSymbolConfiguration` (still `if #available(iOS 13)`-gated) no-op on non-symbol images and icons render at their intrinsic size.
+Legacy shim (barely used): `UIImage+Symbol.swift` (`UIImage.appSymbol` → nil on iOS 12).
 - 13 files gated (icons load unstyled on iOS 12): `Chrome/ActionBar/PageZoom/PageZoomActionBar`, `Chrome/Toolbar/ToolBarButton`, `Homepage/Sections/Recommendations/{Donation,Performance}RecommendationViewController`, `Homepage/Sections/UpdateAvailable/UpdateAvailableViewController`, `Library/LibrarySection`, `Library/Settings/.../AddressBarPosition/AddressBarPositionOptionControl`, `.../AppAppearance/AppAppearanceOptionControl`, `Sidebar/SidebarActionCell`, `TabBar/TabBarCell`, `TabOverview/TabOverviewCard`, `TabOverview/.../TabOverviewToolbarButton`, `JIT/Interface/JITFailure`
 - `Chrome/AddressBar/AddressBarButton.swift`, `AddressBarDismissButton.swift` — `setPreferredSymbolConfiguration` gated
 
@@ -95,8 +96,9 @@ iOS-12 fallback = the light-appearance branch.
 - `main.swift` — `configureUnsandboxedAppDataDirectories` (iOS 13.x-only) call-site narrowed to skip iOS 12 [GATE — revisit if unsandboxed iOS-12 builds need MOZ_APP_DATA setup]
 
 ## 4. Scene lifecycle (UIWindowScene / UISceneConfiguration) — [GATE] + [SHIM]
-- `SceneDelegate.swift:10` — whole class `@available(iOS 13.0, *)` [GATE]
-- `AppDelegate.swift` — scene callbacks `@available(iOS 13.0, *)`; **added iOS-12 `window` bootstrap** in `didFinishLaunching` so the app launches on iOS 12 [SHIM]
+- `SceneDelegate.swift:10` — whole class `@available(iOS 13.0, *)` [GATE]. Creates the `BrowserViewController` window on iOS 13+ (via the Info.plist `UIApplicationSceneManifest`).
+- `main.swift` — **iOS-12 window bootstrap** [SHIM]. The engine calls `UIApplicationMain` with its own `AppShellDelegate` (`nsAppShell.mm:308`), so the app's `AppDelegate`/`SceneDelegate` are not the running delegate for window creation on iOS 12 (SceneDelegate is scene-manifest-driven and iOS 13+ only). On iOS 12 we register a `UIApplication.didFinishLaunchingNotification` observer (before `GeckoRuntime.main`) that builds the `BrowserViewController` window, mirroring `SceneDelegate`. Without this the app launches to a 100% black screen (no delegate ever creates a window).
+- `AppDelegate.swift` — NOT the running UIApplication delegate (`AppShellDelegate` is); its methods do not execute. Kept as a no-op with an explanatory note. [note]
 - `Client/Extensions/UIApplication+Presentation.swift` — `appKeyWindow` helper (scenes on 13+, `windows` on 12); `topViewController()` + split-screen helpers routed through it [SHIM]
 - `Client/Interface/Appearance/AppAppearanceController.swift` — `apply()` no-ops on iOS 12 (no dark mode); `userInterfaceStyle(for:)` `@available(iOS 13.0, *)` [GATE]
 - `Client/Interface/Sidebar/SidebarCoordinator.swift:172` — status bar height via `statusBarManager` on 13+, `UIApplication.statusBarFrame` on 12 [SHIM]

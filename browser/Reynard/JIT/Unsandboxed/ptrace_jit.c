@@ -30,6 +30,13 @@ int isBeingDebugged(pid_t pid) {
 int main(int argc, char *argv[]) {
     (void)argc;
 
+    // On iOS 12 jailbreaks (Chimera) there are no personas, so spawnRoot cannot
+    // launch us as root directly. The jailbreak platformizes spawned processes,
+    // which lets us elevate to real root here. On iOS 13+/TrollStore we are
+    // already root and these are no-ops.
+    setgid(0);
+    setuid(0);
+
     if (getuid() != 0) {
         fprintf(stderr, "This helper must be run as root.\n");
         return 1;

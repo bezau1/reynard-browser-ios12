@@ -1,8 +1,41 @@
 diff --git a/gfx/layers/NativeLayerCA.mm b/gfx/layers/NativeLayerCA.mm
-index a1522a742b95..8653974050cb 100644
+index a1522a742b95..0ca52f777a78 100644
 --- a/gfx/layers/NativeLayerCA.mm
 +++ b/gfx/layers/NativeLayerCA.mm
-@@ -1526,7 +1526,8 @@ CGColorRef CGColorCreateForDeviceColor(const gfx::DeviceColor& aColor) {
+@@ -810,12 +810,30 @@ static void EmitTelemetryForVideoLowPower(VideoLowPowerType aVideoLowPower) {
+ #endif
+ }
+ 
++// Takes ownership of aSpace.
++static CGColorRef CreateCGColorInSpace(CGColorSpaceRef aSpace,
++                                       const gfx::DeviceColor& aColor) {
++  CGFloat components[] = {aColor.r, aColor.g, aColor.b, aColor.a};
++  CGColorRef color = CGColorCreate(aSpace, components);
++  CGColorSpaceRelease(aSpace);
++  return color;
++}
++
+ CGColorRef CGColorCreateForDeviceColor(const gfx::DeviceColor& aColor) {
++  // CGColorCreateSRGB / CGColorCreateGenericRGB are iOS 13+; fall back to
++  // CGColorCreate with an explicit color space on iOS 12.
+   if (StaticPrefs::gfx_color_management_native_srgb()) {
+-    return CGColorCreateSRGB(aColor.r, aColor.g, aColor.b, aColor.a);
++    if (__builtin_available(iOS 13.0, *)) {
++      return CGColorCreateSRGB(aColor.r, aColor.g, aColor.b, aColor.a);
++    }
++    return CreateCGColorInSpace(CGColorSpaceCreateWithName(kCGColorSpaceSRGB),
++                                aColor);
+   }
+ 
+-  return CGColorCreateGenericRGB(aColor.r, aColor.g, aColor.b, aColor.a);
++  if (__builtin_available(iOS 13.0, *)) {
++    return CGColorCreateGenericRGB(aColor.r, aColor.g, aColor.b, aColor.a);
++  }
++  return CreateCGColorInSpace(CGColorSpaceCreateDeviceRGB(), aColor);
+ }
+ 
+ NativeLayerCA::NativeLayerCA(gfx::DeviceColor aColor)
+@@ -1526,7 +1544,8 @@ CGColorRef CGColorCreateForDeviceColor(const gfx::DeviceColor& aColor) {
    AVSampleBufferDisplayLayer* videoLayer =
        (AVSampleBufferDisplayLayer*)mContentCALayer;
  
@@ -12,3 +45,28 @@ index a1522a742b95..8653974050cb 100644
      if (videoLayer.requiresFlushToResumeDecoding) {
        [videoLayer flush];
      }
+@@ -1811,7 +1830,10 @@ CGColorRef CGColorCreateForDeviceColor(const gfx::DeviceColor& aColor) {
+   }
+ 
+   if (aSpecializeVideo && mMutatedIsDRM) {
+-    ((AVSampleBufferDisplayLayer*)mContentCALayer).preventsCapture = aIsDRM;
++    // preventsCapture is iOS 13+.
++    if (__builtin_available(iOS 13.0, *)) {
++      ((AVSampleBufferDisplayLayer*)mContentCALayer).preventsCapture = aIsDRM;
++    }
+   }
+ 
+   bool shouldTintOpaqueness = StaticPrefs::gfx_core_animation_tint_opaque();
+@@ -1823,10 +1845,10 @@ CGColorRef CGColorCreateForDeviceColor(const gfx::DeviceColor& aColor) {
+     mOpaquenessTintLayer.contentsGravity = kCAGravityTopLeft;
+     if (aIsOpaque) {
+       mOpaquenessTintLayer.backgroundColor =
+-          CGColorCreateGenericRGB(0, 1, 0, 0.5);
++          CGColorCreateForDeviceColor(gfx::DeviceColor(0, 1, 0, 0.5));
+     } else {
+       mOpaquenessTintLayer.backgroundColor =
+-          CGColorCreateGenericRGB(1, 0, 0, 0.5);
++          CGColorCreateForDeviceColor(gfx::DeviceColor(1, 0, 0, 0.5));
+     }
+     [mRoundedClipCALayer addSublayer:mOpaquenessTintLayer];
+   } else if (!shouldTintOpaqueness && mOpaquenessTintLayer) {

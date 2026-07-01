@@ -1,5 +1,5 @@
 diff --git a/widget/uikit/nsWindow.mm b/widget/uikit/nsWindow.mm
-index a6edb082d7f0..309e76990812 100644
+index a6edb082d7f0..2d1d22b630d7 100644
 --- a/widget/uikit/nsWindow.mm
 +++ b/widget/uikit/nsWindow.mm
 @@ -26,6 +26,7 @@
@@ -99,7 +99,7 @@ index a6edb082d7f0..309e76990812 100644
  
  - (void)markLayerForDisplay;
  - (CALayer*)rootCALayer;
-@@ -155,12 +147,29 @@ - (UIAccessibilityContainerType)accessibilityContainerType;
+@@ -155,12 +147,33 @@ - (UIAccessibilityContainerType)accessibilityContainerType;
  
  @end
  
@@ -124,12 +124,16 @@ index a6edb082d7f0..309e76990812 100644
    if ((self = [super initWithFrame:inFrame])) {
      mGeckoChild = inChild;
  
-+    self.backgroundColor = [UIColor systemBackgroundColor];
++    if (@available(iOS 13.0, *)) {
++      self.backgroundColor = [UIColor systemBackgroundColor];
++    } else {
++      self.backgroundColor = [UIColor whiteColor];
++    }
 +
      mRootCALayer = [[CALayer layer] retain];
      mRootCALayer.position = CGPointZero;
      mRootCALayer.bounds = CGRectZero;
-@@ -168,8 +177,6 @@ - (id)initWithFrame:(CGRect)inFrame geckoChild:(nsWindow*)inChild {
+@@ -168,8 +181,6 @@ - (id)initWithFrame:(CGRect)inFrame geckoChild:(nsWindow*)inChild {
      mRootCALayer.contentsGravity = kCAGravityTopLeft;
      [[self layer] addSublayer:mRootCALayer];
    }
@@ -138,7 +142,7 @@ index a6edb082d7f0..309e76990812 100644
    self.opaque = YES;
    self.alpha = 1.0;
  
-@@ -177,10 +184,14 @@ - (id)initWithFrame:(CGRect)inFrame geckoChild:(nsWindow*)inChild {
+@@ -177,10 +188,14 @@ - (id)initWithFrame:(CGRect)inFrame geckoChild:(nsWindow*)inChild {
        [[UITapGestureRecognizer alloc] initWithTarget:self
                                                action:@selector(handleTap:)];
    tapRecognizer.numberOfTapsRequired = 1;
@@ -153,14 +157,18 @@ index a6edb082d7f0..309e76990812 100644
  
    // This is managed with weak references by the notification center so that we
    // do not need to call removeObserver.
-@@ -199,9 +210,26 @@ - (id)initWithFrame:(CGRect)inFrame geckoChild:(nsWindow*)inChild {
+@@ -199,9 +214,30 @@ - (id)initWithFrame:(CGRect)inFrame geckoChild:(nsWindow*)inChild {
    return self;
  }
  
 +- (void)traitCollectionDidChange:(UITraitCollection*)previousTraitCollection {
 +  [super traitCollectionDidChange:previousTraitCollection];
 +
-+  self.backgroundColor = [UIColor systemBackgroundColor];
++  if (@available(iOS 13.0, *)) {
++    self.backgroundColor = [UIColor systemBackgroundColor];
++  } else {
++    self.backgroundColor = [UIColor whiteColor];
++  }
 +
 +  if (previousTraitCollection &&
 +      self.traitCollection.userInterfaceStyle ==
@@ -180,7 +188,7 @@ index a6edb082d7f0..309e76990812 100644
  }
  
  - (void)delayedTearDown {
-@@ -210,8 +238,6 @@ - (void)delayedTearDown {
+@@ -210,8 +246,6 @@ - (void)delayedTearDown {
  }
  
  - (void)activateWindow:(NSNotification*)notification {
@@ -189,7 +197,7 @@ index a6edb082d7f0..309e76990812 100644
    if (!mGeckoChild) {
      return;
    }
-@@ -222,8 +248,6 @@ - (void)activateWindow:(NSNotification*)notification {
+@@ -222,8 +256,6 @@ - (void)activateWindow:(NSNotification*)notification {
  }
  
  - (void)deactivateWindow:(NSNotification*)notification {
@@ -198,7 +206,7 @@ index a6edb082d7f0..309e76990812 100644
    if (!mGeckoChild) {
      return;
    }
-@@ -233,30 +257,45 @@ - (void)deactivateWindow:(NSNotification*)notification {
+@@ -233,30 +265,45 @@ - (void)deactivateWindow:(NSNotification*)notification {
    }
  }
  
@@ -266,7 +274,7 @@ index a6edb082d7f0..309e76990812 100644
    }
  }
  
-@@ -288,7 +327,24 @@ - (void)sendTouchEvent:(EventMessage)aType
+@@ -288,7 +335,28 @@ - (void)sendTouchEvent:(EventMessage)aType
  }
  
  - (void)touchesBegan:(NSSet<UITouch*>*)touches withEvent:(UIEvent*)event {
@@ -278,7 +286,11 @@ index a6edb082d7f0..309e76990812 100644
 +  // caret-menu resolution.
 +  if (mEditable.mCaretMenuActive) {
 +    mEditable.mCaretMenuActive = NO;
-+    [[UIMenuController sharedMenuController] hideMenuFromView:self];
++    if (@available(iOS 13.0, *)) {
++      [[UIMenuController sharedMenuController] hideMenuFromView:self];
++    } else {
++      [[UIMenuController sharedMenuController] setMenuVisible:NO animated:YES];
++    }
 +  }
 +  if (mEditable.mPendingCaretMenu) {
 +    mEditable.mPendingCaretMenu = NO;
@@ -292,7 +304,7 @@ index a6edb082d7f0..309e76990812 100644
    if (!mGeckoChild) return;
  
    for (UITouch* touch : touches) {
-@@ -301,7 +357,7 @@ - (void)touchesBegan:(NSSet<UITouch*>*)touches withEvent:(UIEvent*)event {
+@@ -301,7 +369,7 @@ - (void)touchesBegan:(NSSet<UITouch*>*)touches withEvent:(UIEvent*)event {
  }
  
  - (void)touchesCancelled:(NSSet<UITouch*>*)touches withEvent:(UIEvent*)event {
@@ -301,7 +313,7 @@ index a6edb082d7f0..309e76990812 100644
    [self sendTouchEvent:eTouchCancel touches:touches widget:mGeckoChild];
    for (UITouch* touch : touches) {
      [mTouches removeObjectForKey:touch];
-@@ -312,7 +368,8 @@ - (void)touchesCancelled:(NSSet<UITouch*>*)touches withEvent:(UIEvent*)event {
+@@ -312,7 +380,8 @@ - (void)touchesCancelled:(NSSet<UITouch*>*)touches withEvent:(UIEvent*)event {
  }
  
  - (void)touchesEnded:(NSSet<UITouch*>*)touches withEvent:(UIEvent*)event {
@@ -311,7 +323,7 @@ index a6edb082d7f0..309e76990812 100644
    if (!mGeckoChild) return;
  
    [self sendTouchEvent:eTouchEnd touches:touches widget:mGeckoChild];
-@@ -325,7 +382,8 @@ - (void)touchesEnded:(NSSet<UITouch*>*)touches withEvent:(UIEvent*)event {
+@@ -325,7 +394,8 @@ - (void)touchesEnded:(NSSet<UITouch*>*)touches withEvent:(UIEvent*)event {
  }
  
  - (void)touchesMoved:(NSSet<UITouch*>*)touches withEvent:(UIEvent*)event {
@@ -321,7 +333,7 @@ index a6edb082d7f0..309e76990812 100644
    if (!mGeckoChild) return;
  
    [self sendTouchEvent:eTouchMove
-@@ -333,8 +391,27 @@ - (void)touchesMoved:(NSSet<UITouch*>*)touches withEvent:(UIEvent*)event {
+@@ -333,8 +403,27 @@ - (void)touchesMoved:(NSSet<UITouch*>*)touches withEvent:(UIEvent*)event {
                  widget:mGeckoChild];
  }
  
@@ -350,7 +362,7 @@ index a6edb082d7f0..309e76990812 100644
    if (!mGeckoChild ||
        mGeckoChild->GetWindowType() != nsIWidget::WindowType::TopLevel) {
      return;
-@@ -351,11 +428,28 @@ - (BOOL)canBecomeFirstResponder {
+@@ -351,11 +440,28 @@ - (BOOL)canBecomeFirstResponder {
    if (!mGeckoChild) {
      return NO;
    }
@@ -382,7 +394,7 @@ index a6edb082d7f0..309e76990812 100644
  }
  
  - (void)setNeedsDisplayInRect:(CGRect)aRect {
-@@ -405,7 +499,6 @@ - (BOOL)isUsingMainThreadOpenGL {
+@@ -405,7 +511,6 @@ - (BOOL)isUsingMainThreadOpenGL {
  }
  
  - (void)drawUsingOpenGL {
@@ -390,7 +402,7 @@ index a6edb082d7f0..309e76990812 100644
    AUTO_PROFILER_LABEL("ChildView::drawUsingOpenGL", OTHER);
  
    if (!mGeckoChild->IsVisible()) return;
-@@ -549,86 +642,6 @@ - (void)updateLayer {
+@@ -549,86 +654,6 @@ - (void)updateLayer {
    [(ChildView*)[self superview] updateRootCALayer];
  }
  
@@ -477,7 +489,7 @@ index a6edb082d7f0..309e76990812 100644
  #ifdef ACCESSIBILITY
  // MUIRootAccessible
  
-@@ -745,10 +758,64 @@ - (UIAccessibilityContainerType)accessibilityContainerType {
+@@ -745,10 +770,64 @@ - (UIAccessibilityContainerType)accessibilityContainerType {
        mParent(nullptr) {}
  
  nsWindow::~nsWindow() {
@@ -542,7 +554,7 @@ index a6edb082d7f0..309e76990812 100644
  void nsWindow::TearDownView() {
    if (!mNativeView) return;
  
-@@ -770,15 +837,9 @@ - (UIAccessibilityContainerType)accessibilityContainerType {
+@@ -770,15 +849,9 @@ - (UIAccessibilityContainerType)accessibilityContainerType {
  
  nsresult nsWindow::Create(nsIWidget* aParent, const LayoutDeviceIntRect& aRect,
                            const widget::InitData& aInitData) {
@@ -558,7 +570,7 @@ index a6edb082d7f0..309e76990812 100644
    // Set defaults which can be overriden from aInitData in BaseCreate
    mWindowType = WindowType::TopLevel;
    mBorderStyle = BorderStyle::Default;
-@@ -826,6 +887,8 @@ - (UIAccessibilityContainerType)accessibilityContainerType {
+@@ -826,6 +899,8 @@ - (UIAccessibilityContainerType)accessibilityContainerType {
    }
    mTextInputHandler = nullptr;
  
@@ -567,7 +579,7 @@ index a6edb082d7f0..309e76990812 100644
    [mNativeView widgetDestroyed];
  
    nsCOMPtr<nsIWidget> kungFuDeathGrip(this);
-@@ -834,6 +897,8 @@ - (UIAccessibilityContainerType)accessibilityContainerType {
+@@ -834,6 +909,8 @@ - (UIAccessibilityContainerType)accessibilityContainerType {
  
    // ReportDestroyEvent();
  
@@ -576,7 +588,7 @@ index a6edb082d7f0..309e76990812 100644
    TearDownView();
  
    nsIWidget::OnDestroy();
-@@ -842,6 +907,17 @@ - (UIAccessibilityContainerType)accessibilityContainerType {
+@@ -842,6 +919,17 @@ - (UIAccessibilityContainerType)accessibilityContainerType {
  void nsWindow::Show(bool aState) {
    if (aState != mVisible) {
      mNativeView.hidden = aState ? NO : YES;
@@ -594,7 +606,7 @@ index a6edb082d7f0..309e76990812 100644
      if (aState) {
        if (mParent) {
          [mParent->mNativeView bringSubviewToFront:mNativeView];
-@@ -852,6 +928,26 @@ - (UIAccessibilityContainerType)accessibilityContainerType {
+@@ -852,6 +940,26 @@ - (UIAccessibilityContainerType)accessibilityContainerType {
    }
  }
  
@@ -621,7 +633,7 @@ index a6edb082d7f0..309e76990812 100644
  void nsWindow::Move(const DesktopPoint& aPoint) {
    if (!mNativeView || (mBounds.x == aPoint.x && mBounds.y == aPoint.y)) {
      return;
-@@ -940,6 +1036,27 @@ - (UIAccessibilityContainerType)accessibilityContainerType {
+@@ -940,6 +1048,27 @@ - (UIAccessibilityContainerType)accessibilityContainerType {
    ReportSizeModeEvent(aMode);
  }
  
@@ -649,7 +661,7 @@ index a6edb082d7f0..309e76990812 100644
  void nsWindow::Invalidate(const LayoutDeviceIntRect& aRect) {
    if (!mNativeView || !mVisible) return;
  
-@@ -982,6 +1099,10 @@ - (UIAccessibilityContainerType)accessibilityContainerType {
+@@ -982,6 +1111,10 @@ - (UIAccessibilityContainerType)accessibilityContainerType {
  void nsWindow::ReportSizeEvent() {
    LayoutDeviceIntRect innerBounds = GetClientBounds();
  
@@ -660,7 +672,7 @@ index a6edb082d7f0..309e76990812 100644
    if (mWidgetListener) {
      mWidgetListener->WindowResized(this, innerBounds.Size());
    }
-@@ -1020,17 +1141,60 @@ - (UIAccessibilityContainerType)accessibilityContainerType {
+@@ -1020,17 +1153,60 @@ - (UIAccessibilityContainerType)accessibilityContainerType {
  
    const bool changingEnabledState =
        aContext.IsInputAttributeChanged(mInputContext);
@@ -712,19 +724,19 @@ index a6edb082d7f0..309e76990812 100644
 +      hadFirstResponder || aAction.UserMightRequestOpenVKB() ||
 +      (aAction.mFocusChange == InputContextAction::GOT_FOCUS &&
 +       (focusFromPointerInput || focusFromKeyboardInput));
-+
+ 
+-  if (aAction.UserMightRequestOpenVKB() || changingEnabledState) {
 +  if (shouldBecomeFirstResponder) {
 +    [mNativeView cancelResponderBlur];
 +    [mNativeView becomeFirstResponder];
 +  }
- 
--  if (aAction.UserMightRequestOpenVKB() || changingEnabledState) {
++
 +  if ((aAction.UserMightRequestOpenVKB() || changingEnabledState) &&
 +      (hadFirstResponder || shouldBecomeFirstResponder)) {
      // TODO(m_kato):
      // It is unnecessary to call reloadInputViews with changingEnabledState if
      // virtual keyboard is disappeared.
-@@ -1050,6 +1214,25 @@ - (UIAccessibilityContainerType)accessibilityContainerType {
+@@ -1050,6 +1226,25 @@ - (UIAccessibilityContainerType)accessibilityContainerType {
    return mInputContext;
  }
  
@@ -750,7 +762,7 @@ index a6edb082d7f0..309e76990812 100644
  widget::TextEventDispatcherListener*
  nsWindow::GetNativeTextEventDispatcherListener() {
    return mTextInputHandler;
-@@ -1110,6 +1293,10 @@ - (UIAccessibilityContainerType)accessibilityContainerType {
+@@ -1110,6 +1305,10 @@ - (UIAccessibilityContainerType)accessibilityContainerType {
    return [UIScreen mainScreen].scale;
  }
  
@@ -761,7 +773,7 @@ index a6edb082d7f0..309e76990812 100644
  int32_t nsWindow::RoundsWidgetCoordinatesTo() {
    if (BackingScaleFactor() == 2.0) {
      return 2;
-@@ -1121,6 +1308,85 @@ - (UIAccessibilityContainerType)accessibilityContainerType {
+@@ -1121,6 +1320,85 @@ - (UIAccessibilityContainerType)accessibilityContainerType {
    return mNativeLayerRoot;
  }
  
@@ -847,7 +859,7 @@ index a6edb082d7f0..309e76990812 100644
  void nsWindow::HandleMainThreadCATransaction() {
    // Trigger a synchronous OMTC composite. This will call NextSurface and
    // NotifySurfaceReady on the compositor thread to update mNativeLayerRoot's
-@@ -1275,6 +1541,7 @@ - (void)close {
+@@ -1275,6 +1553,7 @@ - (void)close {
  
    nsAutoCString url;
    nsresult rv = Preferences::GetCString("toolkit.defaultChromeURI", url);

@@ -41,6 +41,26 @@ private func configureUnsandboxedAppDataDirectories() {
     setenv("MOZ_LOCAL_APP_DATA", appDataDirectory.path, 1)
 }
 
+// On iOS 12 there is no UIScene, so SceneDelegate never runs, and the engine's
+// AppShellDelegate (the actual UIApplication delegate) never creates a window.
+// Create the browser window ourselves when UIKit finishes launching. UIKit posts
+// this notification regardless of which app delegate is used, and the observer
+// must be registered before UIApplicationMain (inside GeckoRuntime.main) takes
+// over the process. See IOS12_GATES.md.
+private var legacyRootWindow: UIWindow?
+if #unavailable(iOS 13.0) {
+    NotificationCenter.default.addObserver(
+        forName: UIApplication.didFinishLaunchingNotification,
+        object: nil,
+        queue: .main
+    ) { _ in
+        let window = UIWindow(frame: UIScreen.main.bounds)
+        window.rootViewController = BrowserViewController()
+        window.makeKeyAndVisible()
+        legacyRootWindow = window
+    }
+}
+
 UserDataMigration.shared.run()
 JITController.shared.start()
 // configureUnsandboxedAppDataDirectories is available on iOS 13.x only (introduced 13.0,

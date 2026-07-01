@@ -1,9 +1,9 @@
 diff --git a/widget/uikit/GeckoEditableSupport.mm b/widget/uikit/GeckoEditableSupport.mm
 new file mode 100644
-index 000000000000..cef3606cd080
+index 000000000000..00c769dd37f7
 --- /dev/null
 +++ b/widget/uikit/GeckoEditableSupport.mm
-@@ -0,0 +1,3373 @@
+@@ -0,0 +1,3393 @@
 +/* This Source Code Form is subject to the terms of the Mozilla Public
 + * License, v. 2.0. If a copy of the MPL was not distributed with this
 + * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
@@ -30,6 +30,24 @@ index 000000000000..cef3606cd080
 +using namespace mozilla;
 +using namespace mozilla::widget;
 +using mozilla::widget::UIKitUtils;
++
++static void CompatHideMenu(UIMenuController* aController, UIView* aView) {
++  if (@available(iOS 13.0, *)) {
++    [aController hideMenuFromView:aView];
++  } else {
++    [aController setMenuVisible:NO animated:YES];
++  }
++}
++
++static void CompatShowMenu(UIMenuController* aController, UIView* aView,
++                           CGRect aRect) {
++  if (@available(iOS 13.0, *)) {
++    [aController showMenuFromView:aView rect:aRect];
++  } else {
++    [aController setTargetRect:aRect inView:aView];
++    [aController setMenuVisible:YES animated:YES];
++  }
++}
 +
 +namespace {
 +
@@ -498,15 +516,17 @@ index 000000000000..cef3606cd080
 +  mEditable.mVietnameseBufferText = nil;
 +  [self resetHandleState];
 +
-+  mEditable.mEditableTextInteraction = [[UITextInteraction
-+      textInteractionForMode:UITextInteractionModeEditable] retain];
-+  mEditable.mEditableTextInteraction.textInput = self;
-+  mEditable.mEditableTextInteraction.delegate = self;
++  if (@available(iOS 13.0, *)) {
++    mEditable.mEditableTextInteraction = [[UITextInteraction
++        textInteractionForMode:UITextInteractionModeEditable] retain];
++    mEditable.mEditableTextInteraction.textInput = self;
++    mEditable.mEditableTextInteraction.delegate = self;
 +
-+  mEditable.mNonEditableTextInteraction = [[UITextInteraction
-+      textInteractionForMode:UITextInteractionModeNonEditable] retain];
-+  mEditable.mNonEditableTextInteraction.textInput = self;
-+  mEditable.mNonEditableTextInteraction.delegate = self;
++    mEditable.mNonEditableTextInteraction = [[UITextInteraction
++        textInteractionForMode:UITextInteractionModeNonEditable] retain];
++    mEditable.mNonEditableTextInteraction.textInput = self;
++    mEditable.mNonEditableTextInteraction.delegate = self;
++  }
 +
 +  [self setupModernTextInput];
 +  [self updateTextInteractions];
@@ -1892,14 +1912,14 @@ index 000000000000..cef3606cd080
 +  widget::TextInputHandler* handler = [self textHandler];
 +  UIMenuController* menuController = [UIMenuController sharedMenuController];
 +  if (!handler || ![self isFirstResponder]) {
-+    [menuController hideMenuFromView:self];
++    CompatHideMenu(menuController, self);
 +    return;
 +  }
 +
 +  NSRange selectedRange = NSMakeRange(NSNotFound, 0);
 +  if (!handler->SelectedRange(selectedRange) ||
 +      selectedRange.location == NSNotFound) {
-+    [menuController hideMenuFromView:self];
++    CompatHideMenu(menuController, self);
 +    return;
 +  }
 +
@@ -1908,20 +1928,20 @@ index 000000000000..cef3606cd080
 +  if (selectedRange.length > 0) {
 +    mEditable.mCaretMenuActive = NO;
 +    if (mEditable.mActiveSelectionHandle != GeckoSelectionHandleNone) {
-+      [menuController hideMenuFromView:self];
++      CompatHideMenu(menuController, self);
 +      return;
 +    }
 +    ChildViewTextRange* range = [self textRangeForRange:selectedRange];
 +    if (!range) {
-+      [menuController hideMenuFromView:self];
++      CompatHideMenu(menuController, self);
 +      return;
 +    }
 +    CGRect targetRect = [self firstRectForRange:range];
 +    if (CGRectIsEmpty(targetRect)) {
-+      [menuController hideMenuFromView:self];
++      CompatHideMenu(menuController, self);
 +      return;
 +    }
-+    [menuController showMenuFromView:self rect:targetRect];
++    CompatShowMenu(menuController, self, targetRect);
 +    return;
 +  }
 +
@@ -1932,13 +1952,13 @@ index 000000000000..cef3606cd080
 +      CGRect caretRect =
 +          DevPixelsToUIKitPoints(caretDevRect, [self contentScaleFactor]);
 +      if (!CGRectIsEmpty(caretRect)) {
-+        [menuController showMenuFromView:self rect:caretRect];
++        CompatShowMenu(menuController, self, caretRect);
 +        return;
 +      }
 +    }
 +  }
 +
-+  [menuController hideMenuFromView:self];
++  CompatHideMenu(menuController, self);
 +}
 +
 +// Returns the plain text inside a UITextRange.
@@ -2522,7 +2542,7 @@ index 000000000000..cef3606cd080
 +
 +- (void)interactionWillBegin:(UITextInteraction*)aInteraction {
 +  mEditable.mTextInteractionInProgress = YES;
-+  [[UIMenuController sharedMenuController] hideMenuFromView:self];
++  CompatHideMenu([UIMenuController sharedMenuController], self);
 +  [self becomeFirstResponder];
 +  if (mEditable.mSelectionDisplayInteraction != nil) {
 +    [self updateHandleVisibility];

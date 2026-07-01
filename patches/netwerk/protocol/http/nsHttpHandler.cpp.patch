@@ -1,8 +1,19 @@
 diff --git a/netwerk/protocol/http/nsHttpHandler.cpp b/netwerk/protocol/http/nsHttpHandler.cpp
-index c45cb9f04196..f9f91718ef1a 100644
+index c45cb9f04196..77d69bd15bfc 100644
 --- a/netwerk/protocol/http/nsHttpHandler.cpp
 +++ b/netwerk/protocol/http/nsHttpHandler.cpp
-@@ -660,6 +660,23 @@ nsresult nsHttpHandler::InitConnectionMgr() {
+@@ -113,6 +113,10 @@
+ #  include <CoreServices/CoreServices.h>
+ #endif
+ 
++#if defined(XP_IOS)
++#  include <sys/sysctl.h>
++#endif
++
+ //-----------------------------------------------------------------------------
+ #include "mozilla/net/HttpChannelChild.h"
+ 
+@@ -660,6 +664,23 @@ nsresult nsHttpHandler::InitConnectionMgr() {
                          mBeConservativeForProxy);
  }
  
@@ -26,3 +37,28 @@ index c45cb9f04196..f9f91718ef1a 100644
  // We're using RequestOverride because this can get called when these are
  // set by Fetch from the old request. We need to pass a function pointer to
  // let GetDictionaryFor suspend the channel before starting the async
+@@ -1167,9 +1188,21 @@ void nsHttpHandler::InitUserAgentComponents() {
+ #endif  // ANDROID
+ 
+ #if defined(XP_IOS)
+-  // Freeze the iOS version to 18.0, use an underscore separator to avoid
+-  // detection as macOS.
+-  mCompatDevice.AssignLiteral("CPU iPhone OS 18_0 like Mac OS X");
++  // Report the actual iOS version, using an underscore separator to avoid
++  // detection as macOS. Fall back to a frozen version if the sysctl fails.
++  nsAutoCString iosVersion;
++  char osVersionBuf[128];
++  size_t osVersionLen = sizeof(osVersionBuf);
++  if (sysctlbyname("kern.osproductversion", osVersionBuf, &osVersionLen,
++                   nullptr, 0) == 0) {
++    iosVersion.Assign(osVersionBuf);
++    iosVersion.ReplaceChar('.', '_');
++  } else {
++    iosVersion.AssignLiteral("18_0");
++  }
++  mCompatDevice.AssignLiteral("CPU iPhone OS ");
++  mCompatDevice.Append(iosVersion);
++  mCompatDevice.AppendLiteral(" like Mac OS X");
+ #endif
+ 
+   // Gather OS/CPU.

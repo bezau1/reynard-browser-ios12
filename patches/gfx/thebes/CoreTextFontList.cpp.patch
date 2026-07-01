@@ -1,5 +1,5 @@
 diff --git a/gfx/thebes/CoreTextFontList.cpp b/gfx/thebes/CoreTextFontList.cpp
-index 09cc159cad78..8e8e87556bfa 100644
+index 09cc159cad78..2e036a481409 100644
 --- a/gfx/thebes/CoreTextFontList.cpp
 +++ b/gfx/thebes/CoreTextFontList.cpp
 @@ -354,6 +354,12 @@ nsresult CTFontEntry::ReadCMAP(FontInfoData* aFontInfoData) {
@@ -89,7 +89,29 @@ index 09cc159cad78..8e8e87556bfa 100644
  
        // Set the appropriate style, assuming it may not have a variation range.
        CTFontSymbolicTraits traits = CTFontGetSymbolicTraits(aFont);
-@@ -1340,7 +1388,6 @@ gfxFontEntry* CoreTextFontList::PlatformGlobalFontFallback(
+@@ -1118,8 +1166,19 @@ void CoreTextFontList::ActivateFontsFromDir(
+     }
+   } while (result != kCFURLEnumeratorEnd);
+ 
+-  CTFontManagerRegisterFontURLs(urls, kCTFontManagerScopeProcess, false,
+-                                nullptr);
++  // CTFontManagerRegisterFontURLs is iOS 13+; on iOS 12 register each URL
++  // individually with the older CTFontManagerRegisterFontsForURL.
++  if (__builtin_available(iOS 13.0, *)) {
++    CTFontManagerRegisterFontURLs(urls, kCTFontManagerScopeProcess, false,
++                                  nullptr);
++  } else {
++    CFIndex count = CFArrayGetCount(urls);
++    for (CFIndex i = 0; i < count; ++i) {
++      CTFontManagerRegisterFontsForURL(
++          (CFURLRef)CFArrayGetValueAtIndex(urls, i), kCTFontManagerScopeProcess,
++          nullptr);
++    }
++  }
+ }
+ 
+ void CoreTextFontList::ReadSystemFontList(dom::SystemFontList* aList)
+@@ -1340,7 +1399,6 @@ gfxFontEntry* CoreTextFontList::PlatformGlobalFontFallback(
    // use CoreText to find the fallback family
  
    gfxFontEntry* fontEntry = nullptr;
@@ -97,7 +119,7 @@ index 09cc159cad78..8e8e87556bfa 100644
  
    if (!mDefaultFont) {
      mDefaultFont = CTFontCreateWithName(CFSTR("LucidaGrande"), 12.f, NULL);
-@@ -1380,7 +1427,6 @@ gfxFontEntry* CoreTextFontList::PlatformGlobalFontFallback(
+@@ -1380,7 +1438,6 @@ gfxFontEntry* CoreTextFontList::PlatformGlobalFontFallback(
                aMatchedFamily = FontFamily(family);
              } else {
                fontEntry = nullptr;
@@ -105,7 +127,7 @@ index 09cc159cad78..8e8e87556bfa 100644
              }
            }
          }
-@@ -1398,7 +1444,6 @@ gfxFontEntry* CoreTextFontList::PlatformGlobalFontFallback(
+@@ -1398,7 +1455,6 @@ gfxFontEntry* CoreTextFontList::PlatformGlobalFontFallback(
                aMatchedFamily = FontFamily(family);
              } else {
                fontEntry = nullptr;
@@ -113,7 +135,7 @@ index 09cc159cad78..8e8e87556bfa 100644
              }
            }
          }
-@@ -1406,11 +1451,44 @@ gfxFontEntry* CoreTextFontList::PlatformGlobalFontFallback(
+@@ -1406,11 +1462,44 @@ gfxFontEntry* CoreTextFontList::PlatformGlobalFontFallback(
      }
    }
  
@@ -163,7 +185,7 @@ index 09cc159cad78..8e8e87556bfa 100644
    }
  
    CFRelease(str);
-@@ -1541,9 +1619,20 @@ bool CoreTextFontList::FindAndAddFamiliesLocked(
+@@ -1541,9 +1630,20 @@ bool CoreTextFontList::FindAndAddFamiliesLocked(
      nsTArray<FamilyAndGeneric>* aOutput, FindFamiliesFlags aFlags,
      gfxFontStyle* aStyle, nsAtom* aLanguage, gfxFloat aDevToCssSize) {
    if (aFamily.EqualsLiteral(kSystemFont_system)) {
@@ -187,7 +209,7 @@ index 09cc159cad78..8e8e87556bfa 100644
      if (auto* fam = FindSystemFontFamily(mSystemFontFamilyName)) {
        aOutput->AppendElement(fam);
        return true;
-@@ -1917,12 +2006,34 @@ FontFamily CoreTextFontList::GetDefaultFontForPlatform(
+@@ -1917,12 +2017,34 @@ FontFamily CoreTextFontList::GetDefaultFontForPlatform(
      nsAtom* aLanguage) {
    AutoCFTypeRef<CTFontRef> font(CTFontCreateUIFontForLanguage(
        kCTFontUIFontUser, 0.0, nullptr));  // TODO: language

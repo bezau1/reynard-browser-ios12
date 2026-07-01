@@ -52,7 +52,7 @@ final class BrowserPreferences {
             
             // Compatibility
             key("CompatibilitySettings", "androidUserAgentDomains"): [],
-            key("CompatibilitySettings", "useAndroidUserAgent"): true,
+            key("CompatibilitySettings", "useAndroidUserAgent"): false,
             
             // Browsing
             key("BrowsingSettings", "requestDesktopWebsite"): UIDevice.current.userInterfaceIdiom == .pad,

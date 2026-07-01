@@ -34,7 +34,13 @@ final class HomepageViewController: UINavigationController {
             bookmarkStore: bookmarkStore,
             isPrivateBrowsing: isPrivateBrowsing
         )
-        super.init(rootViewController: rootViewController)
+        // UINavigationController.init(rootViewController:) calls the subclass's
+        // init(nibName:bundle:) on iOS 12, which traps ("unimplemented
+        // initializer") because this class declares its own designated
+        // initializer. Use the designated UIViewController initializer directly,
+        // then install the root view controller.
+        super.init(nibName: nil, bundle: nil)
+        setViewControllers([rootViewController], animated: false)
         rootViewController.delegate = self
     }
     

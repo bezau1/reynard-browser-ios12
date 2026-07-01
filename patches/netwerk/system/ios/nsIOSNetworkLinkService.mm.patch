@@ -1,9 +1,9 @@
 diff --git a/netwerk/system/ios/nsIOSNetworkLinkService.mm b/netwerk/system/ios/nsIOSNetworkLinkService.mm
 new file mode 100644
-index 000000000000..02575b43ffa5
+index 000000000000..42d602588582
 --- /dev/null
 +++ b/netwerk/system/ios/nsIOSNetworkLinkService.mm
-@@ -0,0 +1,526 @@
+@@ -0,0 +1,537 @@
 +/* This Source Code Form is subject to the terms of the Mozilla Public
 + * License, v. 2.0. If a copy of the MPL was not distributed with this
 + * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
@@ -173,24 +173,29 @@ index 000000000000..02575b43ffa5
 +    return true;
 +  });
 +
-+  nw_path_enumerate_gateways(aPath, ^bool(nw_endpoint_t aGateway) {
-+    char* address = nw_endpoint_copy_address_string(aGateway);
-+    if (address) {
-+      nsAutoCString key("gateway:"_ns);
-+      key.Append(address);
-+      hashKeysPtr->push_back(std::move(key));
-+      free(address);
-+    } else {
-+      const char* hostname = nw_endpoint_get_hostname(aGateway);
-+      if (!hostname) {
-+        return true;
++  // nw_path_enumerate_gateways (and the nw_endpoint_* accessors it uses) are
++  // iOS 13+; guard so they are weak-imported and skipped on iOS 12, where the
++  // network id is computed without gateway information.
++  if (__builtin_available(iOS 13.0, *)) {
++    nw_path_enumerate_gateways(aPath, ^bool(nw_endpoint_t aGateway) {
++      char* address = nw_endpoint_copy_address_string(aGateway);
++      if (address) {
++        nsAutoCString key("gateway:"_ns);
++        key.Append(address);
++        hashKeysPtr->push_back(std::move(key));
++        free(address);
++      } else {
++        const char* hostname = nw_endpoint_get_hostname(aGateway);
++        if (!hostname) {
++          return true;
++        }
++        nsAutoCString key("gateway:"_ns);
++        key.Append(hostname);
++        hashKeysPtr->push_back(std::move(key));
 +      }
-+      nsAutoCString key("gateway:"_ns);
-+      key.Append(hostname);
-+      hashKeysPtr->push_back(std::move(key));
-+    }
-+    return true;
-+  });
++      return true;
++    });
++  }
 +
 +  if (hashKeys->empty()) {
 +    return ""_ns;
@@ -347,7 +352,13 @@ index 000000000000..02575b43ffa5
 +  newState.mStatusKnown = status != nw_path_status_invalid;
 +  newState.mLinkUp = status == nw_path_status_satisfied;
 +  newState.mExpensive = nw_path_is_expensive(aPath);
-+  newState.mConstrained = nw_path_is_constrained(aPath);
++  // nw_path_is_constrained is iOS 13+; guard so it is weak-imported and not
++  // called on iOS 12 (a strong reference fails to bind at launch there).
++  if (__builtin_available(iOS 13.0, *)) {
++    newState.mConstrained = nw_path_is_constrained(aPath);
++  } else {
++    newState.mConstrained = false;
++  }
 +  newState.mHasIPv4 = nw_path_has_ipv4(aPath);
 +  newState.mHasIPv6 = nw_path_has_ipv6(aPath);
 +  newState.mVPNDetected = VPNDetectedForPath(aPath);

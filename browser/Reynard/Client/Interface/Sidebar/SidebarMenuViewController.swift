@@ -5,7 +5,7 @@
 //  Created by Minh Ton on 11/6/26.
 //
 
-final class SidebarMenuViewController: UIViewController, UICollectionViewDelegate, UINavigationControllerDelegate {
+final class SidebarMenuViewController: UIViewController, UICollectionViewDelegate, UICollectionViewDataSource, UICollectionViewDelegateFlowLayout, UINavigationControllerDelegate {
     private enum UX {
         static let topContentInset: CGFloat = 32
         static let legacyItemHeight: CGFloat = 48
@@ -16,7 +16,8 @@ final class SidebarMenuViewController: UIViewController, UICollectionViewDelegat
     private let cellReuseIdentifier = "SidebarActionCell"
     private let childSidebarButtonTag = 9101
     // Diffable data source is iOS 13+. Stored type-erased so this class stays
-    // available on iOS 12 (where the sidebar list is empty). See IOS12_GATES.md.
+    // available on iOS 12, which uses a classic UICollectionViewDataSource
+    // instead (see the iOS 12 data source methods below). See IOS12_GATES.md.
     private var dataSourceStorage: AnyObject?
     @available(iOS 13.0, *)
     private var dataSource: UICollectionViewDiffableDataSource<String, LibrarySection>? {
@@ -69,6 +70,9 @@ final class SidebarMenuViewController: UIViewController, UICollectionViewDelegat
         if #available(iOS 13.0, *) {
             configureDataSource()
             applySnapshot()
+        } else {
+            // Diffable data source is iOS 13+; use a classic data source on iOS 12.
+            collectionView.dataSource = self
         }
     }
     
@@ -92,14 +96,36 @@ final class SidebarMenuViewController: UIViewController, UICollectionViewDelegat
     // MARK: - UICollectionViewDelegate
     
     func collectionView(_ collectionView: UICollectionView, didSelectItemAt indexPath: IndexPath) {
-        guard #available(iOS 13.0, *) else {
-            return
-        }
-        guard let section = dataSource?.itemIdentifier(for: indexPath) else {
+        let section: LibrarySection
+        if #available(iOS 13.0, *), let identifier = dataSource?.itemIdentifier(for: indexPath) {
+            section = identifier
+        } else if indexPath.item < LibrarySection.allCases.count {
+            section = LibrarySection.allCases[indexPath.item]
+        } else {
             return
         }
 
         showSection(section, animated: true)
+    }
+
+    // MARK: - UICollectionViewDataSource (iOS 12)
+
+    func collectionView(_ collectionView: UICollectionView, numberOfItemsInSection section: Int) -> Int {
+        return LibrarySection.allCases.count
+    }
+
+    func collectionView(_ collectionView: UICollectionView, cellForItemAt indexPath: IndexPath) -> UICollectionViewCell {
+        let cell = collectionView.dequeueReusableCell(withReuseIdentifier: cellReuseIdentifier, for: indexPath)
+        if let sidebarCell = cell as? SidebarActionCell, indexPath.item < LibrarySection.allCases.count {
+            let section = LibrarySection.allCases[indexPath.item]
+            sidebarCell.configure(title: section.title, symbolName: section.symbolName)
+        }
+        return cell
+    }
+
+    func collectionView(_ collectionView: UICollectionView, layout collectionViewLayout: UICollectionViewLayout, sizeForItemAt indexPath: IndexPath) -> CGSize {
+        // Applies to the iOS <14 flow-layout fallback (full-width rows).
+        return CGSize(width: collectionView.bounds.width, height: UX.legacyItemHeight)
     }
     
     // MARK: - Sections
@@ -110,6 +136,8 @@ final class SidebarMenuViewController: UIViewController, UICollectionViewDelegat
         var indexPath: IndexPath?
         if #available(iOS 13.0, *) {
             indexPath = dataSource?.indexPath(for: section)
+        } else if let index = LibrarySection.allCases.firstIndex(of: section) {
+            indexPath = IndexPath(item: index, section: 0)
         }
         if let indexPath {
             collectionView.selectItem(at: indexPath, animated: false, scrollPosition: [])
