@@ -126,7 +126,7 @@ final class AddonInformationPreferencesViewController: SettingsTableViewControll
     
     init(addonID: String) {
         self.addonID = addonID
-        super.init(style: .insetGrouped)
+        super.init(style: .appGrouped)
         title = "Details"
     }
     
@@ -195,7 +195,7 @@ final class AddonInformationPreferencesViewController: SettingsTableViewControll
             let cell = UITableViewCell(style: .value1, reuseIdentifier: nil)
             cell.textLabel?.text = row.title
             cell.detailTextLabel?.text = row.value
-            cell.detailTextLabel?.textColor = row.link == nil ? .secondaryLabel : view.tintColor
+            cell.detailTextLabel?.textColor = row.link == nil ? .appSecondaryLabel : view.tintColor
             cell.accessoryType = row.link == nil ? .none : .disclosureIndicator
             return cell
         case .links:
@@ -207,7 +207,7 @@ final class AddonInformationPreferencesViewController: SettingsTableViewControll
             cell.textLabel?.text = row.title
             cell.detailTextLabel?.text = row.value
             cell.detailTextLabel?.numberOfLines = 0
-            cell.detailTextLabel?.textColor = .secondaryLabel
+            cell.detailTextLabel?.textColor = .appSecondaryLabel
             cell.accessoryType = .disclosureIndicator
             return cell
         }

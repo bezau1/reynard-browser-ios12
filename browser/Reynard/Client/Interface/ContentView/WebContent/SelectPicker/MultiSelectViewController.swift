@@ -58,7 +58,7 @@ final class MultiSelectViewController: UIViewController, UITableViewDataSource, 
     }
     
     private func configureTableView() {
-        tableView = UITableView(frame: view.bounds, style: .insetGrouped)
+        tableView = UITableView(frame: view.bounds, style: .appGrouped)
         tableView.autoresizingMask = [.flexibleWidth, .flexibleHeight]
         tableView.dataSource = self
         tableView.delegate = self

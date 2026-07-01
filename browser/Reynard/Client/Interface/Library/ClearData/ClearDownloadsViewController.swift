@@ -19,7 +19,7 @@ final class ClearDownloadsViewController: UITableViewController {
     
     init(onClear: @escaping (Date?) -> Void) {
         self.onClear = onClear
-        super.init(style: .insetGrouped)
+        super.init(style: .appGrouped)
         title = "Clear Downloads"
     }
     
@@ -30,7 +30,7 @@ final class ClearDownloadsViewController: UITableViewController {
     override func viewDidLoad() {
         super.viewDidLoad()
         
-        view.backgroundColor = .systemGroupedBackground
+        view.backgroundColor = .appSystemGroupedBackground
         navigationItem.largeTitleDisplayMode = .never
         navigationItem.rightBarButtonItem = LibraryActionButton.makeSheetCloseButton(target: self, action: #selector(dismissSheet))
         tableView.tableFooterView = clearFooterView

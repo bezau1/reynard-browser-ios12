@@ -56,13 +56,13 @@ final class AppAppearanceOptionControl: UIControl {
     func displaySelection(selected: Bool) {
         isSelected = selected
         if selected {
-            previewView.backgroundColor = traitCollection.userInterfaceStyle == .dark ? .systemGray5 : .systemBackground
+            previewView.backgroundColor = traitCollection.userInterfaceStyle == .dark ? .appSystemGray5 : .appSystemBackground
         } else {
             previewView.backgroundColor = .clear
         }
-        previewView.layer.borderColor = selected ? UIColor.clear.cgColor : UIColor.systemGray5.cgColor
-        previewImageView.tintColor = selected ? .label : .secondaryLabel
-        nameLabel.textColor = selected ? .label : .secondaryLabel
+        previewView.layer.borderColor = selected ? UIColor.clear.cgColor : UIColor.appSystemGray5.cgColor
+        previewImageView.tintColor = selected ? .appLabel : .appSecondaryLabel
+        nameLabel.textColor = selected ? .appLabel : .appSecondaryLabel
     }
     
     func animateTap() {
@@ -81,7 +81,7 @@ final class AppAppearanceOptionControl: UIControl {
         previewView.translatesAutoresizingMaskIntoConstraints = false
         previewView.isUserInteractionEnabled = false
         previewView.layer.cornerRadius = UX.previewCornerRadius
-        previewView.layer.cornerCurve = .continuous
+        previewView.layer.applyContinuousCornerCurve()
         previewView.layer.borderWidth = UX.previewBorderWidth
     }
     

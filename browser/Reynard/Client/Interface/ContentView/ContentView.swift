@@ -66,7 +66,7 @@ final class ContentView: UIView {
     
     private func configureAppearance() {
         translatesAutoresizingMaskIntoConstraints = false
-        backgroundColor = .systemBackground
+        backgroundColor = .appSystemBackground
     }
     
     private func configureHierarchy() {

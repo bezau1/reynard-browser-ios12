@@ -28,8 +28,8 @@ final class RecentlyClosedTabCollectionViewCell: UICollectionViewCell {
         let view = UIView()
         view.translatesAutoresizingMaskIntoConstraints = false
         view.isUserInteractionEnabled = false
-        view.backgroundColor = .systemGray5
-        view.layer.cornerCurve = .continuous
+        view.backgroundColor = .appSystemGray5
+        view.layer.applyContinuousCornerCurve()
         view.layer.cornerRadius = UX.pillCornerRadius
         view.clipsToBounds = true
         return view
@@ -39,7 +39,7 @@ final class RecentlyClosedTabCollectionViewCell: UICollectionViewCell {
         let label = UILabel()
         label.translatesAutoresizingMaskIntoConstraints = false
         label.font = RecentlyClosedTabCollectionViewCell.titleFont
-        label.textColor = .label
+        label.textColor = .appLabel
         label.numberOfLines = 1
         label.lineBreakMode = .byTruncatingTail
         label.adjustsFontForContentSizeCategory = true
@@ -96,7 +96,7 @@ final class RecentlyClosedTabCollectionViewCell: UICollectionViewCell {
         contentView.backgroundColor = .clear
         clipsToBounds = false
         contentView.clipsToBounds = false
-        layer.cornerCurve = .continuous
+        layer.applyContinuousCornerCurve()
         layer.cornerRadius = UX.pillCornerRadius
         layer.shadowOpacity = UX.shadowOpacity
         layer.shadowRadius = UX.shadowRadius
@@ -142,9 +142,9 @@ final class RecentlyClosedTabCollectionViewCell: UICollectionViewCell {
     
     private func updateAppearance() {
         pillView.backgroundColor = traitCollection.userInterfaceStyle == .dark
-        ? .systemGray5
-        : .systemBackground
-        titleLabel.textColor = .label
+        ? .appSystemGray5
+        : .appSystemBackground
+        titleLabel.textColor = .appLabel
         layer.shadowColor = traitCollection.userInterfaceStyle == .dark
         ? UIColor.white.cgColor
         : UIColor.black.cgColor

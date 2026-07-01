@@ -32,7 +32,7 @@ final class HistoryItemCell: UITableViewCell {
         let label = UILabel()
         label.translatesAutoresizingMaskIntoConstraints = false
         label.font = .preferredFont(forTextStyle: .body)
-        label.textColor = .label
+        label.textColor = .appLabel
         label.adjustsFontForContentSizeCategory = true
         label.numberOfLines = 1
         return label
@@ -42,7 +42,7 @@ final class HistoryItemCell: UITableViewCell {
         let label = UILabel()
         label.translatesAutoresizingMaskIntoConstraints = false
         label.font = .preferredFont(forTextStyle: .subheadline)
-        label.textColor = .secondaryLabel
+        label.textColor = .appSecondaryLabel
         label.adjustsFontForContentSizeCategory = true
         label.numberOfLines = 1
         return label
@@ -151,6 +151,6 @@ final class HistoryItemCell: UITableViewCell {
         }
         
         faviconView.image = UIImage(named: "reynard.globe")
-        faviconView.tintColor = .secondaryLabel
+        faviconView.tintColor = .appSecondaryLabel
     }
 }

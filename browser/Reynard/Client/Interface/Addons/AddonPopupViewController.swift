@@ -129,14 +129,14 @@ final class AddonPopupViewController: UIViewController, ContentDelegate, Navigat
         view.layer.shadowRadius = UX.shadowRadius
         view.layer.shadowOffset = UX.shadowOffset
         view.layer.borderWidth = UX.borderWidth
-        view.layer.borderColor = UIColor.separator.cgColor
+        view.layer.borderColor = UIColor.appSeparator.cgColor
         return view
     }
     
     private func makeSheetView() -> UIView {
         let view = UIView()
         view.translatesAutoresizingMaskIntoConstraints = false
-        view.backgroundColor = .systemBackground
+        view.backgroundColor = .appSystemBackground
         view.layer.cornerRadius = UX.sheetCornerRadius
         view.layer.maskedCorners = [.layerMinXMinYCorner, .layerMaxXMinYCorner]
         view.clipsToBounds = true
@@ -146,7 +146,7 @@ final class AddonPopupViewController: UIViewController, ContentDelegate, Navigat
     private func makeCloseButton() -> UIButton {
         let button = UIButton(type: .system)
         button.setImage(UIImage(named: "reynard.xmark"), for: .normal)
-        button.tintColor = .label
+        button.tintColor = .appLabel
         button.translatesAutoresizingMaskIntoConstraints = false
         button.addTarget(self, action: #selector(closeTapped), for: .touchUpInside)
         return button

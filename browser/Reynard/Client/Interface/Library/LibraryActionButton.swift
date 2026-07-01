@@ -51,12 +51,12 @@ final class LibraryActionButton: UIButton {
         if #available(iOS 26.0, *) {
             var configuration = UIButton.Configuration.glass()
             configuration.image = UIImage(named: iconName)
-            configuration.baseForegroundColor = .label
+            configuration.baseForegroundColor = .appLabel
             configuration.contentInsets = .zero
             self.configuration = configuration
         } else {
             setImage(UIImage(named: iconName), for: .normal)
-            backgroundColor = .quaternarySystemFill
+            backgroundColor = .appQuaternarySystemFill
         }
     }
     
@@ -80,7 +80,7 @@ final class LibraryActionButton: UIButton {
     static func makeSheetCloseButton(target: AnyObject, action: Selector) -> UIBarButtonItem {
         if #available(iOS 26.0, *) {
             let item = UIBarButtonItem(barButtonSystemItem: .cancel, target: target, action: action)
-            item.tintColor = .label
+            item.tintColor = .appLabel
             return item
         }
         
@@ -91,8 +91,8 @@ final class LibraryActionButton: UIButton {
     
     private func configureAppearance() {
         translatesAutoresizingMaskIntoConstraints = false
-        tintColor = .label
-        layer.cornerCurve = .continuous
+        tintColor = .appLabel
+        layer.applyContinuousCornerCurve()
         layer.masksToBounds = true
     }
 }

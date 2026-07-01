@@ -57,7 +57,7 @@ final class AddonPermissionPromptViewController: UITableViewController {
         button.backgroundColor = view.tintColor
         button.tintColor = .white
         button.layer.cornerRadius = UX.actionButtonCornerRadius
-        button.layer.cornerCurve = .continuous
+        button.layer.applyContinuousCornerCurve()
         button.titleLabel?.font = .preferredFont(forTextStyle: .headline)
         button.setTitle(prompt.kind == .install ? "Add" : "Allow", for: .normal)
         button.addTarget(self, action: #selector(confirmPrompt), for: .touchUpInside)
@@ -76,7 +76,7 @@ final class AddonPermissionPromptViewController: UITableViewController {
             domains: content.siteDomains
         )
         dataCollectionDescription = content.dataCollectionDescription
-        super.init(style: .insetGrouped)
+        super.init(style: .appGrouped)
         configureTitle()
     }
     
@@ -161,7 +161,7 @@ final class AddonPermissionPromptViewController: UITableViewController {
         let cell = tableView.dequeueReusableCell(withIdentifier: cellReuseIdentifier)
         ?? UITableViewCell(style: .default, reuseIdentifier: cellReuseIdentifier)
         cell.textLabel?.numberOfLines = 0
-        cell.textLabel?.textColor = .label
+        cell.textLabel?.textColor = .appLabel
         cell.selectionStyle = .none
         cell.accessoryType = .none
         cell.accessoryView = nil
@@ -226,7 +226,7 @@ final class AddonPermissionPromptViewController: UITableViewController {
     }
     
     private func configureView() {
-        view.backgroundColor = .systemGroupedBackground
+        view.backgroundColor = .appSystemGroupedBackground
     }
     
     private func configureNavigationItem() {
@@ -236,7 +236,7 @@ final class AddonPermissionPromptViewController: UITableViewController {
             navigationItem.rightBarButtonItems = [
                 UIBarButtonItem(barButtonSystemItem: .cancel, target: self, action: #selector(dismissModal))
             ]
-            navigationItem.rightBarButtonItems?.first?.tintColor = .label
+            navigationItem.rightBarButtonItems?.first?.tintColor = .appLabel
         } else {
             navigationItem.rightBarButtonItems = [
                 UIBarButtonItem(barButtonSystemItem: .done, target: self, action: #selector(dismissModal))
@@ -364,7 +364,7 @@ private final class AddonPromptSiteListViewController: UITableViewController {
     
     init(sites: [String]) {
         self.sites = sites
-        super.init(style: .insetGrouped)
+        super.init(style: .appGrouped)
         title = "Sites"
     }
     
@@ -374,7 +374,7 @@ private final class AddonPromptSiteListViewController: UITableViewController {
     
     override func viewDidLoad() {
         super.viewDidLoad()
-        view.backgroundColor = .systemGroupedBackground
+        view.backgroundColor = .appSystemGroupedBackground
         navigationItem.largeTitleDisplayMode = .never
     }
     

@@ -28,7 +28,7 @@ final class SidebarMenuViewController: UIViewController, UICollectionViewDelegat
         let layout: UICollectionViewLayout
         if #available(iOS 14.0, *) {
             var configuration = UICollectionLayoutListConfiguration(appearance: .sidebar)
-            configuration.backgroundColor = .systemGray6
+            configuration.backgroundColor = .appSystemGray6
             layout = UICollectionViewCompositionalLayout.list(using: configuration)
         } else {
             let flowLayout = UICollectionViewFlowLayout()
@@ -40,7 +40,7 @@ final class SidebarMenuViewController: UIViewController, UICollectionViewDelegat
         
         let view = UICollectionView(frame: .zero, collectionViewLayout: layout)
         view.translatesAutoresizingMaskIntoConstraints = false
-        view.backgroundColor = .systemGray6
+        view.backgroundColor = .appSystemGray6
         view.delegate = self
         return view
     }()
@@ -198,7 +198,7 @@ final class SidebarMenuViewController: UIViewController, UICollectionViewDelegat
     // MARK: - View Setup
     
     private func configureAppearance() {
-        view.backgroundColor = .systemGray6
+        view.backgroundColor = .appSystemGray6
     }
     
     private func configureCollectionView() {
@@ -220,7 +220,7 @@ final class SidebarMenuViewController: UIViewController, UICollectionViewDelegat
                 var content = cell.defaultContentConfiguration()
                 content.text = section.title
                 content.image = UIImage(named: section.symbolName)
-                content.imageProperties.tintColor = .label
+                content.imageProperties.tintColor = .appLabel
                 cell.contentConfiguration = content
                 cell.accessories = []
             }

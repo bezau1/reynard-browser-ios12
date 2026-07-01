@@ -25,7 +25,7 @@ final class HomepageSectionItemCountPreferencesViewController: SettingsTableView
         self.values = values
         self.selectedValue = selectedValue
         self.selectValue = selectValue
-        super.init(style: .insetGrouped)
+        super.init(style: .appGrouped)
         self.title = title
     }
     

@@ -243,7 +243,7 @@ final class TabOverview: UIView {
     
     private func configureAppearance() {
         translatesAutoresizingMaskIntoConstraints = false
-        backgroundColor = .systemGray6
+        backgroundColor = .appSystemGray6
         alpha = 0
         isHidden = true
     }

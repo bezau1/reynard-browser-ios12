@@ -133,7 +133,7 @@ final class BottomToolbar: UIView {
             topConstraint.constant = verticalOffset - contentHeight
             contentHeightConstraint.constant = contentHeight
             isHidden = state == .hidden || state == .collapsed
-            backgroundColor = state == .focused ? .clear : .systemGray6
+            backgroundColor = state == .focused ? .clear : .appSystemGray6
             
             let isCompact = state == .compact || state == .collapsed
             standardButtonsTopConstraint?.isActive = !isCompact
@@ -183,7 +183,7 @@ final class BottomToolbar: UIView {
     
     private func configureAppearance() {
         translatesAutoresizingMaskIntoConstraints = false
-        backgroundColor = .systemGray6
+        backgroundColor = .appSystemGray6
     }
     
     private func configureHierarchy() {

@@ -114,7 +114,7 @@ final class SiteSettingsViewController: UITableViewController {
         self.host = host
         self.origin = origin
         self.session = session
-        super.init(style: .insetGrouped)
+        super.init(style: .appGrouped)
         title = "Settings for \(host)"
     }
     
@@ -210,7 +210,7 @@ final class SiteSettingsViewController: UITableViewController {
         if indexPath.row == 0 {
             let cell = UITableViewCell(style: .default, reuseIdentifier: nil)
             cell.textLabel?.text = SiteSettingsUtils.disabledPermissionMessage()
-            cell.textLabel?.textColor = .secondaryLabel
+            cell.textLabel?.textColor = .appSecondaryLabel
             cell.textLabel?.numberOfLines = 0
             cell.selectionStyle = .none
             return cell
@@ -235,9 +235,9 @@ final class SiteSettingsViewController: UITableViewController {
         let selectedIndex = selectedOptionIndex(for: row)
         cell.textLabel?.text = row.title
         if SiteSettingsUtils.isSystemDisabled(row.permission) {
-            cell.textLabel?.textColor = .secondaryLabel
+            cell.textLabel?.textColor = .appSecondaryLabel
             cell.detailTextLabel?.text = titles[selectedIndex]
-            cell.detailTextLabel?.textColor = .tertiaryLabel
+            cell.detailTextLabel?.textColor = .appTertiaryLabel
             cell.selectionStyle = .none
             cell.isUserInteractionEnabled = false
             cell.accessoryView = nil
@@ -245,7 +245,7 @@ final class SiteSettingsViewController: UITableViewController {
             return cell
         }
         
-        cell.textLabel?.textColor = .label
+        cell.textLabel?.textColor = .appLabel
         cell.selectionStyle = .default
         cell.isUserInteractionEnabled = true
         
@@ -266,7 +266,7 @@ final class SiteSettingsViewController: UITableViewController {
         cell.textLabel?.text = "Reset Permissions for this Site"
         cell.textLabel?.textColor = .systemRed
         cell.detailTextLabel?.text = nil
-        cell.detailTextLabel?.textColor = .secondaryLabel
+        cell.detailTextLabel?.textColor = .appSecondaryLabel
         cell.accessoryView = nil
         cell.accessoryType = .none
         cell.selectionStyle = .default
@@ -464,7 +464,7 @@ final class SiteSettingsViewController: UITableViewController {
     // MARK: - Helpers
     
     private func configureView() {
-        view.backgroundColor = .systemGroupedBackground
+        view.backgroundColor = .appSystemGroupedBackground
         navigationItem.largeTitleDisplayMode = .never
         navigationItem.rightBarButtonItems = [
             SiteSettingsUtils.makeDismissButton(target: self, action: #selector(dismissModal))

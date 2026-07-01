@@ -42,7 +42,7 @@ final class PageZoomActionBar: UIView {
     private let backgroundView: UIVisualEffectView = {
         let view = UIVisualEffectView(effect: UIBlurEffect(style: .systemChromeMaterial))
         view.translatesAutoresizingMaskIntoConstraints = false
-        view.contentView.backgroundColor = UIColor.systemBackground.withAlphaComponent(UX.backgroundAlpha)
+        view.contentView.backgroundColor = UIColor.appSystemBackground.withAlphaComponent(UX.backgroundAlpha)
         return view
     }()
     
@@ -50,7 +50,7 @@ final class PageZoomActionBar: UIView {
         let view = UIView()
         view.translatesAutoresizingMaskIntoConstraints = false
         view.backgroundColor = .clear
-        view.layer.cornerCurve = .continuous
+        view.layer.applyContinuousCornerCurve()
         view.layer.cornerRadius = UX.controlsCornerRadius
         view.layer.shadowOpacity = UX.shadowOpacity
         view.layer.shadowRadius = UX.shadowRadius
@@ -61,8 +61,8 @@ final class PageZoomActionBar: UIView {
     private let controlsBackground: UIVisualEffectView = {
         let view = UIVisualEffectView(effect: UIBlurEffect(style: .systemMaterial))
         view.translatesAutoresizingMaskIntoConstraints = false
-        view.contentView.backgroundColor = UIColor.systemBackground.withAlphaComponent(UX.backgroundAlpha)
-        view.layer.cornerCurve = .continuous
+        view.contentView.backgroundColor = UIColor.appSystemBackground.withAlphaComponent(UX.backgroundAlpha)
+        view.layer.applyContinuousCornerCurve()
         view.layer.cornerRadius = UX.controlsCornerRadius
         view.layer.borderWidth = UX.borderWidth
         view.clipsToBounds = true
@@ -76,7 +76,7 @@ final class PageZoomActionBar: UIView {
         let button = UIButton(type: .system)
         button.translatesAutoresizingMaskIntoConstraints = false
         button.titleLabel?.font = UIFont.systemFont(ofSize: UX.percentFontSize, weight: .regular)
-        button.setTitleColor(.secondaryLabel, for: .normal)
+        button.setTitleColor(.appSecondaryLabel, for: .normal)
         button.addTarget(self, action: #selector(resetTapped), for: .touchUpInside)
         return button
     }()
@@ -85,7 +85,7 @@ final class PageZoomActionBar: UIView {
         let view = UIView()
         view.translatesAutoresizingMaskIntoConstraints = false
         view.backgroundColor = .clear
-        view.layer.cornerCurve = .continuous
+        view.layer.applyContinuousCornerCurve()
         view.layer.cornerRadius = UX.closeButtonCornerRadius
         view.layer.shadowOpacity = UX.shadowOpacity
         view.layer.shadowRadius = UX.shadowRadius
@@ -96,8 +96,8 @@ final class PageZoomActionBar: UIView {
     private let closeBackground: UIVisualEffectView = {
         let view = UIVisualEffectView(effect: UIBlurEffect(style: .systemMaterial))
         view.translatesAutoresizingMaskIntoConstraints = false
-        view.contentView.backgroundColor = UIColor.systemBackground.withAlphaComponent(UX.backgroundAlpha)
-        view.layer.cornerCurve = .continuous
+        view.contentView.backgroundColor = UIColor.appSystemBackground.withAlphaComponent(UX.backgroundAlpha)
+        view.layer.applyContinuousCornerCurve()
         view.layer.cornerRadius = UX.closeButtonCornerRadius
         view.layer.borderWidth = UX.borderWidth
         view.clipsToBounds = true
@@ -109,7 +109,7 @@ final class PageZoomActionBar: UIView {
         button.translatesAutoresizingMaskIntoConstraints = false
         let configuration = UIImage.SymbolConfiguration(pointSize: UX.closeSymbolPointSize, weight: .regular)
         button.setImage(UIImage(named: "reynard.xmark", in: .main, with: configuration), for: .normal)
-        button.tintColor = .secondaryLabel
+        button.tintColor = .appSecondaryLabel
         button.backgroundColor = .clear
         button.addTarget(self, action: #selector(closeTapped), for: .touchUpInside)
         return button
@@ -286,7 +286,7 @@ final class PageZoomActionBar: UIView {
     }
     
     private func updateBorderColor() {
-        let color = UIColor.separator.withAlphaComponent(0.2)
+        let color = UIColor.appSeparator.withAlphaComponent(0.2)
         controlsBackground.layer.borderColor = color.cgColor
         closeBackground.layer.borderColor = color.cgColor
     }
@@ -296,7 +296,7 @@ final class PageZoomActionBar: UIView {
         button.translatesAutoresizingMaskIntoConstraints = false
         let configuration = UIImage.SymbolConfiguration(pointSize: UX.controlSymbolPointSize, weight: .regular)
         button.setImage(UIImage(named: named, in: .main, with: configuration), for: .normal)
-        button.tintColor = .label
+        button.tintColor = .appLabel
         button.addTarget(self, action: action, for: .touchUpInside)
         return button
     }
@@ -304,7 +304,7 @@ final class PageZoomActionBar: UIView {
     private static func makeSeparator() -> UIView {
         let view = UIView()
         view.translatesAutoresizingMaskIntoConstraints = false
-        view.backgroundColor = .separator
+        view.backgroundColor = .appSeparator
         return view
     }
 }

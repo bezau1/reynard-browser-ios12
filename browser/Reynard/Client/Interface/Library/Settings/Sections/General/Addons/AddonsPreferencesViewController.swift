@@ -93,7 +93,7 @@ final class AddonsPreferencesViewController: SettingsTableViewController {
     // MARK: - Lifecycle
     
     init() {
-        super.init(style: .insetGrouped)
+        super.init(style: .appGrouped)
         title = "Add-ons"
     }
     
@@ -151,7 +151,7 @@ final class AddonsPreferencesViewController: SettingsTableViewController {
                 let cell = UITableViewCell(style: .default, reuseIdentifier: nil)
                 cell.selectionStyle = .none
                 cell.textLabel?.text = isLoadingAddons ? "Loading Add-ons..." : "No Add-ons Installed"
-                cell.textLabel?.textColor = .secondaryLabel
+                cell.textLabel?.textColor = .appSecondaryLabel
                 return cell
             }
             
@@ -164,7 +164,7 @@ final class AddonsPreferencesViewController: SettingsTableViewController {
             let cell = UITableViewCell(style: statusText == nil ? .default : .subtitle, reuseIdentifier: nil)
             cell.textLabel?.text = addon.metaData.name ?? addon.id
             cell.detailTextLabel?.text = statusText
-            cell.detailTextLabel?.textColor = .secondaryLabel
+            cell.detailTextLabel?.textColor = .appSecondaryLabel
             cell.accessoryType = .disclosureIndicator
             cell.imageView?.image = Self.sharedIconCache.object(forKey: addon.id as NSString) ?? UIImage(named: "reynard.puzzlepiece.extension")
             applyAvailabilityState(to: cell, for: addon)
@@ -180,7 +180,7 @@ final class AddonsPreferencesViewController: SettingsTableViewController {
             let cell = UITableViewCell(style: .subtitle, reuseIdentifier: nil)
             cell.textLabel?.text = addon.metaData.name ?? addon.id
             cell.detailTextLabel?.text = statusText
-            cell.detailTextLabel?.textColor = .secondaryLabel
+            cell.detailTextLabel?.textColor = .appSecondaryLabel
             cell.accessoryType = .disclosureIndicator
             cell.imageView?.image = Self.sharedIconCache.object(forKey: addon.id as NSString) ?? UIImage(named: "reynard.puzzlepiece.extension")
             applyAvailabilityState(to: cell, for: addon)
@@ -197,13 +197,13 @@ final class AddonsPreferencesViewController: SettingsTableViewController {
                 cell.textLabel?.textColor = view.tintColor
             case .installFromFile:
                 cell.textLabel?.text = isInstallingAddonFromFile ? "Installing Add-on..." : "Install Add-on From File..."
-                cell.textLabel?.textColor = isInstallingAddonFromFile ? .secondaryLabel : view.tintColor
+                cell.textLabel?.textColor = isInstallingAddonFromFile ? .appSecondaryLabel : view.tintColor
                 if isInstallingAddonFromFile {
                     cell.selectionStyle = .none
                 }
             case .updateAll:
                 cell.textLabel?.text = addonUpdateActionTitle
-                cell.textLabel?.textColor = isCheckingForAddonUpdates ? .secondaryLabel : view.tintColor
+                cell.textLabel?.textColor = isCheckingForAddonUpdates ? .appSecondaryLabel : view.tintColor
                 if isCheckingForAddonUpdates {
                     cell.selectionStyle = .none
                 }
@@ -496,14 +496,14 @@ final class AddonsPreferencesViewController: SettingsTableViewController {
     
     private func applyAvailabilityState(to cell: UITableViewCell, for addon: Addon) {
         guard addon.metaData.enabled == false else {
-            cell.textLabel?.textColor = .label
-            cell.detailTextLabel?.textColor = .secondaryLabel
+            cell.textLabel?.textColor = .appLabel
+            cell.detailTextLabel?.textColor = .appSecondaryLabel
             cell.imageView?.alpha = 1
             return
         }
         
-        cell.textLabel?.textColor = .secondaryLabel
-        cell.detailTextLabel?.textColor = .tertiaryLabel
+        cell.textLabel?.textColor = .appSecondaryLabel
+        cell.detailTextLabel?.textColor = .appTertiaryLabel
         cell.imageView?.alpha = UX.disabledIconAlpha
     }
     

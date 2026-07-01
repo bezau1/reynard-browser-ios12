@@ -74,8 +74,8 @@ final class UpdateReleaseNotesCell: UITableViewCell {
         iconView.contentMode = .scaleAspectFill
         iconView.clipsToBounds = true
         iconView.layer.cornerRadius = UX.iconCornerRadius
-        iconView.layer.cornerCurve = .continuous
-        iconView.backgroundColor = .secondarySystemFill
+        iconView.layer.applyContinuousCornerCurve()
+        iconView.backgroundColor = .appSecondarySystemFill
         iconView.image = appIconImage()
         return iconView
     }
@@ -89,12 +89,12 @@ final class UpdateReleaseNotesCell: UITableViewCell {
         let versionLabel = UILabel()
         versionLabel.text = "Version \(updateInfo.version)"
         versionLabel.font = UIFont.preferredFont(forTextStyle: .footnote)
-        versionLabel.textColor = .secondaryLabel
+        versionLabel.textColor = .appSecondaryLabel
         
         let sizeLabel = UILabel()
         sizeLabel.text = updateInfo.size
         sizeLabel.font = UIFont.preferredFont(forTextStyle: .footnote)
-        sizeLabel.textColor = .secondaryLabel
+        sizeLabel.textColor = .appSecondaryLabel
         
         let infoStackView = UIStackView(arrangedSubviews: [nameLabel, versionLabel, sizeLabel])
         infoStackView.translatesAutoresizingMaskIntoConstraints = false
@@ -125,7 +125,7 @@ final class UpdateReleaseNotesCell: UITableViewCell {
         releaseNotesView.isSelectable = false
         releaseNotesView.backgroundColor = .clear
         releaseNotesView.attributedText = BrowserUpdates.shared.cachedReleaseNotes
-        releaseNotesView.textColor = .label
+        releaseNotesView.textColor = .appLabel
         releaseNotesView.textContainerInset = UIEdgeInsets(top: UX.textViewTopSpacing, left: 0, bottom: 0, right: 0)
         releaseNotesView.contentInset = UIEdgeInsets(top: 0, left: 0, bottom: UX.releaseNotesBottomInset, right: 0)
         releaseNotesView.textContainer.lineFragmentPadding = 0

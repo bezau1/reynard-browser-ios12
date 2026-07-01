@@ -32,8 +32,8 @@ final class FrequentlyVisitedSiteCardView: UIControl {
         let view = UIView()
         view.translatesAutoresizingMaskIntoConstraints = false
         view.isUserInteractionEnabled = false
-        view.backgroundColor = .systemGray6
-        view.layer.cornerCurve = .continuous
+        view.backgroundColor = .appSystemGray6
+        view.layer.applyContinuousCornerCurve()
         view.layer.cornerRadius = UX.previewCornerRadius - UX.previewImageViewPadding
         view.clipsToBounds = true
         return view
@@ -57,7 +57,7 @@ final class FrequentlyVisitedSiteCardView: UIControl {
         let label = FrequentlyVisitedCardLabel()
         label.translatesAutoresizingMaskIntoConstraints = false
         label.font = FrequentlyVisitedSiteCardView.titleFont
-        label.textColor = .label
+        label.textColor = .appLabel
         label.numberOfLines = 2
         label.adjustsFontForContentSizeCategory = true
         return label
@@ -119,7 +119,7 @@ final class FrequentlyVisitedSiteCardView: UIControl {
         layer.shadowOpacity = UX.shadowOpacity
         layer.shadowRadius = UX.shadowRadius
         layer.shadowOffset = CGSize(width: UX.shadowOffsetWidth, height: UX.shadowOffsetHeight)
-        layer.cornerCurve = .continuous
+        layer.applyContinuousCornerCurve()
         layer.cornerRadius = UX.previewCornerRadius
         updateAppearance()
     }
@@ -168,9 +168,9 @@ final class FrequentlyVisitedSiteCardView: UIControl {
     // MARK: - Appearance
     
     private func updateAppearance() {
-        backgroundColor = traitCollection.userInterfaceStyle == .dark ? .systemGray5 : .systemBackground
-        previewView.backgroundColor = .systemGray6
-        titleLabel.textColor = .label
+        backgroundColor = traitCollection.userInterfaceStyle == .dark ? .appSystemGray5 : .appSystemBackground
+        previewView.backgroundColor = .appSystemGray6
+        titleLabel.textColor = .appLabel
         layer.shadowColor = traitCollection.userInterfaceStyle == .dark
         ? UIColor.white.cgColor
         : UIColor.black.cgColor

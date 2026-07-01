@@ -153,7 +153,7 @@ final class TabBarCollection: UICollectionView, UIGestureRecognizerDelegate {
     
     private func configureAppearance() {
         translatesAutoresizingMaskIntoConstraints = false
-        backgroundColor = .systemGray6
+        backgroundColor = .appSystemGray6
         showsHorizontalScrollIndicator = false
         contentInset = .zero
         contentInsetAdjustmentBehavior = .never

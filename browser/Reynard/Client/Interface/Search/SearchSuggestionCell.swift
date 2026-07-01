@@ -22,7 +22,7 @@ final class SearchSuggestionCell: UITableViewCell {
         imageView.translatesAutoresizingMaskIntoConstraints = false
         imageView.contentMode = .scaleAspectFit
         imageView.image = UIImage(named: "reynard.magnifyingglass")
-        imageView.tintColor = .label
+        imageView.tintColor = .appLabel
         return imageView
     }()
     
@@ -30,7 +30,7 @@ final class SearchSuggestionCell: UITableViewCell {
         let label = UILabel()
         label.translatesAutoresizingMaskIntoConstraints = false
         label.font = .preferredFont(forTextStyle: .body)
-        label.textColor = .label
+        label.textColor = .appLabel
         label.adjustsFontForContentSizeCategory = true
         label.numberOfLines = 2
         label.lineBreakMode = .byTruncatingTail
@@ -42,7 +42,7 @@ final class SearchSuggestionCell: UITableViewCell {
         imageView.translatesAutoresizingMaskIntoConstraints = false
         imageView.contentMode = .scaleAspectFit
         imageView.image = UIImage(named: "reynard.arrow.down.left.circle")
-        imageView.tintColor = .tertiaryLabel
+        imageView.tintColor = .appTertiaryLabel
         return imageView
     }()
     
@@ -75,7 +75,7 @@ final class SearchSuggestionCell: UITableViewCell {
     }
     
     func setFilledBackgroundVisible(_ visible: Bool) {
-        contentView.backgroundColor = visible ? .secondarySystemBackground : .clear
+        contentView.backgroundColor = visible ? .appSecondarySystemBackground : .clear
     }
     
     func setTrailingIconVisible(_ visible: Bool) {
@@ -126,7 +126,7 @@ final class SearchSuggestionCell: UITableViewCell {
         guard !normalizedQuery.isEmpty else {
             return NSAttributedString(
                 string: suggestion,
-                attributes: [.foregroundColor: UIColor.secondaryLabel]
+                attributes: [.foregroundColor: UIColor.appSecondaryLabel]
             )
         }
         
@@ -139,7 +139,7 @@ final class SearchSuggestionCell: UITableViewCell {
             let sharedPrefix = String(suggestion.prefix(sharedLength))
             attributed.append(NSAttributedString(
                 string: sharedPrefix,
-                attributes: [.foregroundColor: UIColor.label]
+                attributes: [.foregroundColor: UIColor.appLabel]
             ))
         }
         
@@ -147,14 +147,14 @@ final class SearchSuggestionCell: UITableViewCell {
         if !suffix.isEmpty {
             attributed.append(NSAttributedString(
                 string: suffix,
-                attributes: [.foregroundColor: UIColor.secondaryLabel]
+                attributes: [.foregroundColor: UIColor.appSecondaryLabel]
             ))
         }
         
         if attributed.length == 0 {
             return NSAttributedString(
                 string: suggestion,
-                attributes: [.foregroundColor: UIColor.secondaryLabel]
+                attributes: [.foregroundColor: UIColor.appSecondaryLabel]
             )
         }
         

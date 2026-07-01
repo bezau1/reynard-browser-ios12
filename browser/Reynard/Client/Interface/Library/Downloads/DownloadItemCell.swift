@@ -34,7 +34,7 @@ final class DownloadItemCell: UITableViewCell {
         let view = UIImageView()
         view.translatesAutoresizingMaskIntoConstraints = false
         view.contentMode = .scaleAspectFit
-        view.tintColor = .label
+        view.tintColor = .appLabel
         return view
     }()
     
@@ -42,7 +42,7 @@ final class DownloadItemCell: UITableViewCell {
         let label = UILabel()
         label.translatesAutoresizingMaskIntoConstraints = false
         label.font = .preferredFont(forTextStyle: .body)
-        label.textColor = .label
+        label.textColor = .appLabel
         label.numberOfLines = 1
         return label
     }()
@@ -51,7 +51,7 @@ final class DownloadItemCell: UITableViewCell {
         let label = UILabel()
         label.translatesAutoresizingMaskIntoConstraints = false
         label.font = .preferredFont(forTextStyle: .subheadline)
-        label.textColor = .secondaryLabel
+        label.textColor = .appSecondaryLabel
         label.numberOfLines = 2
         return label
     }()
@@ -59,8 +59,8 @@ final class DownloadItemCell: UITableViewCell {
     private let progressView: UIProgressView = {
         let view = UIProgressView(progressViewStyle: .default)
         view.translatesAutoresizingMaskIntoConstraints = false
-        view.trackTintColor = .tertiarySystemFill
-        view.progressTintColor = .label
+        view.trackTintColor = .appTertiarySystemFill
+        view.progressTintColor = .appLabel
         view.isHidden = true
         return view
     }()
@@ -117,11 +117,11 @@ final class DownloadItemCell: UITableViewCell {
         representedDownloadID = nil
         lastStatusUpdateTime = 0
         contentView.alpha = 1
-        fileNameLabel.textColor = .label
-        statusLabel.textColor = .secondaryLabel
+        fileNameLabel.textColor = .appLabel
+        statusLabel.textColor = .appSecondaryLabel
         fileIconView.image = nil
         fileIconView.transform = .identity
-        fileIconView.tintColor = .label
+        fileIconView.tintColor = .appLabel
     }
     
     // MARK: - Configuration
@@ -130,8 +130,8 @@ final class DownloadItemCell: UITableViewCell {
         fileNameLabel.text = item.fileName
         let isDeleted = item.state == .completed && !item.fileExists
         contentView.alpha = isDeleted ? 0.45 : 1
-        fileNameLabel.textColor = isDeleted ? .secondaryLabel : .label
-        statusLabel.textColor = .secondaryLabel
+        fileNameLabel.textColor = isDeleted ? .appSecondaryLabel : .appLabel
+        statusLabel.textColor = .appSecondaryLabel
         
         switch item.state {
         case .downloading:
@@ -169,7 +169,7 @@ final class DownloadItemCell: UITableViewCell {
             let placeholderIcon = Self.iconProvider.genericPlaceholderIcon()
             fileIconView.image = placeholderIcon
             fileIconView.transform = .identity
-            fileIconView.tintColor = placeholderIcon == nil ? .label : nil
+            fileIconView.tintColor = placeholderIcon == nil ? .appLabel : nil
             
         case .completed:
             representedDownloadID = item.id

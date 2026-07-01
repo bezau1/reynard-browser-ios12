@@ -181,10 +181,10 @@ final class AddressBarGestures: NSObject {
     private func createAddressBarPreview(for tab: Tab) -> UIView {
         let container = UIView()
         container.backgroundColor = UIColor { traitCollection in
-            traitCollection.userInterfaceStyle == .dark ? .tertiarySystemBackground : .systemBackground
+            traitCollection.userInterfaceStyle == .dark ? .appTertiarySystemBackground : .appSystemBackground
         }
         container.layer.cornerRadius = UX.addressBarPreviewCornerRadius
-        container.layer.cornerCurve = .continuous
+        container.layer.applyContinuousCornerCurve()
         container.layer.shadowColor = UIColor.black.cgColor
         container.layer.shadowOpacity = UX.addressBarPreviewShadowOpacity
         container.layer.shadowRadius = UX.addressBarPreviewShadowRadius
@@ -193,7 +193,7 @@ final class AddressBarGestures: NSObject {
         
         let leadingButton = AddressBarButton(type: .system)
         leadingButton.translatesAutoresizingMaskIntoConstraints = false
-        leadingButton.tintColor = tab.url != nil ? .label : .secondaryLabel
+        leadingButton.tintColor = tab.url != nil ? .appLabel : .appSecondaryLabel
         if #available(iOS 14.0, *) {
             leadingButton.showsMenuAsPrimaryAction = true
         }
@@ -202,7 +202,7 @@ final class AddressBarGestures: NSObject {
         
         let trailingButton = AddressBarButton(type: .system)
         trailingButton.translatesAutoresizingMaskIntoConstraints = false
-        trailingButton.tintColor = .label
+        trailingButton.tintColor = .appLabel
         trailingButton.isUserInteractionEnabled = false
         trailingButton.setImage(UIImage(named: tab.state.loadingState.isLoading ? "reynard.xmark" : "reynard.arrow.clockwise"), for: .normal)
         trailingButton.isHidden = !tab.state.loadingState.isLoading && tab.url == nil
@@ -211,7 +211,7 @@ final class AddressBarGestures: NSObject {
         label.translatesAutoresizingMaskIntoConstraints = false
         label.font = .systemFont(ofSize: UX.addressBarPreviewFontSize, weight: .regular)
         label.textAlignment = .left
-        label.textColor = .label
+        label.textColor = .appLabel
         label.numberOfLines = 1
         label.lineBreakMode = .byTruncatingTail
         label.attributedText = previewText(for: tab)
@@ -250,25 +250,25 @@ final class AddressBarGestures: NSObject {
               !host.isEmpty else {
             return NSAttributedString(
                 string: urlText,
-                attributes: [.foregroundColor: UIColor.label]
+                attributes: [.foregroundColor: UIColor.appLabel]
             )
         }
         
         let attributedText = NSMutableAttributedString(
             string: host,
-            attributes: [.foregroundColor: UIColor.label]
+            attributes: [.foregroundColor: UIColor.appLabel]
         )
         attributedText.append(
             NSAttributedString(
                 string: " / ",
-                attributes: [.foregroundColor: UIColor.secondaryLabel]
+                attributes: [.foregroundColor: UIColor.appSecondaryLabel]
             )
         )
         if !trimmedTitle.isEmpty {
             attributedText.append(
                 NSAttributedString(
                     string: trimmedTitle,
-                    attributes: [.foregroundColor: UIColor.secondaryLabel]
+                    attributes: [.foregroundColor: UIColor.appSecondaryLabel]
                 )
             )
         }
@@ -277,14 +277,14 @@ final class AddressBarGestures: NSObject {
     
     private func placeholderPreviewText() -> NSAttributedString {
         NSAttributedString(
-            string: AddressBar.placeholderText,
-            attributes: [.foregroundColor: UIColor.placeholderText]
+            string: AddressBar.appPlaceholderText,
+            attributes: [.foregroundColor: UIColor.appPlaceholderText]
         )
     }
     
     private func createContentPreview(for tab: Tab) -> UIView {
         let preview = UIView()
-        preview.backgroundColor = .systemBackground
+        preview.backgroundColor = .appSystemBackground
         
         if let image = tab.thumbnail {
             let imageView = UIImageView(image: image)

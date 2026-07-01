@@ -48,7 +48,7 @@ final class TabBarCell: UICollectionViewCell {
         let imageView = UIImageView()
         imageView.translatesAutoresizingMaskIntoConstraints = false
         imageView.contentMode = .scaleAspectFit
-        imageView.tintColor = .secondaryLabel
+        imageView.tintColor = .appSecondaryLabel
         imageView.clipsToBounds = true
         return imageView
     }()
@@ -57,7 +57,7 @@ final class TabBarCell: UICollectionViewCell {
         let label = UILabel()
         label.translatesAutoresizingMaskIntoConstraints = false
         label.font = UIFont.systemFont(ofSize: UX.tabTitleFontSize, weight: .semibold)
-        label.textColor = .secondaryLabel
+        label.textColor = .appSecondaryLabel
         label.numberOfLines = 1
         label.textAlignment = .center
         return label
@@ -71,7 +71,7 @@ final class TabBarCell: UICollectionViewCell {
             UIImage.SymbolConfiguration(pointSize: UX.tabCloseButtonSymbolPointSize, weight: .regular),
             forImageIn: .normal
         )
-        button.tintColor = .secondaryLabel
+        button.tintColor = .appSecondaryLabel
         button.isHidden = true
         return button
     }()
@@ -79,7 +79,7 @@ final class TabBarCell: UICollectionViewCell {
     private let trailingSeparator: UIView = {
         let view = UIView()
         view.translatesAutoresizingMaskIntoConstraints = false
-        view.backgroundColor = .separator
+        view.backgroundColor = .appSeparator
         return view
     }()
     
@@ -133,9 +133,9 @@ final class TabBarCell: UICollectionViewCell {
         let displayTitle = tab.title.isEmpty ? "Homepage" : tab.title
         titleLabel.text = displayTitle
         faviconView.image = tab.favicon ?? Self.fallbackFavicon
-        contentView.backgroundColor = isSelected ? .systemGray6 : .systemGray5
-        titleLabel.textColor = isSelected ? .label : .secondaryLabel
-        faviconView.tintColor = isSelected ? .label : .secondaryLabel
+        contentView.backgroundColor = isSelected ? .appSystemGray6 : .appSystemGray5
+        titleLabel.textColor = isSelected ? .appLabel : .appSecondaryLabel
+        faviconView.tintColor = isSelected ? .appLabel : .appSecondaryLabel
         let minimumVisibleTitle = Self.minimumVisibleTabTitle as NSString
         let minimumTitleWidth = minimumVisibleTitle.size(withAttributes: [.font: titleLabel.font as Any]).width
         let availableTitleWidth = cellWidth - UX.expandedTabTitleWidthInset

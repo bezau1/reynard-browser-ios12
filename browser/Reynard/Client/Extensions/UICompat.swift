@@ -1,0 +1,102 @@
+//
+//  UICompat.swift
+//  Reynard
+//
+//  iOS 12 compatibility shims for UIKit APIs introduced in iOS 13+.
+//  Each accessor returns the native semantic value on iOS 13 and later,
+//  and a fixed light-appearance fallback on iOS 12 (which has no dark mode).
+//
+
+import UIKit
+
+extension UIColor {
+    static var appLabel: UIColor {
+        if #available(iOS 13.0, *) { return .label }
+        return .black
+    }
+    static var appSecondaryLabel: UIColor {
+        if #available(iOS 13.0, *) { return .secondaryLabel }
+        return UIColor(white: 0.24, alpha: 0.6)
+    }
+    static var appTertiaryLabel: UIColor {
+        if #available(iOS 13.0, *) { return .tertiaryLabel }
+        return UIColor(white: 0.24, alpha: 0.3)
+    }
+    static var appSystemBackground: UIColor {
+        if #available(iOS 13.0, *) { return .systemBackground }
+        return .white
+    }
+    static var appSecondarySystemBackground: UIColor {
+        if #available(iOS 13.0, *) { return .secondarySystemBackground }
+        return UIColor(white: 0.95, alpha: 1)
+    }
+    static var appTertiarySystemBackground: UIColor {
+        if #available(iOS 13.0, *) { return .tertiarySystemBackground }
+        return .white
+    }
+    static var appSystemGroupedBackground: UIColor {
+        if #available(iOS 13.0, *) { return .systemGroupedBackground }
+        return UIColor(red: 0.95, green: 0.95, blue: 0.97, alpha: 1)
+    }
+    static var appSecondarySystemGroupedBackground: UIColor {
+        if #available(iOS 13.0, *) { return .secondarySystemGroupedBackground }
+        return .white
+    }
+    static var appSystemFill: UIColor {
+        if #available(iOS 13.0, *) { return .systemFill }
+        return UIColor(white: 0.47, alpha: 0.2)
+    }
+    static var appSecondarySystemFill: UIColor {
+        if #available(iOS 13.0, *) { return .secondarySystemFill }
+        return UIColor(white: 0.47, alpha: 0.16)
+    }
+    static var appTertiarySystemFill: UIColor {
+        if #available(iOS 13.0, *) { return .tertiarySystemFill }
+        return UIColor(white: 0.46, alpha: 0.12)
+    }
+    static var appQuaternarySystemFill: UIColor {
+        if #available(iOS 13.0, *) { return .quaternarySystemFill }
+        return UIColor(white: 0.45, alpha: 0.08)
+    }
+    static var appSeparator: UIColor {
+        if #available(iOS 13.0, *) { return .separator }
+        return UIColor(white: 0.24, alpha: 0.29)
+    }
+    static var appLink: UIColor {
+        if #available(iOS 13.0, *) { return .link }
+        return UIColor(red: 0, green: 0.478, blue: 1, alpha: 1)
+    }
+    static var appPlaceholderText: UIColor {
+        if #available(iOS 13.0, *) { return .placeholderText }
+        return UIColor(white: 0.24, alpha: 0.3)
+    }
+    static var appSystemGray4: UIColor {
+        if #available(iOS 13.0, *) { return .systemGray4 }
+        return UIColor(red: 0.82, green: 0.82, blue: 0.84, alpha: 1)
+    }
+    static var appSystemGray5: UIColor {
+        if #available(iOS 13.0, *) { return .systemGray5 }
+        return UIColor(red: 0.90, green: 0.90, blue: 0.92, alpha: 1)
+    }
+    static var appSystemGray6: UIColor {
+        if #available(iOS 13.0, *) { return .systemGray6 }
+        return UIColor(red: 0.95, green: 0.95, blue: 0.97, alpha: 1)
+    }
+}
+
+extension UITableView.Style {
+    /// `.insetGrouped` on iOS 13+, falling back to `.grouped` on iOS 12.
+    static var appGrouped: UITableView.Style {
+        if #available(iOS 13.0, *) { return .insetGrouped }
+        return .grouped
+    }
+}
+
+extension CALayer {
+    /// Applies the continuous (squircle) corner curve on iOS 13+; no-op on iOS 12.
+    func applyContinuousCornerCurve() {
+        if #available(iOS 13.0, *) {
+            cornerCurve = .continuous
+        }
+    }
+}

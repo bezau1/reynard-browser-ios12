@@ -23,7 +23,7 @@ final class ClearHistoryViewController: UITableViewController {
     init(tabCount: Int, onClear: @escaping (Date?, Bool) -> Void) {
         self.tabCount = tabCount
         self.onClear = onClear
-        super.init(style: .insetGrouped)
+        super.init(style: .appGrouped)
         title = "Clear History"
     }
     
@@ -34,7 +34,7 @@ final class ClearHistoryViewController: UITableViewController {
     override func viewDidLoad() {
         super.viewDidLoad()
         
-        view.backgroundColor = .systemGroupedBackground
+        view.backgroundColor = .appSystemGroupedBackground
         navigationItem.largeTitleDisplayMode = .never
         navigationItem.rightBarButtonItem = LibraryActionButton.makeSheetCloseButton(target: self, action: #selector(dismissSheet))
         tableView.tableFooterView = clearFooterView

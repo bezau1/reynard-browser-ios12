@@ -48,7 +48,7 @@ final class SidebarViewController: UISplitViewController, UISplitViewControllerD
     
     private lazy var menuNavigationController: UINavigationController = {
         let navigationController = UINavigationController(rootViewController: menuController)
-        navigationController.navigationBar.tintColor = .label
+        navigationController.navigationBar.tintColor = .appLabel
         return navigationController
     }()
     

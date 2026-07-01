@@ -69,7 +69,7 @@ struct AboutSettingsSection {
         let cell = UITableViewCell(style: .value1, reuseIdentifier: nil)
         cell.textLabel?.text = title
         cell.detailTextLabel?.text = value
-        cell.detailTextLabel?.textColor = .secondaryLabel
+        cell.detailTextLabel?.textColor = .appSecondaryLabel
         cell.selectionStyle = .none
         cell.accessoryType = .none
         return cell

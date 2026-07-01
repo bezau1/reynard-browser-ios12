@@ -18,9 +18,9 @@ final class NewBookmarkFolderViewController: UIViewController, UITableViewDataSo
     private var selectedFolderID: String?
     
     private lazy var tableView: UITableView = {
-        let tableView = UITableView(frame: .zero, style: .insetGrouped)
+        let tableView = UITableView(frame: .zero, style: .appGrouped)
         tableView.translatesAutoresizingMaskIntoConstraints = false
-        tableView.backgroundColor = .systemGroupedBackground
+        tableView.backgroundColor = .appSystemGroupedBackground
         tableView.dataSource = self
         tableView.delegate = self
         tableView.separatorStyle = .singleLine
@@ -60,14 +60,14 @@ final class NewBookmarkFolderViewController: UIViewController, UITableViewDataSo
         super.viewDidLoad()
         
         title = "New Folder"
-        view.backgroundColor = .systemGroupedBackground
+        view.backgroundColor = .appSystemGroupedBackground
         navigationItem.largeTitleDisplayMode = .never
         
         if #available(iOS 26.0, *) {
             navigationItem.leftBarButtonItem = UIBarButtonItem(barButtonSystemItem: .cancel, target: self, action: #selector(cancel))
-            navigationItem.leftBarButtonItem?.tintColor = .label
+            navigationItem.leftBarButtonItem?.tintColor = .appLabel
             navigationItem.rightBarButtonItem = UIBarButtonItem(barButtonSystemItem: .done, target: self, action: #selector(createFolder))
-            navigationItem.rightBarButtonItem?.tintColor = .label
+            navigationItem.rightBarButtonItem?.tintColor = .appLabel
         } else {
             navigationItem.rightBarButtonItem = UIBarButtonItem(title: "Save", style: .done, target: self, action: #selector(createFolder))
         }
@@ -107,7 +107,7 @@ final class NewBookmarkFolderViewController: UIViewController, UITableViewDataSo
         if indexPath.section == 0 {
             let cell = UITableViewCell(style: .default, reuseIdentifier: nil)
             cell.selectionStyle = .none
-            cell.backgroundColor = .secondarySystemGroupedBackground
+            cell.backgroundColor = .appSecondarySystemGroupedBackground
             cell.contentView.addSubview(titleField)
             
             NSLayoutConstraint.activate([

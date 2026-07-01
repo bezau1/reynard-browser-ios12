@@ -33,11 +33,11 @@ final class PrivateBrowsingSectionViewController: UIViewController {
     private let cardView: UIView = {
         let view = UIView()
         view.translatesAutoresizingMaskIntoConstraints = false
-        view.layer.cornerCurve = .continuous
+        view.layer.applyContinuousCornerCurve()
         view.layer.cornerRadius = UX.cornerRadius
         view.clipsToBounds = true
         view.backgroundColor = UIColor { traitCollection in
-            traitCollection.userInterfaceStyle == .dark ? .systemGray6 : UIColor.black.withAlphaComponent(0.7)
+            traitCollection.userInterfaceStyle == .dark ? .appSystemGray6 : UIColor.black.withAlphaComponent(0.7)
         }
         return view
     }()

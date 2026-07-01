@@ -103,10 +103,10 @@ final class PerformanceRecommendationViewController: UIViewController, HomepageR
     private let cardView: UIView = {
         let view = UIView()
         view.translatesAutoresizingMaskIntoConstraints = false
-        view.layer.cornerCurve = .continuous
+        view.layer.applyContinuousCornerCurve()
         view.layer.cornerRadius = UX.cornerRadius
         view.clipsToBounds = true
-        view.backgroundColor = .systemGray6
+        view.backgroundColor = .appSystemGray6
         return view
     }()
     
@@ -127,7 +127,7 @@ final class PerformanceRecommendationViewController: UIViewController, HomepageR
         )
         label.text = "Performance Recommendation"
         label.textAlignment = .left
-        label.textColor = .label
+        label.textColor = .appLabel
         label.numberOfLines = 0
         label.adjustsFontForContentSizeCategory = true
         return label
@@ -138,7 +138,7 @@ final class PerformanceRecommendationViewController: UIViewController, HomepageR
         label.font = .preferredFont(forTextStyle: .body)
         label.text = "Enable JIT to improve performance and ensure websites work properly."
         label.textAlignment = .left
-        label.textColor = .secondaryLabel
+        label.textColor = .appSecondaryLabel
         label.numberOfLines = 0
         label.adjustsFontForContentSizeCategory = true
         return label
@@ -268,7 +268,7 @@ final class PerformanceRecommendationViewController: UIViewController, HomepageR
         let button = UIButton(type: .system)
         button.setTitle(title, for: .normal)
         button.setImage(UIImage(named: imageName, in: .main, with: configuration), for: .normal)
-        button.tintColor = .label
+        button.tintColor = .appLabel
         button.titleLabel?.font = .preferredFont(forTextStyle: .body)
         button.titleLabel?.adjustsFontForContentSizeCategory = true
         button.contentHorizontalAlignment = .leading

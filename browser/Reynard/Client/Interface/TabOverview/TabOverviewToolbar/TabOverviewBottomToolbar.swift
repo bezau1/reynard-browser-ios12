@@ -102,9 +102,9 @@ final class TabOverviewBottomToolbar: UIView {
         let clearTabsItem = UIBarButtonItem(barButtonSystemItem: .trash, target: self, action: #selector(clearTabsButtonTapped))
         let addTabItem = UIBarButtonItem(barButtonSystemItem: .add, target: self, action: #selector(addTabButtonTapped))
         let doneItem = UIBarButtonItem(barButtonSystemItem: .done, target: self, action: #selector(doneTapped))
-        clearTabsItem.tintColor = .label
-        addTabItem.tintColor = .label
-        doneItem.tintColor = .label
+        clearTabsItem.tintColor = .appLabel
+        addTabItem.tintColor = .appLabel
+        doneItem.tintColor = .appLabel
         toolbar.items = [
             clearTabsItem,
             UIBarButtonItem(barButtonSystemItem: .flexibleSpace, target: nil, action: nil),

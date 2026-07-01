@@ -30,7 +30,7 @@ final class UserAgentOverridesPreferencesViewController: SettingsTableViewContro
     }
     
     init() {
-        super.init(style: .insetGrouped)
+        super.init(style: .appGrouped)
         title = "User Agent Overrides"
     }
     

@@ -16,8 +16,8 @@ final class FrequentlyVisitedIconView: UIView {
         let view = UIImageView()
         view.translatesAutoresizingMaskIntoConstraints = false
         view.contentMode = .scaleAspectFit
-        view.tintColor = .secondaryLabel
-        view.layer.cornerCurve = .continuous
+        view.tintColor = .appSecondaryLabel
+        view.layer.applyContinuousCornerCurve()
         view.layer.cornerRadius = UX.iconCornerRadius
         view.clipsToBounds = true
         return view

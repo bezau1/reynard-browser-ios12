@@ -43,7 +43,7 @@ final class BrowsingPreferencesViewController: SettingsTableViewController {
     private let requestDesktopWebsiteSwitch = UISwitch()
     
     init() {
-        super.init(style: .insetGrouped)
+        super.init(style: .appGrouped)
         title = "Browsing"
     }
     
@@ -103,7 +103,7 @@ final class BrowsingPreferencesViewController: SettingsTableViewController {
             cell.selectionStyle = .none
             cell.textLabel?.text = "Show Link Previews"
             cell.detailTextLabel?.text = "When long-pressing links"
-            cell.detailTextLabel?.textColor = .secondaryLabel
+            cell.detailTextLabel?.textColor = .appSecondaryLabel
             cell.accessoryView = showLinkPreviewsSwitch
             return cell
         case .media:
@@ -125,7 +125,7 @@ final class BrowsingPreferencesViewController: SettingsTableViewController {
                 cell.selectionStyle = .none
                 cell.textLabel?.text = "Show Image Previews"
                 cell.detailTextLabel?.text = "When long-pressing images"
-                cell.detailTextLabel?.textColor = .secondaryLabel
+                cell.detailTextLabel?.textColor = .appSecondaryLabel
                 cell.accessoryView = showImagePreviewsSwitch
                 return cell
             }

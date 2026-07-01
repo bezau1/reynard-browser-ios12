@@ -51,7 +51,7 @@ final class SitePermissionDetailsViewController: SettingsTableViewController {
     
     init(permission: SitePermission, title: String) {
         self.permission = permission
-        super.init(style: .insetGrouped)
+        super.init(style: .appGrouped)
         configureViewController(title: title)
     }
     
@@ -231,7 +231,7 @@ final class SitePermissionDetailsViewController: SettingsTableViewController {
     private func emptySiteEntryCell() -> UITableViewCell {
         let cell = UITableViewCell(style: .subtitle, reuseIdentifier: nil)
         cell.textLabel?.text = "No Sites Added"
-        cell.textLabel?.textColor = .secondaryLabel
+        cell.textLabel?.textColor = .appSecondaryLabel
         cell.selectionStyle = .none
         return cell
     }
@@ -240,8 +240,8 @@ final class SitePermissionDetailsViewController: SettingsTableViewController {
         let cell = UITableViewCell(style: .subtitle, reuseIdentifier: nil)
         cell.textLabel?.text = host
         cell.detailTextLabel?.text = subtitle
-        cell.textLabel?.textColor = .label
-        cell.detailTextLabel?.textColor = .secondaryLabel
+        cell.textLabel?.textColor = .appLabel
+        cell.detailTextLabel?.textColor = .appSecondaryLabel
         cell.selectionStyle = .default
         return cell
     }

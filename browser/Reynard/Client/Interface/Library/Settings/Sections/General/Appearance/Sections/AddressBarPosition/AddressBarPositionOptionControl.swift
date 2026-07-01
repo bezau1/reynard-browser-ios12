@@ -44,9 +44,9 @@ final class AddressBarPositionOptionControl: UIControl {
     
     func displaySelection(selected: Bool) {
         let accent = tintColor ?? .systemBlue
-        let secondary = UIColor.secondaryLabel
+        let secondary = UIColor.appSecondaryLabel
         previewImageView.tintColor = selected ? accent : secondary
-        nameLabel.textColor = .label
+        nameLabel.textColor = .appLabel
         let radioConfig = UIImage.SymbolConfiguration(pointSize: UX.indicatorSymbolSize, weight: .regular)
         selectionIndicatorView.image = UIImage(
             named: selected ? "reynard.checkmark.circle.fill" : "reynard.circle", in: .main,

@@ -51,7 +51,7 @@ final class FavoriteSiteCollectionViewCell: UICollectionViewCell {
         let view = UIView()
         view.translatesAutoresizingMaskIntoConstraints = false
         view.backgroundColor = .white
-        view.layer.cornerCurve = .continuous
+        view.layer.applyContinuousCornerCurve()
         view.layer.cornerRadius = UX.iconCornerRadius
         view.clipsToBounds = true
         return view
@@ -68,7 +68,7 @@ final class FavoriteSiteCollectionViewCell: UICollectionViewCell {
         label.translatesAutoresizingMaskIntoConstraints = false
         label.font = FavoriteSiteCollectionViewCell.titleFont
         label.textAlignment = .center
-        label.textColor = .label
+        label.textColor = .appLabel
         label.numberOfLines = 2
         label.adjustsFontForContentSizeCategory = true
         return label

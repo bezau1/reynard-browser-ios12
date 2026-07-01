@@ -15,22 +15,22 @@ enum LibraryTabBarStyle {
     static func apply(to tabBar: UITabBar) {
         let appearance = UITabBarAppearance()
         appearance.configureWithOpaqueBackground()
-        appearance.backgroundColor = .systemBackground
+        appearance.backgroundColor = .appSystemBackground
         
         let titleAttributes: [NSAttributedString.Key: Any] = [.font: UIFont.systemFont(ofSize: UX.itemTitleFontSize, weight: .regular)]
         
         [appearance.stackedLayoutAppearance, appearance.inlineLayoutAppearance, appearance.compactInlineLayoutAppearance].forEach { itemAppearance in
-            itemAppearance.normal.iconColor = .secondaryLabel
-            itemAppearance.normal.titleTextAttributes = titleAttributes.merging([.foregroundColor: UIColor.secondaryLabel]) { _, new in new }
-            itemAppearance.selected.iconColor = .label
-            itemAppearance.selected.titleTextAttributes = titleAttributes.merging([.foregroundColor: UIColor.label]) { _, new in new }
+            itemAppearance.normal.iconColor = .appSecondaryLabel
+            itemAppearance.normal.titleTextAttributes = titleAttributes.merging([.foregroundColor: UIColor.appSecondaryLabel]) { _, new in new }
+            itemAppearance.selected.iconColor = .appLabel
+            itemAppearance.selected.titleTextAttributes = titleAttributes.merging([.foregroundColor: UIColor.appLabel]) { _, new in new }
         }
         
         tabBar.standardAppearance = appearance
         if #available(iOS 15.0, *) {
             tabBar.scrollEdgeAppearance = appearance
         }
-        tabBar.tintColor = .label
-        tabBar.unselectedItemTintColor = .secondaryLabel
+        tabBar.tintColor = .appLabel
+        tabBar.unselectedItemTintColor = .appSecondaryLabel
     }
 }

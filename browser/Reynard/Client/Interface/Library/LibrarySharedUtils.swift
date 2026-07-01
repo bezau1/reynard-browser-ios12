@@ -18,12 +18,12 @@ enum LibrarySharedUtils {
     
     static func makeGroupedSectionHeader(title: String) -> UIView {
         let container = UIView()
-        container.backgroundColor = .systemGroupedBackground
+        container.backgroundColor = .appSystemGroupedBackground
         
         let label = UILabel()
         label.translatesAutoresizingMaskIntoConstraints = false
         label.font = .systemFont(ofSize: UX.groupedSectionHeaderFontSize, weight: .semibold)
-        label.textColor = .secondaryLabel
+        label.textColor = .appSecondaryLabel
         label.text = title
         
         container.addSubview(label)

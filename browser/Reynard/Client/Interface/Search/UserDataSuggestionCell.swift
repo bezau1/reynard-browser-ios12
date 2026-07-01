@@ -25,7 +25,7 @@ final class UserDataSuggestionCell: UITableViewCell {
         let imageView = UIImageView()
         imageView.translatesAutoresizingMaskIntoConstraints = false
         imageView.contentMode = .scaleAspectFit
-        imageView.tintColor = .label
+        imageView.tintColor = .appLabel
         imageView.image = UIImage(named: "reynard.globe")
         return imageView
     }()
@@ -34,7 +34,7 @@ final class UserDataSuggestionCell: UITableViewCell {
         let label = UILabel()
         label.translatesAutoresizingMaskIntoConstraints = false
         label.font = .systemFont(ofSize: UIFont.preferredFont(forTextStyle: .body).pointSize, weight: .medium)
-        label.textColor = .label
+        label.textColor = .appLabel
         label.numberOfLines = 1
         label.lineBreakMode = .byTruncatingTail
         label.adjustsFontForContentSizeCategory = true
@@ -45,7 +45,7 @@ final class UserDataSuggestionCell: UITableViewCell {
         let label = UILabel()
         label.translatesAutoresizingMaskIntoConstraints = false
         label.font = .preferredFont(forTextStyle: .caption1)
-        label.textColor = .secondaryLabel
+        label.textColor = .appSecondaryLabel
         label.numberOfLines = 1
         label.lineBreakMode = .byTruncatingTail
         label.adjustsFontForContentSizeCategory = true
@@ -85,7 +85,7 @@ final class UserDataSuggestionCell: UITableViewCell {
         titleLabel.text = nil
         subtitleLabel.text = nil
         sourceIconView.image = UIImage(named: "reynard.globe")
-        sourceIconView.tintColor = .label
+        sourceIconView.tintColor = .appLabel
         setFilledBackgroundVisible(false)
     }
     
@@ -109,7 +109,7 @@ final class UserDataSuggestionCell: UITableViewCell {
             sourceIconView.image = UIImage(named: "reynard.square.on.square")
         }
         
-        sourceIconView.tintColor = .label
+        sourceIconView.tintColor = .appLabel
         guard showsFavicon else {
             return
         }
@@ -118,7 +118,7 @@ final class UserDataSuggestionCell: UITableViewCell {
     }
     
     func setFilledBackgroundVisible(_ visible: Bool) {
-        contentView.backgroundColor = visible ? .secondarySystemBackground : .clear
+        contentView.backgroundColor = visible ? .appSecondarySystemBackground : .clear
     }
     
     private func configureAppearance() {
@@ -126,7 +126,7 @@ final class UserDataSuggestionCell: UITableViewCell {
         clipsToBounds = true
         contentView.clipsToBounds = true
         backgroundColor = .clear
-        contentView.backgroundColor = .secondarySystemBackground
+        contentView.backgroundColor = .appSecondarySystemBackground
     }
     
     private func configureHierarchy() {
@@ -170,7 +170,7 @@ final class UserDataSuggestionCell: UITableViewCell {
         }
         
         sourceIconView.image = UIImage(named: "reynard.globe")
-        sourceIconView.tintColor = .label
+        sourceIconView.tintColor = .appLabel
 
         let token = UUID()
         faviconLoadToken = token
@@ -180,7 +180,7 @@ final class UserDataSuggestionCell: UITableViewCell {
             guard self.faviconLoadToken == token else { return }
             guard self.representedURL == url else { return }
             self.sourceIconView.image = image ?? UIImage(named: "reynard.globe")
-            self.sourceIconView.tintColor = image == nil ? .label : nil
+            self.sourceIconView.tintColor = image == nil ? .appLabel : nil
         }
     }
 }

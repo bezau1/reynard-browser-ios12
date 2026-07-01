@@ -17,7 +17,7 @@ final class SitePermissionOptionsViewController: UITableViewController {
         self.optionTitles = options
         self.selectedIndex = selectedIndex
         self.onSelect = onSelect
-        super.init(style: .insetGrouped)
+        super.init(style: .appGrouped)
         self.title = title
     }
     
@@ -70,7 +70,7 @@ final class SitePermissionOptionsViewController: UITableViewController {
     }
     
     private func configureView() {
-        view.backgroundColor = .systemGroupedBackground
+        view.backgroundColor = .appSystemGroupedBackground
         navigationItem.largeTitleDisplayMode = .never
         navigationItem.rightBarButtonItems = [
             SiteSettingsUtils.makeDismissButton(target: self, action: #selector(dismissModal))

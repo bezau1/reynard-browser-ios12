@@ -254,7 +254,7 @@ final class TopToolbar: UIView {
     
     private func configureAppearance() {
         translatesAutoresizingMaskIntoConstraints = false
-        backgroundColor = .systemGray6
+        backgroundColor = .appSystemGray6
     }
     
     private func configureHierarchy() {

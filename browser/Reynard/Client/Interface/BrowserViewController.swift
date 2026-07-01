@@ -113,7 +113,7 @@ final class BrowserViewController: UIViewController {
     
     override func viewDidLoad() {
         super.viewDidLoad()
-        view.backgroundColor = .systemBackground
+        view.backgroundColor = .appSystemBackground
         
         if sidebarCoordinator.installHostIfNeeded() {
             return

@@ -27,9 +27,9 @@ final class EditBookmarkViewController: UIViewController, UITableViewDataSource,
     private var storeObserver: NSObjectProtocol?
     
     private lazy var tableView: UITableView = {
-        let tableView = UITableView(frame: .zero, style: .insetGrouped)
+        let tableView = UITableView(frame: .zero, style: .appGrouped)
         tableView.translatesAutoresizingMaskIntoConstraints = false
-        tableView.backgroundColor = .systemGroupedBackground
+        tableView.backgroundColor = .appSystemGroupedBackground
         tableView.dataSource = self
         tableView.delegate = self
         tableView.separatorStyle = .singleLine
@@ -43,10 +43,10 @@ final class EditBookmarkViewController: UIViewController, UITableViewDataSource,
         let imageView = UIImageView(image: UIImage(named: "reynard.globe"))
         imageView.translatesAutoresizingMaskIntoConstraints = false
         imageView.contentMode = .scaleAspectFit
-        imageView.tintColor = .secondaryLabel
-        imageView.backgroundColor = .secondarySystemGroupedBackground
+        imageView.tintColor = .appSecondaryLabel
+        imageView.backgroundColor = .appSecondarySystemGroupedBackground
         imageView.layer.cornerRadius = UX.faviconCornerRadius
-        imageView.layer.cornerCurve = .continuous
+        imageView.layer.applyContinuousCornerCurve()
         imageView.clipsToBounds = true
         return imageView
     }()
@@ -54,10 +54,10 @@ final class EditBookmarkViewController: UIViewController, UITableViewDataSource,
         let imageView = UIImageView(image: UIImage(named: "reynard.globe"))
         imageView.translatesAutoresizingMaskIntoConstraints = false
         imageView.contentMode = .scaleAspectFit
-        imageView.tintColor = .secondaryLabel
-        imageView.backgroundColor = .secondarySystemGroupedBackground
+        imageView.tintColor = .appSecondaryLabel
+        imageView.backgroundColor = .appSecondarySystemGroupedBackground
         imageView.layer.cornerRadius = UX.faviconCornerRadius
-        imageView.layer.cornerCurve = .continuous
+        imageView.layer.applyContinuousCornerCurve()
         imageView.clipsToBounds = true
         return imageView
     }()
@@ -127,18 +127,18 @@ final class EditBookmarkViewController: UIViewController, UITableViewDataSource,
         super.viewDidLoad()
         
         title = limitsToFavorites ? "Add to Favorites" : (bookmark == nil ? "Add Bookmark" : "Edit Bookmark")
-        view.backgroundColor = .systemGroupedBackground
+        view.backgroundColor = .appSystemGroupedBackground
         navigationItem.largeTitleDisplayMode = .never
         
         if #available(iOS 26.0, *) {
             navigationItem.rightBarButtonItem = UIBarButtonItem(barButtonSystemItem: .done, target: self, action: #selector(saveBookmark))
-            navigationItem.rightBarButtonItem?.tintColor = .label
+            navigationItem.rightBarButtonItem?.tintColor = .appLabel
             if bookmark != nil {
                 navigationItem.leftBarButtonItems = [UIBarButtonItem(barButtonSystemItem: .trash, target: self, action: #selector(deleteBookmark))]
                 navigationItem.leftBarButtonItems?.first?.tintColor = .systemRed
             } else {
                 navigationItem.leftBarButtonItems = [UIBarButtonItem(barButtonSystemItem: .cancel, target: self, action: #selector(cancel))]
-                navigationItem.leftBarButtonItems?.first?.tintColor = .label
+                navigationItem.leftBarButtonItems?.first?.tintColor = .appLabel
             }
         } else {
             navigationItem.rightBarButtonItem = UIBarButtonItem(title: "Save", style: .done, target: self, action: #selector(saveBookmark))
@@ -215,7 +215,7 @@ final class EditBookmarkViewController: UIViewController, UITableViewDataSource,
         if indexPath.section == 0 {
             let cell = UITableViewCell(style: .default, reuseIdentifier: nil)
             cell.selectionStyle = .none
-            cell.backgroundColor = .secondarySystemGroupedBackground
+            cell.backgroundColor = .appSecondarySystemGroupedBackground
             cell.clipsToBounds = true
             cell.contentView.clipsToBounds = true
             
@@ -255,7 +255,7 @@ final class EditBookmarkViewController: UIViewController, UITableViewDataSource,
         
         if indexPath.section == 1 {
             let cell = UITableViewCell(style: .default, reuseIdentifier: nil)
-            cell.backgroundColor = .secondarySystemGroupedBackground
+            cell.backgroundColor = .appSecondarySystemGroupedBackground
             cell.tintColor = .systemBlue
             cell.textLabel?.text = "New Folder"
             cell.textLabel?.textColor = .systemBlue

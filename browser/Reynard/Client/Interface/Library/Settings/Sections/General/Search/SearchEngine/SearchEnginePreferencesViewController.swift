@@ -31,7 +31,7 @@ final class SearchEnginePreferencesViewController: SettingsTableViewController, 
     }
     
     init() {
-        super.init(style: .insetGrouped)
+        super.init(style: .appGrouped)
         title = "Search Engine"
     }
     

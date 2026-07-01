@@ -136,7 +136,7 @@ final class AddonDetailsPreferencesViewController: SettingsTableViewController {
     
     init(addonID: String) {
         self.addonID = addonID
-        super.init(style: .insetGrouped)
+        super.init(style: .appGrouped)
         title = "Add-on"
     }
     
@@ -388,12 +388,12 @@ final class AddonDetailsPreferencesViewController: SettingsTableViewController {
             cell.textLabel?.text = addon?.metaData.incognito == .notAllowed
             ? "Not Allowed in Private Browsing"
             : "Allow in Private Browsing"
-            cell.textLabel?.textColor = addon?.metaData.incognito == .notAllowed ? .secondaryLabel : .label
+            cell.textLabel?.textColor = addon?.metaData.incognito == .notAllowed ? .appSecondaryLabel : .appLabel
             cell.selectionStyle = .none
             cell.accessoryView = privateBrowsingSwitch
         case .remove:
             cell.textLabel?.text = "Remove"
-            cell.textLabel?.textColor = addon == nil || isUpdatingAddon ? .secondaryLabel : .systemRed
+            cell.textLabel?.textColor = addon == nil || isUpdatingAddon ? .appSecondaryLabel : .systemRed
         case .settings, .details, .permissions:
             break
         }
@@ -412,7 +412,7 @@ final class AddonDetailsPreferencesViewController: SettingsTableViewController {
         
         let cell = UITableViewCell(style: .default, reuseIdentifier: nil)
         cell.textLabel?.numberOfLines = 0
-        cell.textLabel?.textColor = addon == nil || isUpdatingAddon ? .secondaryLabel : view.tintColor
+        cell.textLabel?.textColor = addon == nil || isUpdatingAddon ? .appSecondaryLabel : view.tintColor
         cell.accessoryType = .disclosureIndicator
         
         switch displayedNavigationRows[indexPath.row] {
@@ -424,7 +424,7 @@ final class AddonDetailsPreferencesViewController: SettingsTableViewController {
             cell.textLabel?.text = "Permissions"
         case .remove:
             cell.textLabel?.text = "Remove"
-            cell.textLabel?.textColor = addon == nil || isUpdatingAddon ? .secondaryLabel : .systemRed
+            cell.textLabel?.textColor = addon == nil || isUpdatingAddon ? .appSecondaryLabel : .systemRed
             cell.accessoryType = .none
         case .enabled, .privateBrowsing:
             break

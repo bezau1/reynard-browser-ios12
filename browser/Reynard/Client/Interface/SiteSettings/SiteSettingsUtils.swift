@@ -257,7 +257,7 @@ enum SiteSettingsUtils {
         let button: UIBarButtonItem
         if #available(iOS 26.0, *) {
             button = UIBarButtonItem(barButtonSystemItem: .cancel, target: target, action: action)
-            button.tintColor = .label
+            button.tintColor = .appLabel
         } else {
             button = UIBarButtonItem(barButtonSystemItem: .done, target: target, action: action)
         }

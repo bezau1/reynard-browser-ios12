@@ -82,7 +82,7 @@ final class UpdatesSettingsSection {
         footerLabel.numberOfLines = 0
         footerLabel.font = UIFont.preferredFont(forTextStyle: .footnote)
         footerLabel.adjustsFontForContentSizeCategory = true
-        footerLabel.textColor = .secondaryLabel
+        footerLabel.textColor = .appSecondaryLabel
         footerLabel.text = text
         
         footerView.contentView.addSubview(footerLabel)

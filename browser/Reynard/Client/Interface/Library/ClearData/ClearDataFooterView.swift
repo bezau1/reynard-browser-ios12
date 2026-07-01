@@ -23,7 +23,7 @@ final class ClearDataFooterView: UIView {
         button.backgroundColor = .systemRed
         button.tintColor = .white
         button.layer.cornerRadius = UX.buttonCornerRadius
-        button.layer.cornerCurve = .continuous
+        button.layer.applyContinuousCornerCurve()
         button.titleLabel?.font = .preferredFont(forTextStyle: .headline)
         return button
     }()

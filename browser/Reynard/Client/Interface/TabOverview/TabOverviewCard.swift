@@ -57,9 +57,9 @@ final class TabOverviewCard: UICollectionViewCell {
     private let webpagePreviewShadowView: UIView = {
         let view = UIView()
         view.translatesAutoresizingMaskIntoConstraints = false
-        view.backgroundColor = .systemBackground
+        view.backgroundColor = .appSystemBackground
         view.layer.cornerRadius = UX.webpagePreviewCornerRadius
-        view.layer.cornerCurve = .continuous
+        view.layer.applyContinuousCornerCurve()
         view.layer.shadowOpacity = UX.webpagePreviewRestingShadowOpacity
         view.layer.shadowRadius = UX.webpagePreviewRestingShadowRadius
         view.layer.shadowOffset = UX.webpagePreviewRestingShadowOffset
@@ -77,9 +77,9 @@ final class TabOverviewCard: UICollectionViewCell {
     private let webpagePreviewClippingView: UIView = {
         let view = UIView()
         view.translatesAutoresizingMaskIntoConstraints = false
-        view.backgroundColor = .systemBackground
+        view.backgroundColor = .appSystemBackground
         view.layer.cornerRadius = UX.webpagePreviewCornerRadius
-        view.layer.cornerCurve = .continuous
+        view.layer.applyContinuousCornerCurve()
         view.layer.masksToBounds = true
         return view
     }()
@@ -105,7 +105,7 @@ final class TabOverviewCard: UICollectionViewCell {
         button.backgroundColor = .systemGray.withAlphaComponent(UX.closeButtonBackgroundAlpha)
         button.tintColor = .white
         button.layer.cornerRadius = UX.closeButtonCornerRadius
-        button.layer.cornerCurve = .continuous
+        button.layer.applyContinuousCornerCurve()
         return button
     }()
     
@@ -114,7 +114,7 @@ final class TabOverviewCard: UICollectionViewCell {
         label.translatesAutoresizingMaskIntoConstraints = false
         label.font = UIFont.systemFont(ofSize: UX.tabTitleFontSize, weight: .medium)
         label.textAlignment = .center
-        label.textColor = .label
+        label.textColor = .appLabel
         label.numberOfLines = 1
         return label
     }()
@@ -123,7 +123,7 @@ final class TabOverviewCard: UICollectionViewCell {
         let imageView = UIImageView()
         imageView.translatesAutoresizingMaskIntoConstraints = false
         imageView.contentMode = .scaleAspectFit
-        imageView.tintColor = .secondaryLabel
+        imageView.tintColor = .appSecondaryLabel
         imageView.clipsToBounds = true
         return imageView
     }()

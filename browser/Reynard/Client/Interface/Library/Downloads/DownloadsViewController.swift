@@ -56,9 +56,9 @@ final class DownloadsViewController: UIViewController, UITableViewDataSource, UI
     }
     
     private lazy var tableView: UITableView = {
-        let view = UITableView(frame: .zero, style: .insetGrouped)
+        let view = UITableView(frame: .zero, style: .appGrouped)
         view.translatesAutoresizingMaskIntoConstraints = false
-        view.backgroundColor = .systemGroupedBackground
+        view.backgroundColor = .appSystemGroupedBackground
         view.dataSource = self
         view.delegate = self
         view.rowHeight = UITableView.automaticDimension
@@ -89,7 +89,7 @@ final class DownloadsViewController: UIViewController, UITableViewDataSource, UI
     
     override func viewDidLoad() {
         super.viewDidLoad()
-        view.backgroundColor = .systemGroupedBackground
+        view.backgroundColor = .appSystemGroupedBackground
         installLayout()
         installHeader()
         observeStore()
@@ -299,7 +299,7 @@ final class DownloadsViewController: UIViewController, UITableViewDataSource, UI
             return
         }
         
-        downloadsMenuItem.tintColor = .label
+        downloadsMenuItem.tintColor = .appLabel
         if #available(iOS 14.0, *) {
             downloadsMenuItem.menu = makeDownloadsMenu()
             downloadsMenuItem.target = nil

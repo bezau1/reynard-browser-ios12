@@ -30,7 +30,7 @@ final class BookmarkItemCell: UITableViewCell {
         let label = UILabel()
         label.translatesAutoresizingMaskIntoConstraints = false
         label.font = .preferredFont(forTextStyle: .body)
-        label.textColor = .label
+        label.textColor = .appLabel
         label.adjustsFontForContentSizeCategory = true
         label.numberOfLines = 1
         return label
@@ -39,7 +39,7 @@ final class BookmarkItemCell: UITableViewCell {
         let label = UILabel()
         label.translatesAutoresizingMaskIntoConstraints = false
         label.font = .preferredFont(forTextStyle: .body)
-        label.textColor = .secondaryLabel
+        label.textColor = .appSecondaryLabel
         label.adjustsFontForContentSizeCategory = true
         label.textAlignment = .right
         label.setContentCompressionResistancePriority(.required, for: .horizontal)
@@ -75,7 +75,7 @@ final class BookmarkItemCell: UITableViewCell {
         ])
         
         separatorInset.left = UX.separatorLeftInset
-        applyIcon(UIImage(named: "reynard.globe"), tintColor: .secondaryLabel)
+        applyIcon(UIImage(named: "reynard.globe"), tintColor: .appSecondaryLabel)
     }
     
     // MARK: - Reuse And Layout
@@ -96,7 +96,7 @@ final class BookmarkItemCell: UITableViewCell {
         itemTitleLabel.text = nil
         countLabel.text = nil
         countLabel.isHidden = true
-        applyIcon(UIImage(named: "reynard.globe"), tintColor: .secondaryLabel)
+        applyIcon(UIImage(named: "reynard.globe"), tintColor: .appSecondaryLabel)
     }
     
     // MARK: - Configuration
@@ -109,9 +109,9 @@ final class BookmarkItemCell: UITableViewCell {
         countLabel.isHidden = false
         
         if folder.isProtected && folder.title == "Favorites" {
-            applyIcon(UIImage(named: "reynard.star"), tintColor: .secondaryLabel)
+            applyIcon(UIImage(named: "reynard.star"), tintColor: .appSecondaryLabel)
         } else {
-            applyIcon(UIImage(named: "reynard.folder"), tintColor: .secondaryLabel)
+            applyIcon(UIImage(named: "reynard.folder"), tintColor: .appSecondaryLabel)
         }
     }
     
@@ -127,7 +127,7 @@ final class BookmarkItemCell: UITableViewCell {
             return
         }
         
-        applyIcon(UIImage(named: "reynard.globe"), tintColor: .secondaryLabel)
+        applyIcon(UIImage(named: "reynard.globe"), tintColor: .appSecondaryLabel)
         let expectedURL = bookmark.url
         let token = UUID()
         faviconLoadToken = token
@@ -144,7 +144,7 @@ final class BookmarkItemCell: UITableViewCell {
                 return
             }
 
-            self.applyIcon(image ?? UIImage(named: "reynard.globe"), tintColor: image == nil ? .secondaryLabel : nil)
+            self.applyIcon(image ?? UIImage(named: "reynard.globe"), tintColor: image == nil ? .appSecondaryLabel : nil)
         }
     }
     

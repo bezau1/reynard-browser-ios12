@@ -329,7 +329,7 @@ final class TabOverviewPresentation {
         
         pageSnapshot.frame = sourceFrame
         pageSnapshot.layer.cornerRadius = UX.transitionPreviewCornerRadius
-        pageSnapshot.layer.cornerCurve = .continuous
+        pageSnapshot.layer.applyContinuousCornerCurve()
         pageSnapshot.layer.masksToBounds = true
         
         bottomChromeView.frame = tabOverview.bottomToolbar.frame
@@ -508,7 +508,7 @@ final class TabOverviewPresentation {
         
         pageSnapshot.frame = sourceFrame
         pageSnapshot.layer.cornerRadius = UX.transitionPreviewCornerRadius
-        pageSnapshot.layer.cornerCurve = .continuous
+        pageSnapshot.layer.applyContinuousCornerCurve()
         pageSnapshot.layer.masksToBounds = true
         
         context.containerView.addSubview(pageSnapshot)
@@ -569,7 +569,7 @@ final class TabOverviewPresentation {
         imageView.contentMode = .scaleAspectFill
         imageView.clipsToBounds = true
         imageView.layer.cornerRadius = UX.transitionPreviewCornerRadius
-        imageView.layer.cornerCurve = .continuous
+        imageView.layer.applyContinuousCornerCurve()
         return imageView
     }
     

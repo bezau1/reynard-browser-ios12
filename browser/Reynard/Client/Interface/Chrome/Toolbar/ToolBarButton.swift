@@ -38,7 +38,7 @@ final class ToolbarButton: UIButton {
         let view = UIImageView()
         view.translatesAutoresizingMaskIntoConstraints = false
         view.contentMode = .scaleAspectFit
-        view.tintColor = .label
+        view.tintColor = .appLabel
         view.clipsToBounds = false
         view.isHidden = true
         return view
@@ -47,7 +47,7 @@ final class ToolbarButton: UIButton {
     private lazy var downloadProgressTrackView: UIView = {
         let view = UIView()
         view.translatesAutoresizingMaskIntoConstraints = false
-        view.backgroundColor = .tertiarySystemFill
+        view.backgroundColor = .appTertiarySystemFill
         view.layer.cornerRadius = UX.downloadProgressTrackCornerRadius
         view.isHidden = true
         return view
@@ -56,7 +56,7 @@ final class ToolbarButton: UIButton {
     private lazy var downloadProgressFillView: UIView = {
         let view = UIView()
         view.translatesAutoresizingMaskIntoConstraints = false
-        view.backgroundColor = .label
+        view.backgroundColor = .appLabel
         view.layer.cornerRadius = UX.downloadProgressTrackCornerRadius
         view.isHidden = true
         return view
@@ -119,9 +119,9 @@ final class ToolbarButton: UIButton {
     
     private func configureAppearance() {
         translatesAutoresizingMaskIntoConstraints = false
-        tintColor = .label
+        tintColor = .appLabel
         layer.cornerRadius = UX.toolbarButtonCornerRadius
-        layer.cornerCurve = .continuous
+        layer.applyContinuousCornerCurve()
     }
     
     private func configureImage() {

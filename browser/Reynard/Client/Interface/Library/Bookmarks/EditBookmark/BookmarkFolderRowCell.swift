@@ -32,14 +32,14 @@ final class BookmarkFolderRowCell: UITableViewCell {
         let label = UILabel()
         label.translatesAutoresizingMaskIntoConstraints = false
         label.font = .preferredFont(forTextStyle: .body)
-        label.textColor = .label
+        label.textColor = .appLabel
         label.adjustsFontForContentSizeCategory = true
         return label
     }()
     
     override init(style: UITableViewCell.CellStyle, reuseIdentifier: String?) {
         super.init(style: style, reuseIdentifier: reuseIdentifier)
-        backgroundColor = .secondarySystemGroupedBackground
+        backgroundColor = .appSecondarySystemGroupedBackground
         tintColor = .systemBlue
         
         contentView.addSubview(folderIconView)
@@ -81,7 +81,7 @@ final class BookmarkFolderRowCell: UITableViewCell {
         hierarchyDepth = depth
         folderTitleLabel.text = folder.title
         folderIconLeadingConstraint?.constant = CGFloat(depth) * UX.hierarchyIndentWidth
-        folderIconView.tintColor = isSelected ? .systemBlue : .secondaryLabel
+        folderIconView.tintColor = isSelected ? .systemBlue : .appSecondaryLabel
         
         if folder.parentGUID == nil {
             folderIconView.image = UIImage(named: "reynard.book")?.withRenderingMode(.alwaysTemplate)

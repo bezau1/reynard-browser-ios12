@@ -37,10 +37,10 @@ final class UpdateAvailableViewController: UIViewController, HomepageRecommendat
     private let cardView: UIView = {
         let view = UIView()
         view.translatesAutoresizingMaskIntoConstraints = false
-        view.layer.cornerCurve = .continuous
+        view.layer.applyContinuousCornerCurve()
         view.layer.cornerRadius = UX.cornerRadius
         view.clipsToBounds = true
-        view.backgroundColor = .systemGray6
+        view.backgroundColor = .appSystemGray6
         return view
     }()
     
@@ -61,7 +61,7 @@ final class UpdateAvailableViewController: UIViewController, HomepageRecommendat
         )
         label.text = "Update Available"
         label.textAlignment = .left
-        label.textColor = .label
+        label.textColor = .appLabel
         label.numberOfLines = 0
         label.adjustsFontForContentSizeCategory = true
         return label
@@ -72,7 +72,7 @@ final class UpdateAvailableViewController: UIViewController, HomepageRecommendat
         label.font = .preferredFont(forTextStyle: .body)
         label.text = "A new version of Reynard Browser is available. Open Settings to update."
         label.textAlignment = .left
-        label.textColor = .secondaryLabel
+        label.textColor = .appSecondaryLabel
         label.numberOfLines = 0
         label.adjustsFontForContentSizeCategory = true
         return label
@@ -209,7 +209,7 @@ final class UpdateAvailableViewController: UIViewController, HomepageRecommendat
         let button = UIButton(type: .system)
         button.setTitle(title, for: .normal)
         button.setImage(UIImage(named: imageName, in: .main, with: configuration), for: .normal)
-        button.tintColor = .label
+        button.tintColor = .appLabel
         button.titleLabel?.font = .preferredFont(forTextStyle: .body)
         button.titleLabel?.adjustsFontForContentSizeCategory = true
         button.contentHorizontalAlignment = .leading

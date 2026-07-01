@@ -65,9 +65,9 @@ final class HistoryViewController: UIViewController, UITableViewDataSource, UITa
     }()
     
     private lazy var tableView: UITableView = {
-        let view = UITableView(frame: .zero, style: .insetGrouped)
+        let view = UITableView(frame: .zero, style: .appGrouped)
         view.translatesAutoresizingMaskIntoConstraints = false
-        view.backgroundColor = .systemGroupedBackground
+        view.backgroundColor = .appSystemGroupedBackground
         view.dataSource = self
         view.delegate = self
         view.rowHeight = UITableView.automaticDimension
@@ -99,7 +99,7 @@ final class HistoryViewController: UIViewController, UITableViewDataSource, UITa
     override func viewDidLoad() {
         super.viewDidLoad()
         
-        view.backgroundColor = .systemGroupedBackground
+        view.backgroundColor = .appSystemGroupedBackground
         
         view.addSubview(tableView)
         NSLayoutConstraint.activate([
@@ -247,7 +247,7 @@ final class HistoryViewController: UIViewController, UITableViewDataSource, UITa
             return
         }
         
-        clearHistoryActionItem.tintColor = .label
+        clearHistoryActionItem.tintColor = .appLabel
         LibraryActionButton.installNavigationAction(clearHistoryActionItem, in: navigationItem)
     }
     

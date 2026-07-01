@@ -43,11 +43,11 @@ final class TabOverviewToolbarButton: UIButton {
     
     private func configureAppearance() {
         translatesAutoresizingMaskIntoConstraints = false
-        tintColor = action == .done ? .systemBackground : .label
-        backgroundColor = action == .done ? .label : .quaternarySystemFill
+        tintColor = action == .done ? .appSystemBackground : .appLabel
+        backgroundColor = action == .done ? .appLabel : .appQuaternarySystemFill
         layer.borderWidth = action == .done ? 0 : UX.toolbarButtonBorderWidth
-        layer.borderColor = action == .done ? UIColor.clear.cgColor : UIColor.systemFill.cgColor
-        layer.cornerCurve = .continuous
+        layer.borderColor = action == .done ? UIColor.clear.cgColor : UIColor.appSystemFill.cgColor
+        layer.applyContinuousCornerCurve()
         layer.cornerRadius = UX.toolbarButtonCornerRadius
     }
     

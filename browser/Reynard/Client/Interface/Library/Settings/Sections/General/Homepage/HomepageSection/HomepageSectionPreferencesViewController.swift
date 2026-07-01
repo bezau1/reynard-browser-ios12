@@ -180,7 +180,7 @@ final class HomepageSectionPreferencesViewController: SettingsTableViewControlle
     
     init(preference: Preference) {
         self.preference = preference
-        super.init(style: .insetGrouped)
+        super.init(style: .appGrouped)
         title = preference.title
     }
     

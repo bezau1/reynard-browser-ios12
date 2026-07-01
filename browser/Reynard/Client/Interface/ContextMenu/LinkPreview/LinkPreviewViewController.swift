@@ -66,7 +66,7 @@ final class LinkPreviewViewController: UIViewController {
     }
     
     private func configureView() {
-        geckoView.backgroundColor = .systemBackground
+        geckoView.backgroundColor = .appSystemBackground
         geckoView.isUserInteractionEnabled = false
         view = geckoView
     }

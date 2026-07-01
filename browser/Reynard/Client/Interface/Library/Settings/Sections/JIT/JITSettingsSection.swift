@@ -56,7 +56,7 @@ final class JITSettingsSection: NSObject {
             
             if #available(iOS 16.7, *) {
                 if #unavailable(iOS 17.4) {
-                    cell.textLabel?.textColor = .secondaryLabel
+                    cell.textLabel?.textColor = .appSecondaryLabel
                     cell.selectionStyle = .none
                     cell.isUserInteractionEnabled = false
                 }
@@ -275,7 +275,7 @@ final class JITSettingsSection: NSObject {
         detailLabel.numberOfLines = 0
         detailLabel.font = UIFont.preferredFont(forTextStyle: .footnote)
         detailLabel.adjustsFontForContentSizeCategory = true
-        detailLabel.textColor = .secondaryLabel
+        detailLabel.textColor = .appSecondaryLabel
         detailLabel.text = "Enable JIT to improve performance and ensure websites work properly."
         return detailLabel
     }

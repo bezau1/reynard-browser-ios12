@@ -65,12 +65,12 @@ final class JITFailureView: UIView {
     }
     
     private func configureView() {
-        backgroundColor = .systemBackground
+        backgroundColor = .appSystemBackground
         let horizontalInset: CGFloat = 24
         
         let symbolConfiguration = UIImage.SymbolConfiguration(pointSize: 96, weight: .regular)
         symbolImageView.image = UIImage(named: "reynard.bolt.slash", in: .main, with: symbolConfiguration)
-        symbolImageView.tintColor = .label
+        symbolImageView.tintColor = .appLabel
         symbolImageView.contentMode = .scaleAspectFit
         symbolImageView.setContentHuggingPriority(.required, for: .vertical)
         symbolImageView.setContentCompressionResistancePriority(.required, for: .vertical)
@@ -86,13 +86,13 @@ final class JITFailureView: UIView {
         messageLabel.text = nil
         messageLabel.textAlignment = .center
         messageLabel.font = .preferredFont(forTextStyle: .body)
-        messageLabel.textColor = .secondaryLabel
+        messageLabel.textColor = .appSecondaryLabel
         messageLabel.adjustsFontForContentSizeCategory = true
         messageLabel.numberOfLines = 0
         
-        errorContainerView.backgroundColor = .secondarySystemBackground
+        errorContainerView.backgroundColor = .appSecondarySystemBackground
         errorContainerView.layer.cornerRadius = 12
-        errorContainerView.layer.cornerCurve = .continuous
+        errorContainerView.layer.applyContinuousCornerCurve()
         errorContainerView.translatesAutoresizingMaskIntoConstraints = false
         
         errorScrollView.translatesAutoresizingMaskIntoConstraints = false
@@ -104,7 +104,7 @@ final class JITFailureView: UIView {
         errorLabel.textAlignment = .left
         errorLabel.numberOfLines = 1
         errorLabel.lineBreakMode = .byClipping
-        errorLabel.textColor = .label
+        errorLabel.textColor = .appLabel
         errorLabel.translatesAutoresizingMaskIntoConstraints = false
         errorLabel.adjustsFontForContentSizeCategory = true
         errorLabel.font = .monospacedSystemFont(
@@ -115,10 +115,10 @@ final class JITFailureView: UIView {
         quitButton.setTitle(nil, for: .normal)
         quitButton.titleLabel?.font = .preferredFont(forTextStyle: .headline)
         quitButton.titleLabel?.adjustsFontForContentSizeCategory = true
-        quitButton.backgroundColor = .label
-        quitButton.setTitleColor(.systemBackground, for: .normal)
+        quitButton.backgroundColor = .appLabel
+        quitButton.setTitleColor(.appSystemBackground, for: .normal)
         quitButton.layer.cornerRadius = 12
-        quitButton.layer.cornerCurve = .continuous
+        quitButton.layer.applyContinuousCornerCurve()
         quitButton.contentEdgeInsets = UIEdgeInsets(top: 14, left: 20, bottom: 14, right: 20)
         quitButton.accessibilityTraits.insert(.button)
         

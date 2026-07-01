@@ -62,7 +62,7 @@ final class LibraryViewController: UITabBarController, UITabBarControllerDelegat
     // MARK: - View Setup
     
     private func configureAppearance() {
-        view.backgroundColor = .systemGroupedBackground
+        view.backgroundColor = .appSystemGroupedBackground
         delegate = self
         LibraryTabBarStyle.apply(to: tabBar)
     }
@@ -153,7 +153,7 @@ final class LibraryViewController: UITabBarController, UITabBarControllerDelegat
                 target: self,
                 action: #selector(closeLibrary)
             )
-            button.tintColor = .label
+            button.tintColor = .appLabel
             return button
         }
         

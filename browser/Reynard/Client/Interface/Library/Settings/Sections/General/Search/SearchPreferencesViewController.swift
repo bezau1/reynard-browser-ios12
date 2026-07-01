@@ -38,7 +38,7 @@ final class SearchPreferencesViewController: SettingsTableViewController {
     private let searchOpenedTabsSwitch = UISwitch()
     
     init() {
-        super.init(style: .insetGrouped)
+        super.init(style: .appGrouped)
         title = "Search"
     }
     
@@ -96,7 +96,7 @@ final class SearchPreferencesViewController: SettingsTableViewController {
             let cell = UITableViewCell(style: .value1, reuseIdentifier: nil)
             cell.textLabel?.text = "Search Engine"
             cell.detailTextLabel?.text = Prefs.SearchSettings.searchEngine.displayName
-            cell.detailTextLabel?.textColor = .secondaryLabel
+            cell.detailTextLabel?.textColor = .appSecondaryLabel
             cell.accessoryType = .disclosureIndicator
             return cell
         case .searchSuggestions:
@@ -119,7 +119,7 @@ final class SearchPreferencesViewController: SettingsTableViewController {
                 let cell = UITableViewCell(style: .value1, reuseIdentifier: nil)
                 cell.textLabel?.text = "Search Suggestion Provider"
                 cell.detailTextLabel?.text = Prefs.SearchSettings.searchSuggestionProvider.name
-                cell.detailTextLabel?.textColor = .secondaryLabel
+                cell.detailTextLabel?.textColor = .appSecondaryLabel
                 cell.accessoryType = .disclosureIndicator
                 return cell
             }

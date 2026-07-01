@@ -58,7 +58,7 @@ final class FavoritesSectionViewController: UIViewController {
         let label = UILabel()
         label.translatesAutoresizingMaskIntoConstraints = false
         label.font = FavoritesSectionViewController.titleFont
-        label.textColor = .label
+        label.textColor = .appLabel
         label.text = "Favorites"
         label.adjustsFontForContentSizeCategory = true
         return label
@@ -67,7 +67,7 @@ final class FavoritesSectionViewController: UIViewController {
     private lazy var showAllButton: UIButton = {
         let button = UIButton(type: .system)
         button.translatesAutoresizingMaskIntoConstraints = false
-        button.tintColor = .label
+        button.tintColor = .appLabel
         button.titleLabel?.adjustsFontForContentSizeCategory = true
         button.addTarget(self, action: #selector(showAllButtonTapped), for: .touchUpInside)
         return button

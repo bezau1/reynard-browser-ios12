@@ -20,7 +20,7 @@ final class SearchSuggestionProviderPreferencesViewController: SettingsTableView
     }
     
     init() {
-        super.init(style: .insetGrouped)
+        super.init(style: .appGrouped)
         title = "Search Suggestion Provider"
     }
     

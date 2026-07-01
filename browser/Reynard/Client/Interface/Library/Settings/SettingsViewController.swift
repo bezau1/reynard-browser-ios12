@@ -60,7 +60,7 @@ final class SettingsViewController: SettingsTableViewController {
     // MARK: - Lifecycle
     
     init() {
-        super.init(style: .insetGrouped)
+        super.init(style: .appGrouped)
         configureViewController()
     }
     

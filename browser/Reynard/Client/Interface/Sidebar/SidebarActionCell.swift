@@ -18,7 +18,7 @@ final class SidebarActionCell: UICollectionViewCell {
     private let iconView: UIImageView = {
         let view = UIImageView()
         view.translatesAutoresizingMaskIntoConstraints = false
-        view.tintColor = .label
+        view.tintColor = .appLabel
         view.preferredSymbolConfiguration = UIImage.SymbolConfiguration(textStyle: .body)
         return view
     }()
@@ -26,7 +26,7 @@ final class SidebarActionCell: UICollectionViewCell {
     private let titleLabel: UILabel = {
         let label = UILabel()
         label.translatesAutoresizingMaskIntoConstraints = false
-        label.textColor = .label
+        label.textColor = .appLabel
         label.font = .preferredFont(forTextStyle: .body)
         label.adjustsFontForContentSizeCategory = true
         return label

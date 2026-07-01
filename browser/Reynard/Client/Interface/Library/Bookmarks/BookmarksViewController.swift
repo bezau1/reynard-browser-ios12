@@ -63,10 +63,10 @@ final class BookmarksViewController: UIViewController, UITableViewDataSource, UI
         return view
     }()
     private lazy var tableView: UITableView = {
-        let tableView = UITableView(frame: .zero, style: .insetGrouped)
+        let tableView = UITableView(frame: .zero, style: .appGrouped)
         tableView.translatesAutoresizingMaskIntoConstraints = false
         tableView.alwaysBounceVertical = true
-        tableView.backgroundColor = .systemGroupedBackground
+        tableView.backgroundColor = .appSystemGroupedBackground
         tableView.dataSource = self
         tableView.delegate = self
         tableView.keyboardDismissMode = .interactive
@@ -80,7 +80,7 @@ final class BookmarksViewController: UIViewController, UITableViewDataSource, UI
         let label = UILabel()
         label.text = "No matching bookmarks"
         label.font = .systemFont(ofSize: UX.emptyStateFontSize, weight: .medium)
-        label.textColor = .secondaryLabel
+        label.textColor = .appSecondaryLabel
         label.textAlignment = .center
         return label
     }()
@@ -106,7 +106,7 @@ final class BookmarksViewController: UIViewController, UITableViewDataSource, UI
     override func viewDidLoad() {
         super.viewDidLoad()
         
-        view.backgroundColor = .systemGroupedBackground
+        view.backgroundColor = .appSystemGroupedBackground
         installLayout()
         
         tableView.register(BookmarkItemCell.self, forCellReuseIdentifier: BookmarkItemCell.reuseIdentifier)
@@ -429,7 +429,7 @@ final class BookmarksViewController: UIViewController, UITableViewDataSource, UI
         
         if showsNavigationMenu {
             bookmarkMenuItem.image = UIImage(named: symbolName)
-            bookmarkMenuItem.tintColor = .label
+            bookmarkMenuItem.tintColor = .appLabel
             
             if #available(iOS 14.0, *) {
                 bookmarkMenuItem.menu = isEditing ? nil : makeBookmarkMenu()

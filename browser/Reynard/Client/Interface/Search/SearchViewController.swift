@@ -50,7 +50,7 @@ final class SearchViewController: UIViewController, UITableViewDataSource, UITab
     private var lastReportedOverlayContentHeight: CGFloat = -1
     
     private let tableView: UITableView = {
-        let tableView = UITableView(frame: .zero, style: .insetGrouped)
+        let tableView = UITableView(frame: .zero, style: .appGrouped)
         tableView.translatesAutoresizingMaskIntoConstraints = false
         tableView.alwaysBounceVertical = true
         tableView.backgroundColor = .clear
@@ -316,7 +316,7 @@ final class SearchViewController: UIViewController, UITableViewDataSource, UITab
         let label = UILabel()
         label.translatesAutoresizingMaskIntoConstraints = false
         label.font = .systemFont(ofSize: UX.sectionHeaderFontSize, weight: .semibold)
-        label.textColor = .secondaryLabel
+        label.textColor = .appSecondaryLabel
         label.text = title
         
         container.addSubview(label)

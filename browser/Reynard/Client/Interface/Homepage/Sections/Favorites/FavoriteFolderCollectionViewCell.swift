@@ -39,8 +39,8 @@ final class FavoriteFolderCollectionViewCell: UICollectionViewCell {
     private let folderBackgroundView: UIView = {
         let view = UIView()
         view.translatesAutoresizingMaskIntoConstraints = false
-        view.backgroundColor = .systemGray5
-        view.layer.cornerCurve = .continuous
+        view.backgroundColor = .appSystemGray5
+        view.layer.applyContinuousCornerCurve()
         view.layer.cornerRadius = UX.iconCornerRadius
         view.clipsToBounds = true
         return view
@@ -67,7 +67,7 @@ final class FavoriteFolderCollectionViewCell: UICollectionViewCell {
         label.translatesAutoresizingMaskIntoConstraints = false
         label.font = FavoriteFolderCollectionViewCell.titleFont
         label.textAlignment = .center
-        label.textColor = .label
+        label.textColor = .appLabel
         label.numberOfLines = 2
         label.adjustsFontForContentSizeCategory = true
         return label
@@ -173,7 +173,7 @@ final class FavoriteFolderCollectionViewCell: UICollectionViewCell {
             iconView.translatesAutoresizingMaskIntoConstraints = false
             iconView.backgroundColor = .white
             iconView.clipsToBounds = true
-            iconView.layer.cornerCurve = .continuous
+            iconView.layer.applyContinuousCornerCurve()
             iconView.layer.cornerRadius = UX.previewIconCornerRadius
             previewGridView.addSubview(iconView)
             previewIconViews.append(iconView)

@@ -12,7 +12,7 @@ final class FavoriteSiteIconView: UIView {
         let view = UIImageView()
         view.translatesAutoresizingMaskIntoConstraints = false
         view.contentMode = .scaleAspectFit
-        view.tintColor = .secondaryLabel
+        view.tintColor = .appSecondaryLabel
         return view
     }()
     

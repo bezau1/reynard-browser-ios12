@@ -166,7 +166,7 @@ final class AddonPermissionsPreferencesViewController: SettingsTableViewControll
     
     init(addonID: String) {
         self.addonID = addonID
-        super.init(style: .insetGrouped)
+        super.init(style: .appGrouped)
         title = "Permissions"
     }
     
@@ -227,7 +227,7 @@ final class AddonPermissionsPreferencesViewController: SettingsTableViewControll
             cell.textLabel?.numberOfLines = 0
             cell.detailTextLabel?.text = subtitle
             cell.detailTextLabel?.numberOfLines = 0
-            cell.detailTextLabel?.textColor = .secondaryLabel
+            cell.detailTextLabel?.textColor = .appSecondaryLabel
             cell.accessoryView = toggle
             return cell
         case .warning(let text):
@@ -235,7 +235,7 @@ final class AddonPermissionsPreferencesViewController: SettingsTableViewControll
             cell.selectionStyle = .none
             cell.textLabel?.text = text
             cell.textLabel?.numberOfLines = 0
-            cell.textLabel?.textColor = .secondaryLabel
+            cell.textLabel?.textColor = .appSecondaryLabel
             return cell
         }
     }

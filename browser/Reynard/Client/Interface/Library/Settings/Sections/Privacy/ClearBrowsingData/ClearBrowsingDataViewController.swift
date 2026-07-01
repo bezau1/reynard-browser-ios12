@@ -108,7 +108,7 @@ final class ClearBrowsingDataViewController: SettingsTableViewController {
     }
     
     init() {
-        super.init(style: .insetGrouped)
+        super.init(style: .appGrouped)
         title = "Clear Browsing Data"
     }
     
@@ -119,7 +119,7 @@ final class ClearBrowsingDataViewController: SettingsTableViewController {
     override func viewDidLoad() {
         super.viewDidLoad()
         
-        view.backgroundColor = .systemGroupedBackground
+        view.backgroundColor = .appSystemGroupedBackground
         navigationItem.largeTitleDisplayMode = .never
         
         for category in BrowsingDataCategory.allCases {
@@ -186,7 +186,7 @@ final class ClearBrowsingDataViewController: SettingsTableViewController {
         let cell = UITableViewCell(style: .subtitle, reuseIdentifier: nil)
         cell.textLabel?.text = category.title
         cell.detailTextLabel?.text = category.subtitle
-        cell.detailTextLabel?.textColor = .secondaryLabel
+        cell.detailTextLabel?.textColor = .appSecondaryLabel
         cell.detailTextLabel?.numberOfLines = 0
         browsingDataCategorySwitches[category]?.isOn = category.isSelected
         cell.accessoryView = browsingDataCategorySwitches[category]
