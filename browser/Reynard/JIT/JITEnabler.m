@@ -12,6 +12,12 @@
 #import "Utils.h"
 #include <sys/stat.h>
 #include <errno.h>
+#include <unistd.h>
+
+// ptrace is not declared in the iOS SDK headers.
+extern int ptrace(int request, pid_t pid, caddr_t addr, int data);
+#define PT_DETACH 11
+#define PT_ATTACHEXC 14
 
 @interface JITEnabler ()
 
@@ -47,46 +53,23 @@
 - (BOOL)enableJITForPID:(int32_t)pid hasTXMSupport:(BOOL)hasTXMSupport error:(NSError **)error {
     // TrollStore or jailbroken devices
     if (getEntitlementValue(@"com.apple.private.security.no-sandbox")) {
-        NSBundle *bundle = NSBundle.mainBundle;
-        NSString *helperPath = [bundle.bundlePath stringByAppendingPathComponent:@"ptrace_jit"];
-        if (![[NSFileManager defaultManager] fileExistsAtPath:helperPath]) {
-            NSString *resourceCandidate = [bundle.resourcePath stringByAppendingPathComponent:@"ptrace_jit"];
-            if ([[NSFileManager defaultManager] fileExistsAtPath:resourceCandidate]) helperPath = resourceCandidate;
-        }
-        if (![[NSFileManager defaultManager] fileExistsAtPath:helperPath]) {
-            NSURL *auxURL = [bundle URLForAuxiliaryExecutable:@"ptrace_jit"];
-            if (auxURL.path.length > 0) helperPath = auxURL.path;
-        }
-        
-        int result = spawnRoot(helperPath, @[[NSString stringWithFormat:@"%d", pid]]);
-        logger([NSString stringWithFormat:@"ptrace_jit result %d", result]);
-        
-        if (result != 0 && result != EACCES && result != ENOENT && result != ENOEXEC && result != 126 && result != 127) {
-            // keep existing behavior for non-permission failures
-        } else if (result == EACCES || result == ENOENT || result == ENOEXEC || result == 126 || result == 127) {
-            NSString *tempPath = [NSTemporaryDirectory() stringByAppendingPathComponent:@"ptrace_jit"];
-            NSError *copyError = nil;
-            [[NSFileManager defaultManager] removeItemAtPath:tempPath error:nil];
-            if ([[NSFileManager defaultManager] copyItemAtPath:helperPath toPath:tempPath error:&copyError]) {
-                chmod(tempPath.UTF8String, 0755);
-                if ([[NSFileManager defaultManager] isExecutableFileAtPath:tempPath]) {
-                    logger([NSString stringWithFormat:@"Retrying ptrace_jit from temp path %@", tempPath]);
-                    result = spawnRoot(tempPath, @[[NSString stringWithFormat:@"%d", pid]]);
-                }
-            } else {
-                logger([NSString stringWithFormat:@"Failed to copy ptrace_jit to temp path: %@", copyError.localizedDescription ?: @"unknown"]);
-            }
-        }
-        if (result >= 128) {
-            if (error) *error = MakeError(TSPtraceHelperTerminated);
-            return NO;
-        }
-        
-        if (result != 0) {
+        // Attach the target content process directly from this (parent) process
+        // -- no helper binary, no fork, no root. PT_ATTACHEXC sets CS_DEBUGGED on
+        // the target; PT_DETACH then resumes it and restores its exception ports,
+        // so it keeps JIT capability without being left traced. Requires debugger
+        // entitlements on this process (task_for_pid-allow / cs.debugger) and
+        // get-task-allow on the target.
+        if (ptrace(PT_ATTACHEXC, pid, 0, 0) != 0) {
+            int attachErrno = errno;
+            logger([NSString stringWithFormat:@"[REYNARD_DEBUG] direct PT_ATTACHEXC failed pid=%d errno=%d", pid, attachErrno]);
             if (error) *error = MakeError(TSPtraceHelperAttachFailed);
             return NO;
         }
-        
+        usleep(50000);
+        if (ptrace(PT_DETACH, pid, 0, 0) != 0) {
+            logger([NSString stringWithFormat:@"[REYNARD_DEBUG] PT_DETACH failed pid=%d errno=%d", pid, errno]);
+        }
+        logger([NSString stringWithFormat:@"[REYNARD_DEBUG] direct attach+detach OK pid=%d", pid]);
         return YES;
     }
     
