@@ -55,7 +55,7 @@ final class SiteMetadataStore {
     private let storage: StorageURLs
     private let stateQueue = DispatchQueue(label: "com.minh-ton.Reynard.SiteMetadataStore.Queue", qos: .utility)
     private var records: [String: SiteMetadataRecord] = [:]
-    private var activeRequests: [String: Task<SiteMetadataSnapshot?, Never>] = [:]
+    private var pendingCompletions: [String: [(SiteMetadataSnapshot?) -> Void]] = [:]
     
     private lazy var session: URLSession = {
         let configuration = URLSessionConfiguration.default
@@ -110,44 +110,55 @@ final class SiteMetadataStore {
         }
     }
     
-    func metadata(for url: URL) async -> SiteMetadataSnapshot? {
+    func metadata(for url: URL, completion: @escaping (SiteMetadataSnapshot?) -> Void) {
         guard let sanitizedURL = URLUtils.sanitizedURL(for: url) else {
-            return nil
+            completion(nil)
+            return
         }
-        
+
         if let snapshot = stateQueue.sync(execute: { snapshotLocked(for: sanitizedURL) }) {
-            return snapshot
+            completion(snapshot)
+            return
         }
-        
-        return await saveMetadata(for: sanitizedURL)
+
+        saveMetadata(for: sanitizedURL, completion: completion)
     }
-    
-    func saveMetadata(for url: URL) async -> SiteMetadataSnapshot? {
+
+    func saveMetadata(for url: URL, completion: @escaping (SiteMetadataSnapshot?) -> Void) {
         guard let sanitizedURL = URLUtils.sanitizedURL(for: url) else {
-            return nil
+            completion(nil)
+            return
         }
-        
+
         let requestKey = sanitizedURL.absoluteString
-        if let activeRequest = stateQueue.sync(execute: { activeRequests[requestKey] }) {
-            return await activeRequest.value
+
+        // Coalesce concurrent requests for the same URL.
+        let alreadyInFlight = stateQueue.sync { () -> Bool in
+            if pendingCompletions[requestKey] != nil {
+                pendingCompletions[requestKey]?.append(completion)
+                return true
+            }
+            pendingCompletions[requestKey] = [completion]
+            return false
         }
-        
-        let task = Task<SiteMetadataSnapshot?, Never>(priority: .utility) { [weak self] in
+
+        guard !alreadyInFlight else {
+            return
+        }
+
+        fetchAndStoreMetadata(for: sanitizedURL) { [weak self] snapshot in
             guard let self else {
-                return nil
+                return
             }
-            
-            let snapshot = await self.fetchAndStoreMetadata(for: sanitizedURL)
-            self.stateQueue.async {
-                self.activeRequests[requestKey] = nil
+            let completions = self.stateQueue.sync { () -> [(SiteMetadataSnapshot?) -> Void] in
+                let waiting = self.pendingCompletions[requestKey] ?? []
+                self.pendingCompletions[requestKey] = nil
+                return waiting
             }
-            return snapshot
+            DispatchQueue.main.async {
+                completions.forEach { $0(snapshot) }
+            }
         }
-        
-        stateQueue.sync {
-            activeRequests[requestKey] = task
-        }
-        return await task.value
     }
     
     func prune(keeping urls: [URL]) {
@@ -266,94 +277,117 @@ final class SiteMetadataStore {
     
     // MARK: - Fetching
     
-    private func fetchAndStoreMetadata(for sanitizedURL: URL) async -> SiteMetadataSnapshot? {
-        guard let document = await fetchHTMLDocument(for: sanitizedURL, redirectDepth: 0) else {
-            return nil
-        }
-        
-        let metadata = openGraphMetadata(in: document.html)
-        let remoteImage: RemoteImage?
-        if let imageValue = metadata["og:image"],
-           let imageURL = URL(string: decodeHTMLEntities(in: imageValue), relativeTo: document.url)?.absoluteURL {
-            remoteImage = await fetchRemoteImage(from: imageURL)
-        } else {
-            remoteImage = nil
-        }
-        
-        return stateQueue.sync {
-            storeLocked(
-                sanitizedURL: sanitizedURL,
-                finalURL: document.url,
-                metadata: metadata,
-                remoteImage: remoteImage
-            )
+    private func fetchAndStoreMetadata(for sanitizedURL: URL, completion: @escaping (SiteMetadataSnapshot?) -> Void) {
+        fetchHTMLDocument(for: sanitizedURL, redirectDepth: 0) { [weak self] document in
+            guard let self else {
+                completion(nil)
+                return
+            }
+            guard let document else {
+                completion(nil)
+                return
+            }
+
+            let metadata = self.openGraphMetadata(in: document.html)
+
+            let finish: (RemoteImage?) -> Void = { remoteImage in
+                let snapshot = self.stateQueue.sync {
+                    self.storeLocked(
+                        sanitizedURL: sanitizedURL,
+                        finalURL: document.url,
+                        metadata: metadata,
+                        remoteImage: remoteImage
+                    )
+                }
+                completion(snapshot)
+            }
+
+            if let imageValue = metadata["og:image"],
+               let imageURL = URL(string: self.decodeHTMLEntities(in: imageValue), relativeTo: document.url)?.absoluteURL {
+                self.fetchRemoteImage(from: imageURL) { remoteImage in
+                    finish(remoteImage)
+                }
+            } else {
+                finish(nil)
+            }
         }
     }
-    
-    private func fetchHTMLDocument(for url: URL, redirectDepth: Int) async -> HTMLDocument? {
+
+    private func fetchHTMLDocument(for url: URL, redirectDepth: Int, completion: @escaping (HTMLDocument?) -> Void) {
         var request = URLRequest(url: url)
         request.httpMethod = "GET"
         request.setValue("text/html,application/xhtml+xml", forHTTPHeaderField: "Accept")
-        
-        guard let (data, response) = await data(for: request),
-              data.count <= Self.maxHTMLBytes else {
-            return nil
+
+        data(for: request) { [weak self] result in
+            guard let self else {
+                completion(nil)
+                return
+            }
+            guard let (data, response) = result,
+                  data.count <= Self.maxHTMLBytes else {
+                completion(nil)
+                return
+            }
+
+            let mimeType = (response.mimeType ?? "").lowercased()
+            guard mimeType.isEmpty || mimeType.contains("html") || mimeType.contains("xml") else {
+                completion(nil)
+                return
+            }
+
+            let html = self.string(from: data, response: response)
+            guard !html.isEmpty else {
+                completion(nil)
+                return
+            }
+
+            let finalURL = response.url ?? url
+            if redirectDepth < Self.maxRedirectDepth,
+               let redirectURL = self.metaRefreshRedirectURL(in: html, baseURL: finalURL),
+               redirectURL != finalURL {
+                self.fetchHTMLDocument(for: redirectURL, redirectDepth: redirectDepth + 1, completion: completion)
+                return
+            }
+
+            completion(HTMLDocument(html: html, url: finalURL))
         }
-        
-        let mimeType = (response.mimeType ?? "").lowercased()
-        guard mimeType.isEmpty || mimeType.contains("html") || mimeType.contains("xml") else {
-            return nil
-        }
-        
-        let html = string(from: data, response: response)
-        guard !html.isEmpty else {
-            return nil
-        }
-        
-        let finalURL = response.url ?? url
-        if redirectDepth < Self.maxRedirectDepth,
-           let redirectURL = metaRefreshRedirectURL(in: html, baseURL: finalURL),
-           redirectURL != finalURL {
-            return await fetchHTMLDocument(for: redirectURL, redirectDepth: redirectDepth + 1)
-        }
-        
-        return HTMLDocument(html: html, url: finalURL)
     }
-    
-    private func fetchRemoteImage(from url: URL) async -> RemoteImage? {
+
+    private func fetchRemoteImage(from url: URL, completion: @escaping (RemoteImage?) -> Void) {
         var request = URLRequest(url: url)
         request.httpMethod = "GET"
         request.setValue("image/*,*/*;q=0.8", forHTTPHeaderField: "Accept")
-        
-        guard let (data, response) = await data(for: request),
-              data.count <= Self.maxImageBytes,
-              let image = UIImage(data: data) else {
-            return nil
-        }
-        
-        return RemoteImage(image: image, data: data, url: response.url ?? url)
-    }
-    
-    private func data(for request: URLRequest) async -> (Data, URLResponse)? {
-        await withCheckedContinuation { continuation in
-            let task = session.dataTask(with: request) { data, response, error in
-                guard error == nil,
-                      let data,
-                      let response else {
-                    continuation.resume(returning: nil)
-                    return
-                }
-                
-                if let httpResponse = response as? HTTPURLResponse,
-                   !(200...299).contains(httpResponse.statusCode) {
-                    continuation.resume(returning: nil)
-                    return
-                }
-                
-                continuation.resume(returning: (data, response))
+
+        data(for: request) { result in
+            guard let (data, response) = result,
+                  data.count <= Self.maxImageBytes,
+                  let image = UIImage(data: data) else {
+                completion(nil)
+                return
             }
-            task.resume()
+
+            completion(RemoteImage(image: image, data: data, url: response.url ?? url))
         }
+    }
+
+    private func data(for request: URLRequest, completion: @escaping ((Data, URLResponse)?) -> Void) {
+        let task = session.dataTask(with: request) { data, response, error in
+            guard error == nil,
+                  let data,
+                  let response else {
+                completion(nil)
+                return
+            }
+
+            if let httpResponse = response as? HTTPURLResponse,
+               !(200...299).contains(httpResponse.statusCode) {
+                completion(nil)
+                return
+            }
+
+            completion((data, response))
+        }
+        task.resume()
     }
     
     // MARK: - HTML Parsing

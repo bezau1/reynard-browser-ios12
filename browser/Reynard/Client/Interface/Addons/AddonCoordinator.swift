@@ -66,22 +66,26 @@ final class AddonCoordinator: NSObject, AddonEmbedderDelegate {
     
     // MARK: - Runtime Lifecycle
     
-    func start() async {
+    func start(completion: @escaping () -> Void = {}) {
         AddonRuntime.shared.delegate = self
-        _ = try? await AddonRuntime.shared.list()
-        updateCoordinator.start()
-        delegate?.refreshAddonChrome(self)
+        AddonRuntime.shared.list { [weak self] _ in
+            guard let self else {
+                completion()
+                return
+            }
+            self.updateCoordinator.start()
+            self.delegate?.refreshAddonChrome(self)
+            completion()
+        }
     }
-    
+
     func handleExternalResponse(_ response: ExternalResponseInfo) -> Bool {
         guard shouldInterceptAMOInstall(response) else {
             return false
         }
-        
-        Task { @MainActor [weak self] in
-            do {
-                _ = try await AddonRuntime.shared.install(url: response.url, installMethod: .manager)
-            } catch {
+
+        AddonRuntime.shared.install(url: response.url, installMethod: .manager) { [weak self] result in
+            if case .failure(let error) = result {
                 guard let self else {
                     return
                 }
@@ -162,17 +166,17 @@ final class AddonCoordinator: NSObject, AddonEmbedderDelegate {
     }
     
     func activateMenuItem(_ item: AddonMenuItem) {
-        Task { @MainActor [weak self] in
+        AddonRuntime.shared.clickAction(kind: item.action.kind, addon: item.addon) { [weak self] result in
             guard let self else {
                 return
             }
-            
-            do {
-                if let url = try await AddonRuntime.shared.clickAction(kind: item.action.kind, addon: item.addon),
-                   !url.isEmpty {
+
+            switch result {
+            case .success(let url):
+                if let url, !url.isEmpty {
                     self.presentPopupAfterMenuDismissal(url: url)
                 }
-            } catch {
+            case .failure(let error):
                 self.delegate?.presentAddonAlert(self, title: nil, message: "\(error)")
             }
         }
@@ -194,29 +198,28 @@ final class AddonCoordinator: NSObject, AddonEmbedderDelegate {
     }
     
     @MainActor
-    func addonController(_ controller: AddonRuntime, promptFor prompt: AddonPermissionPrompt) async -> AddonPermissionPromptResponse {
-        let presentPrompt: @MainActor (AddonPermissionPrompt) async -> AddonPermissionPromptResponse = { prompt in
-            await withCheckedContinuation { continuation in
-                guard let delegate = self.delegate else {
-                    continuation.resume(returning: .deny)
-                    return
-                }
-                
-                let promptViewController = AddonPermissionPromptViewController(prompt: prompt) { response in
-                    continuation.resume(returning: response)
-                }
-                
-                let navigationController = UINavigationController(rootViewController: promptViewController)
-                navigationController.modalPresentationStyle = .pageSheet
-                delegate.presentAddonViewController(self, navigationController)
+    func addonController(_ controller: AddonRuntime, promptFor prompt: AddonPermissionPrompt, completion: @escaping (AddonPermissionPromptResponse) -> Void) {
+        let presentPrompt: (AddonPermissionPrompt, @escaping (AddonPermissionPromptResponse) -> Void) -> Void = { [weak self] prompt, promptCompletion in
+            guard let self, let delegate = self.delegate else {
+                promptCompletion(.deny)
+                return
             }
+
+            let promptViewController = AddonPermissionPromptViewController(prompt: prompt) { response in
+                promptCompletion(response)
+            }
+
+            let navigationController = UINavigationController(rootViewController: promptViewController)
+            navigationController.modalPresentationStyle = .pageSheet
+            delegate.presentAddonViewController(self, navigationController)
         }
-        
+
         if prompt.kind == .update {
-            return await updateCoordinator.responseForUpdatePrompt(prompt, presentPrompt: presentPrompt)
+            updateCoordinator.responseForUpdatePrompt(prompt, presentPrompt: presentPrompt, completion: completion)
+            return
         }
-        
-        return await presentPrompt(prompt)
+
+        presentPrompt(prompt, completion)
     }
     
     func addonController(_ controller: AddonRuntime, didUpdate action: AddonAction, for addon: Addon, session: GeckoSession?) {
@@ -242,7 +245,7 @@ final class AddonCoordinator: NSObject, AddonEmbedderDelegate {
     }
     
     func addonController(_ controller: AddonRuntime, didRequestOpenPopup url: String, for addon: Addon, action: AddonAction, session: GeckoSession?) {
-        Task { @MainActor [weak self] in
+        DispatchQueue.main.async { [weak self] in
             self?.presentPopupAfterMenuDismissal(
                 url: url
             )

@@ -48,7 +48,7 @@ final class BookmarkItemCell: UITableViewCell {
     }()
     
     private var representedURL: URL?
-    private var faviconTask: Task<Void, Never>?
+    private var faviconLoadToken: UUID?
     
     override init(style: UITableViewCell.CellStyle, reuseIdentifier: String?) {
         super.init(style: style, reuseIdentifier: reuseIdentifier)
@@ -92,8 +92,7 @@ final class BookmarkItemCell: UITableViewCell {
     override func prepareForReuse() {
         super.prepareForReuse()
         representedURL = nil
-        faviconTask?.cancel()
-        faviconTask = nil
+        faviconLoadToken = nil
         itemTitleLabel.text = nil
         countLabel.text = nil
         countLabel.isHidden = true
@@ -104,8 +103,7 @@ final class BookmarkItemCell: UITableViewCell {
     
     func configure(folder: BookmarkFolderSnapshot) {
         representedURL = nil
-        faviconTask?.cancel()
-        faviconTask = nil
+        faviconLoadToken = nil
         itemTitleLabel.text = folder.title
         countLabel.text = "\(folder.childCount)"
         countLabel.isHidden = false
@@ -119,8 +117,7 @@ final class BookmarkItemCell: UITableViewCell {
     
     func configure(bookmark: BookmarkSnapshot) {
         representedURL = bookmark.url
-        faviconTask?.cancel()
-        faviconTask = nil
+        faviconLoadToken = nil
         itemTitleLabel.text = bookmark.title
         countLabel.text = nil
         countLabel.isHidden = true
@@ -132,23 +129,22 @@ final class BookmarkItemCell: UITableViewCell {
         
         applyIcon(UIImage(named: "reynard.globe"), tintColor: .secondaryLabel)
         let expectedURL = bookmark.url
-        faviconTask = Task { [weak self] in
+        let token = UUID()
+        faviconLoadToken = token
+        Self.faviconStore.favicon(for: expectedURL) { [weak self] image in
             guard let self else {
                 return
             }
-            
-            let image = await Self.faviconStore.favicon(for: expectedURL)
-            guard !Task.isCancelled else {
+
+            guard self.faviconLoadToken == token else {
                 return
             }
-            
-            await MainActor.run {
-                guard self.representedURL == expectedURL else {
-                    return
-                }
-                
-                self.applyIcon(image ?? UIImage(named: "reynard.globe"), tintColor: image == nil ? .secondaryLabel : nil)
+
+            guard self.representedURL == expectedURL else {
+                return
             }
+
+            self.applyIcon(image ?? UIImage(named: "reynard.globe"), tintColor: image == nil ? .secondaryLabel : nil)
         }
     }
     

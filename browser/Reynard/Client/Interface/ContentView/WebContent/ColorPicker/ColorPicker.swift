@@ -12,23 +12,21 @@ final class ColorPicker: NSObject, UIPopoverPresentationControllerDelegate {
     private let anchorRect: CGRect
     private weak var geckoView: UIView?
     
-    private var continuation: CheckedContinuation<String?, Never>?
+    private var completion: ((String?) -> Void)?
     private var currentColor: UIColor = .black
     private weak var presentedController: UIViewController?
-    
+
     init(anchorRect: CGRect, geckoView: UIView) {
         self.anchorRect = anchorRect
         self.geckoView = geckoView
     }
-    
+
     // MARK: - Presentation
-    
-    func present(initialColor: UIColor) async -> String? {
+
+    func present(initialColor: UIColor, completion: @escaping (String?) -> Void) {
         currentColor = initialColor
-        return await withCheckedContinuation { continuation in
-            self.continuation = continuation
-            showColorPicker(initialColor: initialColor)
-        }
+        self.completion = completion
+        showColorPicker(initialColor: initialColor)
     }
     
     private func showColorPicker(initialColor: UIColor) {
@@ -70,7 +68,7 @@ final class ColorPicker: NSObject, UIPopoverPresentationControllerDelegate {
         return .none
     }
     
-    nonisolated func popoverPresentationControllerShouldDismissPopover(
+    func popoverPresentationControllerShouldDismissPopover(
         _ popoverPresentationController: UIPopoverPresentationController
     ) -> Bool {
         let controller = popoverPresentationController.presentedViewController
@@ -80,20 +78,17 @@ final class ColorPicker: NSObject, UIPopoverPresentationControllerDelegate {
         } else {
             color = nil
         }
-        Task { @MainActor [weak self] in
-            guard let self else { return }
-            self.finish(color?.toHexString() ?? self.currentColor.toHexString())
-        }
+        finish(color?.toHexString() ?? currentColor.toHexString())
         return true
     }
-    
+
     // MARK: - Completion
-    
+
     private func finish(_ result: String?) {
-        guard let continuation else { return }
+        guard let completion else { return }
         presentedController = nil
-        self.continuation = nil
-        continuation.resume(returning: result)
+        self.completion = nil
+        completion(result)
     }
     
     func cancelAndDismiss() {
@@ -104,17 +99,11 @@ final class ColorPicker: NSObject, UIPopoverPresentationControllerDelegate {
 
 @available(iOS 14.0, *)
 extension ColorPicker: UIColorPickerViewControllerDelegate {
-    nonisolated func colorPickerViewControllerDidSelectColor(_ viewController: UIColorPickerViewController) {
-        let color = viewController.selectedColor
-        Task { @MainActor [weak self] in
-            self?.currentColor = color
-        }
+    func colorPickerViewControllerDidSelectColor(_ viewController: UIColorPickerViewController) {
+        currentColor = viewController.selectedColor
     }
-    
-    nonisolated func colorPickerViewControllerDidFinish(_ viewController: UIColorPickerViewController) {
-        let hex = viewController.selectedColor.toHexString()
-        Task { @MainActor [weak self] in
-            self?.finish(hex)
-        }
+
+    func colorPickerViewControllerDidFinish(_ viewController: UIColorPickerViewController) {
+        finish(viewController.selectedColor.toHexString())
     }
 }

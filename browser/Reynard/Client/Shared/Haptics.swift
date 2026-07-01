@@ -8,7 +8,8 @@
 import UIKit
 
 enum Haptics {
-    private static let impactGenerator = UIImpactFeedbackGenerator(style: .rigid)
+    // `.rigid` is iOS 13+; `.heavy` is the closest style available on iOS 12.
+    private static let impactGenerator = UIImpactFeedbackGenerator(style: .heavy)
     private static let notificationGenerator = UINotificationFeedbackGenerator()
     
     static func prepareRigid() {

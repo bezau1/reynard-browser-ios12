@@ -49,7 +49,7 @@ final class HistoryItemCell: UITableViewCell {
     }()
     
     private var representedURL: URL?
-    private var faviconTask: Task<Void, Never>?
+    private var faviconLoadToken: UUID?
     
     // MARK: - Lifecycle
     
@@ -102,8 +102,7 @@ final class HistoryItemCell: UITableViewCell {
     override func prepareForReuse() {
         super.prepareForReuse()
         representedURL = nil
-        faviconTask?.cancel()
-        faviconTask = nil
+        faviconLoadToken = nil
         pageTitleLabel.text = nil
         pageURLLabel.text = nil
         setFavicon(nil)
@@ -113,9 +112,8 @@ final class HistoryItemCell: UITableViewCell {
     
     func configure(with item: HistorySiteSnapshot) {
         representedURL = item.url
-        faviconTask?.cancel()
-        faviconTask = nil
-        
+        faviconLoadToken = nil
+
         pageTitleLabel.text = item.title
         pageURLLabel.text = item.url.absoluteString
         
@@ -126,23 +124,22 @@ final class HistoryItemCell: UITableViewCell {
         
         setFavicon(nil)
         let expectedURL = item.url
-        faviconTask = Task { [weak self] in
+        let token = UUID()
+        faviconLoadToken = token
+        Self.faviconStore.favicon(for: expectedURL) { [weak self] image in
             guard let self else {
                 return
             }
-            
-            let image = await Self.faviconStore.favicon(for: expectedURL)
-            guard !Task.isCancelled else {
+
+            guard self.faviconLoadToken == token else {
                 return
             }
-            
-            await MainActor.run {
-                guard self.representedURL == expectedURL else {
-                    return
-                }
-                
-                self.setFavicon(image)
+
+            guard self.representedURL == expectedURL else {
+                return
             }
+
+            self.setFavicon(image)
         }
     }
     

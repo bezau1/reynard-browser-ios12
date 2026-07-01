@@ -145,39 +145,47 @@ extension FilePicker {
     static func stageItemProvider(
         _ itemProvider: NSItemProvider,
         acceptedMediaTypes: [String],
-        in directory: URL
-    ) async -> URL? {
+        in directory: URL,
+        completion: @escaping (URL?) -> Void
+    ) {
         guard let typeIdentifier = preferredTypeIdentifier(
             for: itemProvider,
             acceptedMediaTypes: acceptedMediaTypes
         ) else {
-            return nil
+            completion(nil)
+            return
         }
-        
-        if let stagedURL = await loadStagedFileRepresentation(
+
+        loadStagedFileRepresentation(
             from: itemProvider,
             typeIdentifier: typeIdentifier,
             in: directory
-        ) {
-            return stagedURL
-        }
-        
-        guard let data = await loadDataRepresentation(
-            from: itemProvider,
-            typeIdentifier: typeIdentifier
-        ) else {
-            return nil
-        }
-        
-        let destinationURL = uniqueDestinationURL(
-            in: directory,
-            preferredName: preferredMediaFileName(sourceURL: nil, typeIdentifier: typeIdentifier)
-        )
-        do {
-            try data.write(to: destinationURL, options: .atomic)
-            return destinationURL
-        } catch {
-            return nil
+        ) { stagedURL in
+            if let stagedURL {
+                completion(stagedURL)
+                return
+            }
+
+            loadDataRepresentation(
+                from: itemProvider,
+                typeIdentifier: typeIdentifier
+            ) { data in
+                guard let data else {
+                    completion(nil)
+                    return
+                }
+
+                let destinationURL = uniqueDestinationURL(
+                    in: directory,
+                    preferredName: preferredMediaFileName(sourceURL: nil, typeIdentifier: typeIdentifier)
+                )
+                do {
+                    try data.write(to: destinationURL, options: .atomic)
+                    completion(destinationURL)
+                } catch {
+                    completion(nil)
+                }
+            }
         }
     }
     
@@ -209,42 +217,40 @@ extension FilePicker {
     private static func loadStagedFileRepresentation(
         from itemProvider: NSItemProvider,
         typeIdentifier: String,
-        in directory: URL
-    ) async -> URL? {
-        await withCheckedContinuation { continuation in
-            itemProvider.loadFileRepresentation(forTypeIdentifier: typeIdentifier) { sourceURL, _ in
-                guard let sourceURL else {
-                    continuation.resume(returning: nil)
-                    return
-                }
-                
-                let destinationURL = uniqueDestinationURL(
-                    in: directory,
-                    preferredName: preferredMediaFileName(
-                        sourceURL: sourceURL,
-                        typeIdentifier: typeIdentifier
-                    )
+        in directory: URL,
+        completion: @escaping (URL?) -> Void
+    ) {
+        itemProvider.loadFileRepresentation(forTypeIdentifier: typeIdentifier) { sourceURL, _ in
+            guard let sourceURL else {
+                completion(nil)
+                return
+            }
+
+            let destinationURL = uniqueDestinationURL(
+                in: directory,
+                preferredName: preferredMediaFileName(
+                    sourceURL: sourceURL,
+                    typeIdentifier: typeIdentifier
                 )
-                
-                do {
-                    try FileManager.default.copyItem(at: sourceURL, to: destinationURL)
-                    continuation.resume(returning: destinationURL)
-                } catch {
-                    continuation.resume(returning: nil)
-                }
+            )
+
+            do {
+                try FileManager.default.copyItem(at: sourceURL, to: destinationURL)
+                completion(destinationURL)
+            } catch {
+                completion(nil)
             }
         }
     }
-    
+
     @available(iOS 14.0, *)
     private static func loadDataRepresentation(
         from itemProvider: NSItemProvider,
-        typeIdentifier: String
-    ) async -> Data? {
-        await withCheckedContinuation { continuation in
-            itemProvider.loadDataRepresentation(forTypeIdentifier: typeIdentifier) { data, _ in
-                continuation.resume(returning: data)
-            }
+        typeIdentifier: String,
+        completion: @escaping (Data?) -> Void
+    ) {
+        itemProvider.loadDataRepresentation(forTypeIdentifier: typeIdentifier) { data, _ in
+            completion(data)
         }
     }
     

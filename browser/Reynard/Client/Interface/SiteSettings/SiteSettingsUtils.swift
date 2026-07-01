@@ -174,22 +174,37 @@ enum SiteSettingsUtils {
             )
         }
         
-        Task {
-            for origin in origins {
-                let permissions = (try? await PermissionDelegate.permissions(
-                    for: origin,
-                    privateMode: false
-                )) ?? []
-                
+        func processNext(_ index: Int) {
+            guard index < origins.count else {
+                return
+            }
+
+            let origin = origins[index]
+            PermissionDelegate.permissions(
+                for: origin,
+                privateMode: false
+            ) { result in
+                let permissions: [ContentPermission]
+                switch result {
+                case .success(let perms):
+                    permissions = perms
+                case .failure:
+                    permissions = []
+                }
+
                 for resolvedPermission in permissions {
                     guard SitePermission(contentPermission: resolvedPermission) == permission else {
                         continue
                     }
-                    
+
                     PermissionDelegate.removePermission(resolvedPermission)
                 }
+
+                processNext(index + 1)
             }
         }
+
+        processNext(0)
     }
     
     static func resetStoredSitePermissions() {

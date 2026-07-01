@@ -39,9 +39,7 @@ final class AddonUpdateCoordinator {
             return
         }
         shouldRunAutomaticCheck = false
-        Task {
-            await runAutomaticCheck()
-        }
+        runAutomaticCheck()
     }
     
     func setSettingsVisible(_ visible: Bool) {
@@ -54,137 +52,175 @@ final class AddonUpdateCoordinator {
     @MainActor
     func responseForUpdatePrompt(
         _ prompt: AddonPermissionPrompt,
-        presentPrompt: @escaping (AddonPermissionPrompt) async -> AddonPermissionPromptResponse
-    ) async -> AddonPermissionPromptResponse {
+        presentPrompt: @escaping (AddonPermissionPrompt, @escaping (AddonPermissionPromptResponse) -> Void) -> Void,
+        completion: @escaping (AddonPermissionPromptResponse) -> Void
+    ) {
         guard shouldPresentUpdatePrompts && isSettingsVisible else {
             markNeedsApproval(prompt.addon.id)
-            return .deny
-        }
-        
-        let response = await presentPrompt(prompt)
-        if response.allow {
-            clearPendingApproval(prompt.addon.id)
-        } else {
-            markNeedsApproval(prompt.addon.id)
-        }
-        return response
-    }
-    
-    func updateAllAddons(
-        status: @escaping @MainActor (String, String?) -> Void
-    ) async -> AddonUpdateBatchResult {
-        await runUpdateBatch(
-            addons: updateCandidates(),
-            status: status
-        )
-    }
-    
-    func completePendingUpdates(
-        status: @escaping @MainActor (String, String?) -> Void
-    ) async -> AddonUpdateBatchResult {
-        let pendingIDs = Set(Prefs.AddonSettings.pendingApprovalAddonIDs)
-        let addons = updateCandidates().filter { pendingIDs.contains($0.id) }
-        return await runUpdateBatch(addons: addons, status: status)
-    }
-    
-    private func runAutomaticCheck() async {
-        guard !isRunningBatch else {
+            completion(.deny)
             return
         }
-        
-        isRunningBatch = true
-        defer {
-            isRunningBatch = false
+
+        presentPrompt(prompt) { [weak self] response in
+            guard let self else {
+                completion(response)
+                return
+            }
+            if response.allow {
+                self.clearPendingApproval(prompt.addon.id)
+            } else {
+                self.markNeedsApproval(prompt.addon.id)
+            }
+            completion(response)
         }
-        
-        for addon in updateCandidates() {
-            do {
-                let updatedAddon = try await AddonRuntime.shared.update(addon)
-                if updatedAddon == nil {
-                    clearPendingApproval(addon.id)
+    }
+
+    func updateAllAddons(
+        status: @escaping @MainActor (String, String?) -> Void,
+        completion: @escaping (AddonUpdateBatchResult) -> Void
+    ) {
+        runUpdateBatch(
+            addons: updateCandidates(),
+            status: status,
+            completion: completion
+        )
+    }
+
+    func completePendingUpdates(
+        status: @escaping @MainActor (String, String?) -> Void,
+        completion: @escaping (AddonUpdateBatchResult) -> Void
+    ) {
+        let pendingIDs = Set(Prefs.AddonSettings.pendingApprovalAddonIDs)
+        let addons = updateCandidates().filter { pendingIDs.contains($0.id) }
+        runUpdateBatch(addons: addons, status: status, completion: completion)
+    }
+
+    private func runAutomaticCheck(completion: @escaping () -> Void = {}) {
+        guard !isRunningBatch else {
+            completion()
+            return
+        }
+
+        isRunningBatch = true
+
+        let candidates = updateCandidates()
+
+        func finish() {
+            isRunningBatch = false
+            Prefs.AddonSettings.lastGlobalCheckAt = Date()
+            completion()
+        }
+
+        func processNext(_ index: Int) {
+            guard index < candidates.count else {
+                finish()
+                return
+            }
+
+            let addon = candidates[index]
+            AddonRuntime.shared.update(addon) { result in
+                switch result {
+                case .success(let updatedAddon):
+                    if updatedAddon == nil {
+                        self.clearPendingApproval(addon.id)
+                    }
+                case .failure(let error):
+                    if AddonErrorPresenter.updateRequiresPermissions(error) {
+                        self.markNeedsApproval(addon.id)
+                    }
                 }
-            } catch {
-                if AddonErrorPresenter.updateRequiresPermissions(error) {
-                    markNeedsApproval(addon.id)
-                }
+                processNext(index + 1)
             }
         }
-        
-        Prefs.AddonSettings.lastGlobalCheckAt = Date()
+
+        processNext(0)
     }
-    
+
     private func runUpdateBatch(
         addons: [Addon],
-        status: @escaping @MainActor (String, String?) -> Void
-    ) async -> AddonUpdateBatchResult {
+        status: @escaping @MainActor (String, String?) -> Void,
+        completion: @escaping (AddonUpdateBatchResult) -> Void
+    ) {
         guard !isRunningBatch else {
-            return AddonUpdateBatchResult(
+            completion(AddonUpdateBatchResult(
                 updatedCount: 0,
                 noUpdateCount: 0,
                 pendingApprovalCount: Prefs.AddonSettings.pendingApprovalAddonIDs.count,
                 failedCount: 0
-            )
+            ))
+            return
         }
-        
+
         isRunningBatch = true
         shouldPresentUpdatePrompts = true
-        
+
         var updatedCount = 0
         var noUpdateCount = 0
         var failedCount = 0
-        
-        defer {
+
+        func finish() {
             shouldPresentUpdatePrompts = false
             isRunningBatch = false
             Prefs.AddonSettings.lastGlobalCheckAt = Date()
+            completion(AddonUpdateBatchResult(
+                updatedCount: updatedCount,
+                noUpdateCount: noUpdateCount,
+                pendingApprovalCount: Prefs.AddonSettings.pendingApprovalAddonIDs.count,
+                failedCount: failedCount
+            ))
         }
-        
-        for addon in addons {
-            await MainActor.run {
+
+        func processNext(_ index: Int) {
+            guard index < addons.count else {
+                finish()
+                return
+            }
+
+            let addon = addons[index]
+            DispatchQueue.main.async {
                 status(addon.id, "Updating...")
             }
-            
-            do {
-                let updatedAddon = try await AddonRuntime.shared.update(addon)
-                if updatedAddon == nil {
-                    noUpdateCount += 1
-                    clearPendingApproval(addon.id)
-                    await MainActor.run {
-                        status(addon.id, "No update available")
+
+            AddonRuntime.shared.update(addon) { result in
+                switch result {
+                case .success(let updatedAddon):
+                    if updatedAddon == nil {
+                        noUpdateCount += 1
+                        self.clearPendingApproval(addon.id)
+                        DispatchQueue.main.async {
+                            status(addon.id, "No update available")
+                        }
+                    } else {
+                        updatedCount += 1
+                        self.clearPendingApproval(addon.id)
+                        DispatchQueue.main.async {
+                            status(addon.id, "Successfully updated")
+                        }
                     }
-                } else {
-                    updatedCount += 1
-                    clearPendingApproval(addon.id)
-                    await MainActor.run {
-                        status(addon.id, "Successfully updated")
+                case .failure(let error):
+                    if AddonErrorPresenter.updateRequiresPermissions(error) {
+                        self.markNeedsApproval(addon.id)
+                        DispatchQueue.main.async {
+                            status(addon.id, "Needs permission to update")
+                        }
+                        processNext(index + 1)
+                        return
+                    }
+
+                    failedCount += 1
+                    let presentation = AddonErrorPresenter.updateErrorPresentation(
+                        for: error,
+                        addonName: addon.metaData.name ?? addon.id
+                    )
+                    DispatchQueue.main.async {
+                        status(addon.id, presentation.statusText)
                     }
                 }
-            } catch {
-                if AddonErrorPresenter.updateRequiresPermissions(error) {
-                    markNeedsApproval(addon.id)
-                    await MainActor.run {
-                        status(addon.id, "Needs permission to update")
-                    }
-                    continue
-                }
-                
-                failedCount += 1
-                let presentation = AddonErrorPresenter.updateErrorPresentation(
-                    for: error,
-                    addonName: addon.metaData.name ?? addon.id
-                )
-                await MainActor.run {
-                    status(addon.id, presentation.statusText)
-                }
+                processNext(index + 1)
             }
         }
-        
-        return AddonUpdateBatchResult(
-            updatedCount: updatedCount,
-            noUpdateCount: noUpdateCount,
-            pendingApprovalCount: Prefs.AddonSettings.pendingApprovalAddonIDs.count,
-            failedCount: failedCount
-        )
+
+        processNext(0)
     }
     
     private func updateCandidates() -> [Addon] {

@@ -59,7 +59,7 @@ final class UserDataSuggestionCell: UITableViewCell {
     }()
     
     private var representedURL: URL?
-    private var faviconTask: Task<Void, Never>?
+    private var faviconLoadToken: UUID?
     
     // MARK: - Lifecycle
     
@@ -75,14 +75,13 @@ final class UserDataSuggestionCell: UITableViewCell {
     }
     
     deinit {
-        faviconTask?.cancel()
+        faviconLoadToken = nil
     }
     
     override func prepareForReuse() {
         super.prepareForReuse()
         representedURL = nil
-        faviconTask?.cancel()
-        faviconTask = nil
+        faviconLoadToken = nil
         titleLabel.text = nil
         subtitleLabel.text = nil
         sourceIconView.image = UIImage(named: "reynard.globe")
@@ -94,9 +93,8 @@ final class UserDataSuggestionCell: UITableViewCell {
     
     func apply(result: UserDataSearchResult, showsFavicon: Bool = false) {
         representedURL = result.url
-        faviconTask?.cancel()
-        faviconTask = nil
-        
+        faviconLoadToken = nil
+
         titleLabel.text = result.title
         switch result.source {
         case .bookmark:
@@ -173,18 +171,16 @@ final class UserDataSuggestionCell: UITableViewCell {
         
         sourceIconView.image = UIImage(named: "reynard.globe")
         sourceIconView.tintColor = .label
-        
-        faviconTask = Task { [weak self] in
+
+        let token = UUID()
+        faviconLoadToken = token
+        Self.faviconStore.favicon(for: url) { [weak self] image in
             guard let self else { return }
-            
-            let image = await Self.faviconStore.favicon(for: url)
-            guard !Task.isCancelled else { return }
-            
-            await MainActor.run {
-                guard self.representedURL == url else { return }
-                self.sourceIconView.image = image ?? UIImage(named: "reynard.globe")
-                self.sourceIconView.tintColor = image == nil ? .label : nil
-            }
+
+            guard self.faviconLoadToken == token else { return }
+            guard self.representedURL == url else { return }
+            self.sourceIconView.image = image ?? UIImage(named: "reynard.globe")
+            self.sourceIconView.tintColor = image == nil ? .label : nil
         }
     }
 }

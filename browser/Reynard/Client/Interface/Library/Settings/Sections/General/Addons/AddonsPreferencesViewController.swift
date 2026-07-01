@@ -292,31 +292,37 @@ final class AddonsPreferencesViewController: SettingsTableViewController {
             }
             isLoadingAddons = true
             tableView.reloadData()
-            Task { [weak self] in
-                await self?.loadRuntimeAddons()
-            }
+            loadRuntimeAddons()
             return
         }
-        
+
         isLoadingAddons = false
         tableView.reloadData()
     }
-    
-    private func loadRuntimeAddons() async {
-        let refreshedAddons: [Addon]
-        do {
-            refreshedAddons = try await AddonRuntime.shared.list()
-        } catch {
-            refreshedAddons = AddonRuntime.shared.installedAddons
-        }
-        
-        await MainActor.run {
-            Self.hasLoadedInstalledAddons = true
-            let visibleAddons = refreshedAddons.filter { !$0.isBuiltIn }
-            self.installedAddons = visibleAddons.filter { !$0.metaData.isUnsupported }
-            self.unsupportedAddons = visibleAddons.filter { $0.metaData.isUnsupported }
-            self.isLoadingAddons = false
-            self.tableView.reloadData()
+
+    private func loadRuntimeAddons(completion: @escaping () -> Void = {}) {
+        AddonRuntime.shared.list { [weak self] result in
+            let refreshedAddons: [Addon]
+            switch result {
+            case .success(let addons):
+                refreshedAddons = addons
+            case .failure:
+                refreshedAddons = AddonRuntime.shared.installedAddons
+            }
+
+            DispatchQueue.main.async {
+                guard let self else {
+                    completion()
+                    return
+                }
+                Self.hasLoadedInstalledAddons = true
+                let visibleAddons = refreshedAddons.filter { !$0.isBuiltIn }
+                self.installedAddons = visibleAddons.filter { !$0.metaData.isUnsupported }
+                self.unsupportedAddons = visibleAddons.filter { $0.metaData.isUnsupported }
+                self.isLoadingAddons = false
+                self.tableView.reloadData()
+                completion()
+            }
         }
     }
     
@@ -376,33 +382,44 @@ final class AddonsPreferencesViewController: SettingsTableViewController {
     private func installAddonPackage(from packageURL: URL) {
         isInstallingAddonFromFile = true
         reloadActionSection()
-        
-        Task { [weak self] in
+
+        let handleFailure: (Error) -> Void = { [weak self] error in
             guard let self else {
                 return
             }
-            
-            do {
-                let stagedPackageURL = try Self.stageAddonPackage(from: packageURL)
-                _ = try await AddonRuntime.shared.install(url: stagedPackageURL.absoluteString)
-                await self.loadRuntimeAddons()
-                
-                await MainActor.run {
+            self.isInstallingAddonFromFile = false
+            self.reloadActionSection()
+            let presentation = AddonErrorPresenter.installErrorPresentation(
+                for: error,
+                addonName: packageURL.deletingPathExtension().lastPathComponent
+            )
+            guard !presentation.isUserCancelled else {
+                return
+            }
+            AlertPresenter.show(title: nil, message: presentation.alertMessage)
+        }
+
+        let stagedPackageURL: URL
+        do {
+            stagedPackageURL = try Self.stageAddonPackage(from: packageURL)
+        } catch {
+            handleFailure(error)
+            return
+        }
+
+        AddonRuntime.shared.install(url: stagedPackageURL.absoluteString) { [weak self] result in
+            switch result {
+            case .success:
+                self?.loadRuntimeAddons { [weak self] in
+                    guard let self else {
+                        return
+                    }
                     self.isInstallingAddonFromFile = false
                     self.reloadActionSection()
                 }
-            } catch {
-                await MainActor.run {
-                    self.isInstallingAddonFromFile = false
-                    self.reloadActionSection()
-                    let presentation = AddonErrorPresenter.installErrorPresentation(
-                        for: error,
-                        addonName: packageURL.deletingPathExtension().lastPathComponent
-                    )
-                    guard !presentation.isUserCancelled else {
-                        return
-                    }
-                    AlertPresenter.show(title: nil, message: presentation.alertMessage)
+            case .failure(let error):
+                DispatchQueue.main.async {
+                    handleFailure(error)
                 }
             }
         }
@@ -516,33 +533,33 @@ final class AddonsPreferencesViewController: SettingsTableViewController {
         addonStatusTextByID.removeAll()
         updateFooterMessage = nil
         tableView.reloadData()
-        
-        Task { [weak self] in
+
+        let statusHandler: @MainActor (String, String?) -> Void = { [weak self] addonID, statusText in
+            self?.applyUpdateStatus(statusText, toAddonID: addonID)
+        }
+
+        let handleResult: (AddonUpdateBatchResult) -> Void = { [weak self] result in
             guard let self else {
                 return
             }
-            
-            let result: AddonUpdateBatchResult
-            if browserViewController.addonCoordinator.updateCoordinator.hasPendingApprovals {
-                result = await browserViewController.addonCoordinator.updateCoordinator.completePendingUpdates { [weak self] addonID, statusText in
-                    self?.applyUpdateStatus(statusText, toAddonID: addonID)
+            self.loadRuntimeAddons { [weak self] in
+                guard let self else {
+                    return
                 }
-            } else {
-                result = await browserViewController.addonCoordinator.updateCoordinator.updateAllAddons { [weak self] addonID, statusText in
-                    self?.applyUpdateStatus(statusText, toAddonID: addonID)
-                }
-            }
-            
-            await self.loadRuntimeAddons()
-            
-            await MainActor.run {
                 self.isCheckingForAddonUpdates = false
-                
+
                 let pendingApprovalAddonIDs = Prefs.AddonSettings.pendingApprovalAddonIDs
                 pendingApprovalAddonIDs.forEach { self.addonStatusTextByID[$0] = "Needs permission to update" }
                 self.updateFooterMessage = self.updateFooterSummary(for: result)
                 self.tableView.reloadData()
             }
+        }
+
+        let updateCoordinator = browserViewController.addonCoordinator.updateCoordinator
+        if updateCoordinator.hasPendingApprovals {
+            updateCoordinator.completePendingUpdates(status: statusHandler, completion: handleResult)
+        } else {
+            updateCoordinator.updateAllAddons(status: statusHandler, completion: handleResult)
         }
     }
     

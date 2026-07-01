@@ -176,9 +176,7 @@ final class AddonPermissionsPreferencesViewController: SettingsTableViewControll
     
     override func viewWillAppear(_ animated: Bool) {
         super.viewWillAppear(animated)
-        Task { [weak self] in
-            await self?.refreshAddon()
-        }
+        refreshAddon()
     }
     
     // MARK: - Table Structure
@@ -272,56 +270,55 @@ final class AddonPermissionsPreferencesViewController: SettingsTableViewControll
             request = AddonPermissionChangeRequest(dataCollectionPermissions: [permission])
         }
         
-        Task { [weak self] in
-            guard let self else {
-                return
-            }
-            
-            await MainActor.run {
-                self.isUpdatingPermissions = true
-                self.tableView.reloadData()
-            }
-            
-            do {
-                let updatedAddon = try await (desiredState
-                                              ? AddonRuntime.shared.addOptionalPermissions(request, to: addon)
-                                              : AddonRuntime.shared.removeOptionalPermissions(request, from: addon))
-                
-                await MainActor.run {
-                    self.isUpdatingPermissions = false
+        isUpdatingPermissions = true
+        tableView.reloadData()
+
+        let handler: (Result<Addon, Error>) -> Void = { [weak self] result in
+            DispatchQueue.main.async {
+                guard let self else {
+                    return
+                }
+                self.isUpdatingPermissions = false
+                switch result {
+                case .success(let updatedAddon):
                     self.addon = updatedAddon
                     self.title = updatedAddon.metaData.name ?? updatedAddon.id
                     self.tableView.reloadData()
-                }
-            } catch {
-                await MainActor.run {
-                    self.isUpdatingPermissions = false
+                case .failure(let error):
                     self.addon = addon
                     self.tableView.reloadData()
                     AlertPresenter.show(title: "Failed to update permissions", message: "\(error)")
                 }
             }
         }
+
+        if desiredState {
+            AddonRuntime.shared.addOptionalPermissions(request, to: addon, completion: handler)
+        } else {
+            AddonRuntime.shared.removeOptionalPermissions(request, from: addon, completion: handler)
+        }
     }
     
     // MARK: - Add-on Loading
     
-    private func refreshAddon() async {
-        do {
-            let refreshedAddon = try await AddonRuntime.shared.addon(byID: addonID)
-            await MainActor.run {
-                guard let refreshedAddon else {
-                    self.navigationController?.popViewController(animated: true)
+    private func refreshAddon() {
+        AddonRuntime.shared.addon(byID: addonID) { [weak self] result in
+            DispatchQueue.main.async {
+                guard let self else {
                     return
                 }
-                
-                self.addon = refreshedAddon
-                self.title = refreshedAddon.metaData.name ?? refreshedAddon.id
-                self.tableView.reloadData()
-            }
-        } catch {
-            await MainActor.run {
-                AlertPresenter.show(title: "Failed to reload add-on", message: "\(error)")
+                switch result {
+                case .success(let refreshedAddon):
+                    guard let refreshedAddon else {
+                        self.navigationController?.popViewController(animated: true)
+                        return
+                    }
+                    self.addon = refreshedAddon
+                    self.title = refreshedAddon.metaData.name ?? refreshedAddon.id
+                    self.tableView.reloadData()
+                case .failure(let error):
+                    AlertPresenter.show(title: "Failed to reload add-on", message: "\(error)")
+                }
             }
         }
     }

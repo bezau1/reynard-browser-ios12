@@ -13,7 +13,7 @@ final class ImagePreviewViewController: UIViewController {
     }
     
     private let url: URL
-    private var imageLoadTask: Task<Void, Never>?
+    private var imageLoadToken: UUID?
     
     private let imageView = UIImageView()
     
@@ -29,7 +29,7 @@ final class ImagePreviewViewController: UIViewController {
     }
     
     deinit {
-        imageLoadTask?.cancel()
+        imageLoadToken = nil
     }
     
     override func loadView() {
@@ -71,22 +71,20 @@ final class ImagePreviewViewController: UIViewController {
     
     private func loadImage() {
         imageView.image = nil
-        imageLoadTask = Task { [weak self, url] in
-            guard let image = await ImagePreviewLoader.image(from: url),
-                  !Task.isCancelled else {
+        let token = UUID()
+        imageLoadToken = token
+        ImagePreviewLoader.image(from: url) { [weak self] image in
+            guard let self, let image else {
                 return
             }
-            await MainActor.run {
-                self?.applyLoadedImage(image)
+            guard self.imageLoadToken == token else {
+                return
             }
+            self.applyLoadedImage(image)
         }
     }
-    
+
     private func applyLoadedImage(_ image: UIImage) {
-        guard imageLoadTask?.isCancelled == false else {
-            return
-        }
-        
         imageView.image = image
         UIView.animate(withDuration: UX.previewResizeAnimationDuration, delay: 0, options: [.curveEaseInOut]) {
             self.preferredContentSize = image.size
@@ -95,8 +93,7 @@ final class ImagePreviewViewController: UIViewController {
     }
     
     private func cancelImageLoad() {
-        imageLoadTask?.cancel()
-        imageLoadTask = nil
+        imageLoadToken = nil
         imageView.image = nil
     }
 }

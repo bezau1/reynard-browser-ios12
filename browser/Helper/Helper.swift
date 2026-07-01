@@ -64,7 +64,7 @@ open class BrowserHelper: NSObject, GeckoProcessExtension, NSExtensionRequestHan
 	}
 
 	open func beginRequest(with context: NSExtensionContext) {
-		Task { @MainActor in
+		DispatchQueue.main.async {
 			do {
 				try ProcessBootstrap.start(context: context, process: self)
 			} catch {

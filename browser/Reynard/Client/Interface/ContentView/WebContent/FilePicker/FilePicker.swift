@@ -83,7 +83,7 @@ final class FilePicker: NSObject {
     let acceptedTypes: AcceptedTypes
     let stagingDirectoryURL: URL
     
-    var continuation: CheckedContinuation<[String: Any]?, Never>?
+    var completion: (([String: Any]?) -> Void)?
     var anchorButton: FilePickerMenuAnchorButton?
     weak var presentedController: UIViewController?
     var launchedFollowupPicker = false
@@ -109,24 +109,22 @@ final class FilePicker: NSObject {
     
     // MARK: - Presentation
     
-    func present() async -> [String: Any]? {
-        await withCheckedContinuation { continuation in
-            self.continuation = continuation
-            if let preferredInitialAction {
-                DispatchQueue.main.async { [weak self] in
-                    self?.performAction(preferredInitialAction)
-                }
-                return
+    func present(completion: @escaping ([String: Any]?) -> Void) {
+        self.completion = completion
+        if let preferredInitialAction {
+            DispatchQueue.main.async { [weak self] in
+                self?.performAction(preferredInitialAction)
             }
-            
-            let actions = availableActions
-            if actions.count == 1, let action = actions.first {
-                DispatchQueue.main.async { [weak self] in
-                    self?.performAction(action)
-                }
-            } else {
-                showMenu()
+            return
+        }
+
+        let actions = availableActions
+        if actions.count == 1, let action = actions.first {
+            DispatchQueue.main.async { [weak self] in
+                self?.performAction(action)
             }
+        } else {
+            showMenu()
         }
     }
     
@@ -154,9 +152,9 @@ final class FilePicker: NSObject {
     // MARK: - Completion
     
     func finish(with result: [String: Any]?) {
-        guard let continuation else { return }
-        self.continuation = nil
-        continuation.resume(returning: result)
+        guard let completion else { return }
+        self.completion = nil
+        completion(result)
     }
     
     // MARK: - Helpers

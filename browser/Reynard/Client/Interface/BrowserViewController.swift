@@ -133,14 +133,15 @@ final class BrowserViewController: UIViewController {
         refreshAddressBar()
         homepageOverlayCoordinator.updatePresentation(animated: false)
         
-        Task { @MainActor [weak self] in
-            guard let self else {
-                return
-            }
-            
-            await self.addonCoordinator.start()
-            if let session = self.tabManager.selectedTab?.session {
-                self.sessionManager.setAddonTabActive(true, for: session)
+        addonCoordinator.start { [weak self] in
+            DispatchQueue.main.async {
+                guard let self else {
+                    return
+                }
+
+                if let session = self.tabManager.selectedTab?.session {
+                    self.sessionManager.setAddonTabActive(true, for: session)
+                }
             }
         }
         

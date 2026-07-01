@@ -43,14 +43,12 @@ struct ImagePreviewMenu {
         }
     }
     
-    private static func loadImage(from url: URL, completion: @escaping @MainActor (UIImage) -> Void) {
-        Task {
-            guard let image = await ImagePreviewLoader.image(from: url) else {
+    private static func loadImage(from url: URL, completion: @escaping (UIImage) -> Void) {
+        ImagePreviewLoader.image(from: url) { image in
+            guard let image else {
                 return
             }
-            await MainActor.run {
-                completion(image)
-            }
+            completion(image)
         }
     }
     

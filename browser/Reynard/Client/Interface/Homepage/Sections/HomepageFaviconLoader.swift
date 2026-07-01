@@ -13,21 +13,20 @@ final class HomepageFaviconLoader {
     
     private let updateIcon: (UIImage?, UIColor?) -> Void
     private var representedURL: URL?
-    private var loadTask: Task<Void, Never>?
-    
+    private var loadToken: UUID?
+
     init(_ updateIcon: @escaping (UIImage?, UIColor?) -> Void) {
         self.updateIcon = updateIcon
     }
-    
+
     deinit {
-        loadTask?.cancel()
+        loadToken = nil
     }
-    
+
     func loadIcon(for url: URL) {
         representedURL = url
-        loadTask?.cancel()
-        loadTask = nil
-        
+        loadToken = nil
+
         if let bundledImage = UIImage(named: Self.bundledIconName(for: url)) {
             updateIcon(bundledImage, nil)
             return
@@ -40,33 +39,31 @@ final class HomepageFaviconLoader {
         
         applyFallbackIcon()
         let loadingURL = url
-        loadTask = Task { [weak self] in
+        let token = UUID()
+        loadToken = token
+        Self.faviconStore.favicon(for: loadingURL) { [weak self] loadedImage in
             guard let self else {
                 return
             }
-            
-            let loadedImage = await Self.faviconStore.favicon(for: loadingURL)
-            guard !Task.isCancelled else {
+
+            guard self.loadToken == token else {
                 return
             }
-            
-            await MainActor.run {
-                guard self.representedURL == loadingURL else {
-                    return
-                }
-                
-                self.updateIcon(
-                    loadedImage ?? UIImage(named: Self.fallbackIconName),
-                    loadedImage == nil ? .secondaryLabel : nil
-                )
+
+            guard self.representedURL == loadingURL else {
+                return
             }
+
+            self.updateIcon(
+                loadedImage ?? UIImage(named: Self.fallbackIconName),
+                loadedImage == nil ? .secondaryLabel : nil
+            )
         }
     }
-    
+
     func reset() {
         representedURL = nil
-        loadTask?.cancel()
-        loadTask = nil
+        loadToken = nil
         applyFallbackIcon()
     }
     

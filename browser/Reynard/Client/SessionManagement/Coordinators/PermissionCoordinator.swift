@@ -14,8 +14,9 @@ protocol PermissionPromptPresenting {
         title: String,
         message: String?,
         cancelTitle: String,
-        for session: GeckoSession
-    ) async -> Bool
+        for session: GeckoSession,
+        completion: @escaping (Bool) -> Void
+    )
 }
 
 final class PermissionCoordinator: NSObject, PermissionEmbedderDelegate {
@@ -72,68 +73,81 @@ final class PermissionCoordinator: NSObject, PermissionEmbedderDelegate {
     // MARK: - PermissionEmbedderDelegate
     
     @MainActor
-    func permissionDelegate(decideContentPermission permission: ContentPermission, session: GeckoSession) async -> ContentPermission.Value {
+    func permissionDelegate(decideContentPermission permission: ContentPermission, session: GeckoSession, completion: @escaping (ContentPermission.Value) -> Void) {
         if permission.permission == .deviceSensors,
            let title = permission.alertTitle {
-            let allowed = await promptPresenter.request(
+            promptPresenter.request(
                 title: title,
                 message: permission.alertMessage,
                 cancelTitle: "Don't Allow",
                 for: session
-            )
-            return allowed ? .allow : .deny
+            ) { allowed in
+                completion(allowed ? .allow : .deny)
+            }
+            return
         }
-        
+
         guard let sitePermission = SitePermission(contentPermission: permission),
               let host = URLUtils.normalizedHost(fromRawURI: permission.uri) else {
-            return .prompt
+            completion(.prompt)
+            return
         }
-        
+
         let action = permissionStore.resolvedAction(for: sitePermission, host: host, session: session)
         if sitePermission == .autoplay {
             applyPermission(action, to: sitePermission, permission: permission)
-            return ContentPermission.Value(rawValue: action.autoplayValue) ?? .deny
+            completion(ContentPermission.Value(rawValue: action.autoplayValue) ?? .deny)
+            return
         }
-        
+
         guard let title = permission.alertTitle else {
-            return .prompt
+            completion(.prompt)
+            return
         }
-        
+
         switch action {
         case .blocked,
                 .allowed:
             applyPermission(action, to: sitePermission, permission: permission)
-            return action.contentPermissionValue
+            completion(action.contentPermissionValue)
         case .askToAllow:
-            let allowed = await promptPresenter.request(
+            promptPresenter.request(
                 title: title,
                 message: permission.alertMessage,
                 cancelTitle: "Don't Allow",
                 for: session
-            )
-            let action: SitePermissionAction = allowed ? .allowed : .blocked
-            permissionStore.scheduleActionUpdate(action, for: sitePermission, host: host, session: session)
-            applyPermission(action, to: sitePermission, permission: permission)
-            return action.contentPermissionValue
+            ) { [weak self] allowed in
+                guard let self else {
+                    completion(allowed ? .allow : .deny)
+                    return
+                }
+                let action: SitePermissionAction = allowed ? .allowed : .blocked
+                self.permissionStore.scheduleActionUpdate(action, for: sitePermission, host: host, session: session)
+                self.applyPermission(action, to: sitePermission, permission: permission)
+                completion(action.contentPermissionValue)
+            }
         }
     }
-    
+
     @MainActor
-    func permissionDelegate(decideMediaPermission request: MediaPermissionRequest, session: GeckoSession) async -> Bool {
+    func permissionDelegate(decideMediaPermission request: MediaPermissionRequest, session: GeckoSession, completion: @escaping (Bool) -> Void) {
         let requestedPermissions = requestedPermissions(for: request)
         guard !requestedPermissions.isEmpty else {
-            return false
+            completion(false)
+            return
         }
-        
+
         if requestedPermissions.contains(where: { permissionStore.resolvedAction(for: $0, host: request.host, session: session) == .blocked }) {
-            return false
+            completion(false)
+            return
         }
-        
+
         if requestedPermissions.allSatisfy({ permissionStore.resolvedAction(for: $0, host: request.host, session: session) == .allowed }) {
-            return true
+            completion(true)
+            return
         }
-        
-        let allowed = await promptPresenter.request(
+
+        promptPresenter.request(
             title: ContentPermission.mediaAlertTitle(
                 uri: request.uri,
                 videoRequested: request.videoRequested,
@@ -142,14 +156,18 @@ final class PermissionCoordinator: NSObject, PermissionEmbedderDelegate {
             message: nil,
             cancelTitle: "Cancel",
             for: session
-        )
-        let action: SitePermissionAction = allowed ? .allowed : .blocked
-        for permission in requestedPermissions {
-            permissionStore.scheduleActionUpdate(action, for: permission, host: request.host, session: session)
-            applyPermission(action, to: permission, uri: request.uri, privateMode: session.isPrivateMode)
+        ) { [weak self] allowed in
+            guard let self else {
+                completion(allowed)
+                return
+            }
+            let action: SitePermissionAction = allowed ? .allowed : .blocked
+            for permission in requestedPermissions {
+                self.permissionStore.scheduleActionUpdate(action, for: permission, host: request.host, session: session)
+                self.applyPermission(action, to: permission, uri: request.uri, privateMode: session.isPrivateMode)
+            }
+            completion(allowed)
         }
-        
-        return allowed
     }
     
     // MARK: - Permission Resolution

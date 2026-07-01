@@ -20,16 +20,8 @@ final class FrequentlyVisitedSectionViewController: UIViewController {
     }
     
     private enum MetadataState {
-        case loading(Task<Void, Never>)
+        case loading(UUID)
         case loaded(SiteMetadataSnapshot)
-        
-        func cancelLoad() {
-            guard case let .loading(task) = self else {
-                return
-            }
-            
-            task.cancel()
-        }
     }
     
     private static let titleFont = UIFontMetrics(forTextStyle: .title2).scaledFont(
@@ -165,13 +157,8 @@ final class FrequentlyVisitedSectionViewController: UIViewController {
             minVisitCount: 3
         ).items
         let retainedURLs = Set(sites.map(\.url))
-        metadataStatesByURL = metadataStatesByURL.filter { url, state in
-            if retainedURLs.contains(url) {
-                return true
-            }
-            
-            state.cancelLoad()
-            return false
+        metadataStatesByURL = metadataStatesByURL.filter { url, _ in
+            retainedURLs.contains(url)
         }
         
         metadataStore.prune(keeping: sites.map(\.url))
@@ -207,36 +194,40 @@ final class FrequentlyVisitedSectionViewController: UIViewController {
         guard metadataStatesByURL[url] == nil else {
             return
         }
-        
-        let task = Task { [weak self] in
+
+        let token = UUID()
+        metadataStatesByURL[url] = .loading(token)
+
+        metadataStore.metadata(for: url) { [weak self] metadata in
             guard let self else {
                 return
             }
-            
-            let metadata = await self.metadataStore.metadata(for: url)
-            guard !Task.isCancelled else {
+
+            guard case let .loading(currentToken)? = self.metadataStatesByURL[url],
+                  currentToken == token else {
                 return
             }
-            
-            await MainActor.run {
-                guard let metadata,
-                      self.sites.contains(where: { $0.url == url }) else {
-                    self.metadataStatesByURL[url] = nil
-                    return
-                }
-                
-                self.metadataStatesByURL[url] = .loaded(metadata)
-                if let index = self.sites.firstIndex(where: { $0.url == url }) {
-                    self.cardViews[index].configure(site: self.sites[index], metadata: metadata)
-                }
+
+            guard let metadata,
+                  self.sites.contains(where: { $0.url == url }) else {
+                self.metadataStatesByURL[url] = nil
+                return
+            }
+
+            self.metadataStatesByURL[url] = .loaded(metadata)
+            if let index = self.sites.firstIndex(where: { $0.url == url }) {
+                self.cardViews[index].configure(site: self.sites[index], metadata: metadata)
             }
         }
-        
-        metadataStatesByURL[url] = .loading(task)
     }
-    
+
     private func cancelMetadataLoads() {
-        metadataStatesByURL.values.forEach { $0.cancelLoad() }
+        metadataStatesByURL = metadataStatesByURL.filter { _, state in
+            if case .loading = state {
+                return false
+            }
+            return true
+        }
     }
     
     // MARK: - Layout

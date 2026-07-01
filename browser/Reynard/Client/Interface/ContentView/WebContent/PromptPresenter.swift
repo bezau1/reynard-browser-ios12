@@ -19,32 +19,31 @@ final class PromptPresenter: PromptPresenting {
     
     init() {}
     
-    func present(_ request: PromptRequest, for session: GeckoSession) async -> PromptResponse? {
+    func present(_ request: PromptRequest, for session: GeckoSession, completion: @escaping (PromptResponse?) -> Void) {
         switch request {
         case .alert(let request):
-            await presentAlert(request: request)
-            return nil
-            
+            presentAlert(request: request) { completion(nil) }
+
         case .button(let request):
-            return await presentButton(request: request)
-            
+            presentButton(request: request, completion: completion)
+
         case .text(let request):
-            return await presentText(request: request)
-            
+            presentText(request: request, completion: completion)
+
         case .folderUpload(let request):
-            return await presentFolderUpload(request: request)
-            
+            presentFolderUpload(request: request, completion: completion)
+
         case .color(let request):
-            return await presentColorPicker(session: session, request: request)
-            
+            presentColorPicker(session: session, request: request, completion: completion)
+
         case .dateTime(let request):
-            return await presentDateTimePicker(session: session, request: request)
-            
+            presentDateTimePicker(session: session, request: request, completion: completion)
+
         case .file(let request):
-            return await presentFilePicker(session: session, request: request)
-            
+            presentFilePicker(session: session, request: request, completion: completion)
+
         case .choice(let request):
-            return await presentSelectPicker(session: session, request: request)
+            presentSelectPicker(session: session, request: request, completion: completion)
         }
     }
     
@@ -70,166 +69,168 @@ final class PromptPresenter: PromptPresenting {
     
     // MARK: - Basic Prompts
     
-    private func presentAlert(request: AlertPromptRequest) async {
+    private func presentAlert(request: AlertPromptRequest, completion: @escaping () -> Void) {
         guard let presenter = UIApplication.shared.topViewController() else {
+            completion()
             return
         }
-        
-        await withCheckedContinuation { continuation in
-            let alert = UIAlertController(
-                title: request.title.isEmpty ? nil : request.title,
-                message: request.message.isEmpty ? nil : request.message,
-                preferredStyle: .alert
-            )
+
+        let alert = UIAlertController(
+            title: request.title.isEmpty ? nil : request.title,
+            message: request.message.isEmpty ? nil : request.message,
+            preferredStyle: .alert
+        )
+        alert.addAction(UIAlertAction(title: "OK", style: .default) { _ in
+            completion()
+        })
+        presenter.present(alert, animated: true)
+    }
+
+    private func presentButton(request: ButtonPromptRequest, completion: @escaping (PromptResponse?) -> Void) {
+        guard let presenter = UIApplication.shared.topViewController() else {
+            completion(nil)
+            return
+        }
+
+        let alert = UIAlertController(
+            title: request.title.isEmpty ? nil : request.title,
+            message: request.message.isEmpty ? nil : request.message,
+            preferredStyle: .alert
+        )
+
+        for index in 0..<3 {
+            let title = buttonTitle(at: index, request: request)
+            guard !title.isEmpty else { continue }
+
+            let isCancel = index == 2 &&
+            request.buttonTitles.indices.contains(index) &&
+            request.buttonTitles[index] == "cancel"
+            alert.addAction(UIAlertAction(
+                title: title,
+                style: isCancel ? .cancel : .default
+            ) { _ in
+                completion(.button(index))
+            })
+        }
+
+        if alert.actions.isEmpty {
             alert.addAction(UIAlertAction(title: "OK", style: .default) { _ in
-                continuation.resume()
+                completion(.button(0))
             })
-            presenter.present(alert, animated: true)
         }
+
+        presenter.present(alert, animated: true)
     }
-    
-    private func presentButton(request: ButtonPromptRequest) async -> PromptResponse? {
+
+    private func presentText(request: TextPromptRequest, completion: @escaping (PromptResponse?) -> Void) {
         guard let presenter = UIApplication.shared.topViewController() else {
-            return nil
+            completion(nil)
+            return
         }
-        
-        return await withCheckedContinuation { continuation in
-            let alert = UIAlertController(
-                title: request.title.isEmpty ? nil : request.title,
-                message: request.message.isEmpty ? nil : request.message,
-                preferredStyle: .alert
-            )
-            
-            for index in 0..<3 {
-                let title = buttonTitle(at: index, request: request)
-                guard !title.isEmpty else { continue }
-                
-                let isCancel = index == 2 &&
-                request.buttonTitles.indices.contains(index) &&
-                request.buttonTitles[index] == "cancel"
-                alert.addAction(UIAlertAction(
-                    title: title,
-                    style: isCancel ? .cancel : .default
-                ) { _ in
-                    continuation.resume(returning: .button(index))
-                })
-            }
-            
-            if alert.actions.isEmpty {
-                alert.addAction(UIAlertAction(title: "OK", style: .default) { _ in
-                    continuation.resume(returning: .button(0))
-                })
-            }
-            
-            presenter.present(alert, animated: true)
+
+        let alert = UIAlertController(
+            title: request.title.isEmpty ? nil : request.title,
+            message: request.message.isEmpty ? nil : request.message,
+            preferredStyle: .alert
+        )
+        alert.addTextField { textField in
+            textField.text = request.value
         }
+        alert.addAction(UIAlertAction(title: "Cancel", style: .cancel) { _ in
+            completion(nil)
+        })
+        alert.addAction(UIAlertAction(title: "OK", style: .default) { _ in
+            completion(.text(alert.textFields?.first?.text ?? ""))
+        })
+        presenter.present(alert, animated: true)
     }
-    
-    private func presentText(request: TextPromptRequest) async -> PromptResponse? {
+
+    private func presentFolderUpload(request: FolderUploadPromptRequest, completion: @escaping (PromptResponse?) -> Void) {
         guard let presenter = UIApplication.shared.topViewController() else {
-            return nil
+            completion(nil)
+            return
         }
-        
-        return await withCheckedContinuation { continuation in
-            let alert = UIAlertController(
-                title: request.title.isEmpty ? nil : request.title,
-                message: request.message.isEmpty ? nil : request.message,
-                preferredStyle: .alert
-            )
-            alert.addTextField { textField in
-                textField.text = request.value
-            }
-            alert.addAction(UIAlertAction(title: "Cancel", style: .cancel) { _ in
-                continuation.resume(returning: nil)
-            })
-            alert.addAction(UIAlertAction(title: "OK", style: .default) { _ in
-                continuation.resume(returning: .text(alert.textFields?.first?.text ?? ""))
-            })
-            presenter.present(alert, animated: true)
-        }
-    }
-    
-    private func presentFolderUpload(request: FolderUploadPromptRequest) async -> PromptResponse? {
-        guard let presenter = UIApplication.shared.topViewController() else {
-            return nil
-        }
-        
+
         let message = request.directoryName.isEmpty
         ? "Are you sure you want to upload all files? Only do this if you trust the site."
         : "Are you sure you want to upload all files from \"\(request.directoryName)\"? Only do this if you trust the site."
-        
-        return await withCheckedContinuation { continuation in
-            let alert = UIAlertController(
-                title: "Confirm Upload",
-                message: message,
-                preferredStyle: .alert
-            )
-            alert.addAction(UIAlertAction(title: "Cancel", style: .cancel) { _ in
-                continuation.resume(returning: .folderUpload(allowed: false))
-            })
-            alert.addAction(UIAlertAction(title: "Upload", style: .default) { _ in
-                continuation.resume(returning: .folderUpload(allowed: true))
-            })
-            presenter.present(alert, animated: true)
-        }
+
+        let alert = UIAlertController(
+            title: "Confirm Upload",
+            message: message,
+            preferredStyle: .alert
+        )
+        alert.addAction(UIAlertAction(title: "Cancel", style: .cancel) { _ in
+            completion(.folderUpload(allowed: false))
+        })
+        alert.addAction(UIAlertAction(title: "Upload", style: .default) { _ in
+            completion(.folderUpload(allowed: true))
+        })
+        presenter.present(alert, animated: true)
     }
     
     // MARK: - Picker Prompts
     
     private func presentColorPicker(
         session: GeckoSession,
-        request: ColorPromptRequest
-    ) async -> PromptResponse? {
+        request: ColorPromptRequest,
+        completion: @escaping (PromptResponse?) -> Void
+    ) {
         guard let anchor = promptAnchor(for: request.anchor, session: session) else {
-            return nil
+            completion(nil)
+            return
         }
-        
+
         let picker = ColorPicker(
             anchorRect: anchor.rect,
             geckoView: anchor.view
         )
         colorPickers[request.id] = picker
-        defer { colorPickers.removeValue(forKey: request.id) }
-        
-        let result = await picker.present(initialColor: UIColor(hexString: request.value) ?? .black)
-        
-        return result.map(PromptResponse.color)
+
+        picker.present(initialColor: UIColor(hexString: request.value) ?? .black) { [weak self] result in
+            self?.colorPickers.removeValue(forKey: request.id)
+            completion(result.map(PromptResponse.color))
+        }
     }
-    
+
     private func presentDateTimePicker(
         session: GeckoSession,
-        request: DateTimePromptRequest
-    ) async -> PromptResponse? {
+        request: DateTimePromptRequest,
+        completion: @escaping (PromptResponse?) -> Void
+    ) {
         guard let anchor = promptAnchor(for: request.anchor, session: session) else {
-            return nil
+            completion(nil)
+            return
         }
-        
+
         let picker = DateTimePicker(
             inputMode: request.mode,
             anchorRect: anchor.rect,
             geckoView: anchor.view
         )
         dateTimePickers[request.id] = picker
-        defer { dateTimePickers.removeValue(forKey: request.id) }
-        
-        let result = await picker.present(
+
+        picker.present(
             value: request.value,
             min: request.min,
             max: request.max,
             step: request.step
-        )
-        
-        return result.map(PromptResponse.dateTime)
+        ) { [weak self] result in
+            self?.dateTimePickers.removeValue(forKey: request.id)
+            completion(result.map(PromptResponse.dateTime))
+        }
     }
-    
+
     private func presentFilePicker(
         session: GeckoSession,
-        request: FilePickerPromptRequest
-    ) async -> PromptResponse? {
+        request: FilePickerPromptRequest,
+        completion: @escaping (PromptResponse?) -> Void
+    ) {
         guard let anchor = promptAnchor(for: request.anchor, session: session) else {
-            return nil
+            completion(nil)
+            return
         }
-        
+
         let picker = FilePicker(
             promptId: request.id,
             mode: request.mode,
@@ -239,21 +240,23 @@ final class PromptPresenter: PromptPresenting {
             geckoView: anchor.view
         )
         filePickers[request.id] = picker
-        defer { filePickers.removeValue(forKey: request.id) }
-        
-        let result = await picker.present()
-        
-        return result.map(PromptResponse.files)
+
+        picker.present { [weak self] result in
+            self?.filePickers.removeValue(forKey: request.id)
+            completion(result.map(PromptResponse.files))
+        }
     }
-    
+
     private func presentSelectPicker(
         session: GeckoSession,
-        request: SelectPromptRequest
-    ) async -> PromptResponse? {
+        request: SelectPromptRequest,
+        completion: @escaping (PromptResponse?) -> Void
+    ) {
         guard let anchor = promptAnchor(for: request.anchor, session: session) else {
-            return nil
+            completion(nil)
+            return
         }
-        
+
         let picker = SelectPicker(
             mode: request.mode,
             choices: request.choices,
@@ -261,11 +264,11 @@ final class PromptPresenter: PromptPresenting {
             geckoView: anchor.view
         )
         selectPickers[request.id] = picker
-        defer { selectPickers.removeValue(forKey: request.id) }
-        
-        let result = await picker.present()
-        
-        return result.map(PromptResponse.choices)
+
+        picker.present { [weak self] result in
+            self?.selectPickers.removeValue(forKey: request.id)
+            completion(result.map(PromptResponse.choices))
+        }
     }
     
     private func promptAnchor(

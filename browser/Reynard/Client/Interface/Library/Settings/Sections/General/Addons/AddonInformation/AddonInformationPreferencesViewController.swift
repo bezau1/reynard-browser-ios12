@@ -136,9 +136,7 @@ final class AddonInformationPreferencesViewController: SettingsTableViewControll
     
     override func viewWillAppear(_ animated: Bool) {
         super.viewWillAppear(animated)
-        Task { [weak self] in
-            await self?.refreshAddon()
-        }
+        refreshAddon()
     }
     
     // MARK: - Table Structure
@@ -244,22 +242,24 @@ final class AddonInformationPreferencesViewController: SettingsTableViewControll
     
     // MARK: - Add-on Loading
     
-    private func refreshAddon() async {
-        do {
-            let refreshedAddon = try await AddonRuntime.shared.addon(byID: addonID)
-            await MainActor.run {
-                guard let refreshedAddon else {
-                    self.navigationController?.popViewController(animated: true)
+    private func refreshAddon() {
+        AddonRuntime.shared.addon(byID: addonID) { [weak self] result in
+            DispatchQueue.main.async {
+                guard let self else {
                     return
                 }
-                
-                self.addon = refreshedAddon
-                self.title = refreshedAddon.metaData.name ?? refreshedAddon.id
-                self.tableView.reloadData()
-            }
-        } catch {
-            await MainActor.run {
-                AlertPresenter.show(title: "Failed to reload add-on", message: "\(error)")
+                switch result {
+                case .success(let refreshedAddon):
+                    guard let refreshedAddon else {
+                        self.navigationController?.popViewController(animated: true)
+                        return
+                    }
+                    self.addon = refreshedAddon
+                    self.title = refreshedAddon.metaData.name ?? refreshedAddon.id
+                    self.tableView.reloadData()
+                case .failure(let error):
+                    AlertPresenter.show(title: "Failed to reload add-on", message: "\(error)")
+                }
             }
         }
     }

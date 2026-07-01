@@ -147,53 +147,71 @@ extension FilePicker {
     func prepareMediaResult(
         mediaURL: URL?,
         imageURL: URL?,
-        imageData: Data?
-    ) async -> SelectionResult? {
+        imageData: Data?,
+        completion: @escaping (SelectionResult?) -> Void
+    ) {
         let stagingDirectoryURL = self.stagingDirectoryURL
-        
-        return await Task.detached(priority: .userInitiated) {
+
+        DispatchQueue.global(qos: .userInitiated).async {
+            let result: SelectionResult?
             if let mediaURL {
-                return try? Self.stageFiles(from: [mediaURL], in: stagingDirectoryURL)
+                result = try? Self.stageFiles(from: [mediaURL], in: stagingDirectoryURL)
+            } else if let imageURL {
+                result = try? Self.stageFiles(from: [imageURL], in: stagingDirectoryURL)
+            } else if let imageData {
+                result = try? Self.stageImageData(imageData, in: stagingDirectoryURL)
+            } else {
+                result = nil
             }
-            if let imageURL {
-                return try? Self.stageFiles(from: [imageURL], in: stagingDirectoryURL)
+            DispatchQueue.main.async {
+                completion(result)
             }
-            if let imageData {
-                return try? Self.stageImageData(imageData, in: stagingDirectoryURL)
-            }
-            return nil
-        }.value
+        }
     }
-    
+
     @available(iOS 14.0, *)
-    func preparePhotoLibraryResult(from results: [PHPickerResult]) async -> SelectionResult? {
+    func preparePhotoLibraryResult(from results: [PHPickerResult], completion: @escaping (SelectionResult?) -> Void) {
         let selectedResults = mode == .multiple ? results : Array(results.prefix(1))
         guard !selectedResults.isEmpty else {
-            return nil
+            completion(nil)
+            return
         }
-        
+
         do {
             try Self.prepareDirectory(stagingDirectoryURL)
         } catch {
-            return nil
+            completion(nil)
+            return
         }
-        
+
+        let directory = stagingDirectoryURL
+        let mediaTypes = acceptedTypes.mediaTypes
         var stagedFiles: [String] = []
-        for result in selectedResults {
-            guard let stagedURL = await Self.stageItemProvider(
-                result.itemProvider,
-                acceptedMediaTypes: acceptedTypes.mediaTypes,
-                in: stagingDirectoryURL
-            ) else {
-                continue
+
+        // Stage each picked item sequentially; stageItemProvider is callback-based.
+        func processNext(_ index: Int) {
+            guard index < selectedResults.count else {
+                let result = stagedFiles.isEmpty
+                    ? nil
+                    : SelectionResult(files: stagedFiles, filesInWebKitDirectory: [])
+                DispatchQueue.main.async {
+                    completion(result)
+                }
+                return
             }
-            stagedFiles.append(stagedURL.path)
+
+            Self.stageItemProvider(
+                selectedResults[index].itemProvider,
+                acceptedMediaTypes: mediaTypes,
+                in: directory
+            ) { stagedURL in
+                if let stagedURL {
+                    stagedFiles.append(stagedURL.path)
+                }
+                processNext(index + 1)
+            }
         }
-        
-        guard !stagedFiles.isEmpty else {
-            return nil
-        }
-        
-        return SelectionResult(files: stagedFiles, filesInWebKitDirectory: [])
+
+        processNext(0)
     }
 }

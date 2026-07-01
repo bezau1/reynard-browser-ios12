@@ -255,9 +255,7 @@ final class ClearBrowsingDataViewController: SettingsTableViewController {
             clearOpenedTabs()
         }
         
-        Task {
-            await clearSelectedEngineData(for: selectedCategories)
-        }
+        clearSelectedEngineData(for: selectedCategories)
     }
     
     private func clearOpenedTabs() {
@@ -270,21 +268,45 @@ final class ClearBrowsingDataViewController: SettingsTableViewController {
         browserViewController.tabManager.createTab(selecting: true, mode: .regular)
     }
     
-    private func clearSelectedEngineData(for selectedCategories: Set<BrowsingDataCategory>) async {
-        do {
-            if selectedCategories.contains(.cookiesAndSiteData) {
-                try await GeckoStorageController.clearData(
-                    flags: GeckoStorageClearFlags.cookies | GeckoStorageClearFlags.authSessions
-                )
-                try await GeckoStorageController.clearData(flags: GeckoStorageClearFlags.domStorages)
-            }
-            
-            if selectedCategories.contains(.cachedImagesAndFiles) {
-                await GeckoStorageController.clearTranslationModelCache()
-                try await GeckoStorageController.clearData(flags: GeckoStorageClearFlags.allCaches)
-            }
-        } catch {
+    private func clearSelectedEngineData(for selectedCategories: Set<BrowsingDataCategory>) {
+        let handleError: (Error) -> Void = { error in
             AlertPresenter.show(title: "Failed to clear browsing data", message: "\(error)")
+        }
+
+        let clearCaches: () -> Void = {
+            guard selectedCategories.contains(.cachedImagesAndFiles) else {
+                return
+            }
+
+            GeckoStorageController.clearTranslationModelCache {
+                GeckoStorageController.clearData(flags: GeckoStorageClearFlags.allCaches) { result in
+                    if case .failure(let error) = result {
+                        handleError(error)
+                    }
+                }
+            }
+        }
+
+        if selectedCategories.contains(.cookiesAndSiteData) {
+            GeckoStorageController.clearData(
+                flags: GeckoStorageClearFlags.cookies | GeckoStorageClearFlags.authSessions
+            ) { result in
+                switch result {
+                case .success:
+                    GeckoStorageController.clearData(flags: GeckoStorageClearFlags.domStorages) { result in
+                        switch result {
+                        case .success:
+                            clearCaches()
+                        case .failure(let error):
+                            handleError(error)
+                        }
+                    }
+                case .failure(let error):
+                    handleError(error)
+                }
+            }
+        } else {
+            clearCaches()
         }
     }
 }

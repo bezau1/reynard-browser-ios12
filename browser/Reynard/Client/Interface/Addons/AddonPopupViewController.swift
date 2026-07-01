@@ -220,17 +220,18 @@ final class AddonPopupViewController: UIViewController, ContentDelegate, Navigat
         }
     }
     
-    func onLoadRequest(session: GeckoSession, request: LoadRequest) async -> AllowOrDeny {
+    func onLoadRequest(session: GeckoSession, request: LoadRequest, completion: @escaping (AllowOrDeny) -> Void) {
         guard request.target == .new else {
-            return .allow
+            completion(.allow)
+            return
         }
-        
+
         openInNewTab(request.uri)
-        return .deny
+        completion(.deny)
     }
-    
-    func onNewSession(session: GeckoSession, uri: String, windowId: String) async -> GeckoSession? {
-        return createSession(uri, windowId)
+
+    func onNewSession(session: GeckoSession, uri: String, windowId: String, completion: @escaping (GeckoSession?) -> Void) {
+        completion(createSession(uri, windowId))
     }
     
     private func closeSessionIfNeeded() {

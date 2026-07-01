@@ -15,27 +15,25 @@ final class SelectPicker {
     private let sourceRect: CGRect
     private weak var geckoView: UIView?
     
-    private var continuation: CheckedContinuation<[String]?, Never>?
+    private var completion: (([String]?) -> Void)?
     private var anchorButton: SelectPickerMenuAnchorButton?
     private var presentedController: UIViewController?
-    
+
     init(mode: String, choices: [PromptChoice], sourceRect: CGRect, geckoView: UIView) {
         self.mode = mode
         self.choices = choices
         self.sourceRect = sourceRect
         self.geckoView = geckoView
     }
-    
+
     // MARK: - Presentation
-    
-    func present() async -> [String]? {
-        return await withCheckedContinuation { continuation in
-            self.continuation = continuation
-            if mode == "multiple" {
-                showMultiSelect()
-            } else {
-                showSingleSelect()
-            }
+
+    func present(completion: @escaping ([String]?) -> Void) {
+        self.completion = completion
+        if mode == "multiple" {
+            showMultiSelect()
+        } else {
+            showSingleSelect()
         }
     }
     
@@ -53,9 +51,9 @@ final class SelectPicker {
         anchorButton = nil
         presentedController?.dismiss(animated: false)
         presentedController = nil
-        if let continuation {
-            self.continuation = nil
-            continuation.resume(returning: nil)
+        if let completion {
+            self.completion = nil
+            completion(nil)
         }
     }
     
@@ -200,9 +198,9 @@ final class SelectPicker {
         anchorButton?.removeFromSuperview()
         anchorButton = nil
         // If no selection was made yet, resume with nil (cancel)
-        if let continuation {
-            self.continuation = nil
-            continuation.resume(returning: nil)
+        if let completion {
+            self.completion = nil
+            completion(nil)
         }
     }
     
@@ -236,8 +234,8 @@ final class SelectPicker {
     private func finish(_ result: [String]?) {
         anchorButton?.removeFromSuperview()
         anchorButton = nil
-        guard let continuation else { return }
-        self.continuation = nil
-        continuation.resume(returning: result)
+        guard let completion else { return }
+        self.completion = nil
+        completion(result)
     }
 }

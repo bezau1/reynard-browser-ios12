@@ -68,7 +68,7 @@ final class FaviconStore {
         options: []
     )
     
-    private var activeRequests: [String: Task<UIImage?, Never>] = [:]
+    private var pendingCompletions: [String: [(UIImage?) -> Void]] = [:]
     
     // MARK: - Lifecycle
     
@@ -116,42 +116,52 @@ final class FaviconStore {
         }
     }
     
-    func favicon(for pageURL: URL) async -> UIImage? {
+    func favicon(for pageURL: URL, completion: @escaping (UIImage?) -> Void) {
         guard URLUtils.isWebURL(pageURL) else {
-            return nil
+            completion(nil)
+            return
         }
-        
+
         if let cachedImage = cachedFavicon(for: pageURL) {
-            return cachedImage
+            completion(cachedImage)
+            return
         }
-        
+
         let requestKey = requestScopeKey(for: pageURL)
-        if let activeRequest = stateQueue.sync(execute: { activeRequests[requestKey] }) {
-            return await activeRequest.value
+
+        // Coalesce concurrent requests for the same scope: the first request
+        // performs the fetch, later ones just attach their completion.
+        let alreadyInFlight = stateQueue.sync { () -> Bool in
+            if pendingCompletions[requestKey] != nil {
+                pendingCompletions[requestKey]?.append(completion)
+                return true
+            }
+            pendingCompletions[requestKey] = [completion]
+            return false
         }
-        
-        let task = Task<UIImage?, Never>(priority: .utility) { [weak self] in
+
+        guard !alreadyInFlight else {
+            return
+        }
+
+        fetchAndCacheFavicon(for: pageURL) { [weak self] image in
             guard let self else {
-                return nil
+                return
             }
-            
-            let image = await self.fetchAndCacheFavicon(for: pageURL)
-            self.stateQueue.async {
-                self.activeRequests[requestKey] = nil
+            let completions = self.stateQueue.sync { () -> [(UIImage?) -> Void] in
+                let waiting = self.pendingCompletions[requestKey] ?? []
+                self.pendingCompletions[requestKey] = nil
+                return waiting
             }
-            return image
+            DispatchQueue.main.async {
+                completions.forEach { $0(image) }
+            }
         }
-        
-        stateQueue.sync {
-            activeRequests[requestKey] = task
-        }
-        return await task.value
     }
-    
+
     func clearCache() {
         stateQueue.async {
-            self.activeRequests.values.forEach { $0.cancel() }
-            self.activeRequests.removeAll()
+            self.pendingCompletions.removeAll()
             
             let imageKeys = self.fetchImageKeysLocked()
             _ = self.executeLocked(
@@ -249,43 +259,65 @@ final class FaviconStore {
         return image
     }
     
-    private func fetchAndCacheFavicon(for pageURL: URL) async -> UIImage? {
-        var candidates: [URL] = []
-        
-        if let document = await fetchHTMLDocument(for: pageURL, redirectDepth: 0) {
-            candidates.append(contentsOf: iconURLs(in: document.html, baseURL: document.url))
+    private func fetchAndCacheFavicon(for pageURL: URL, completion: @escaping (UIImage?) -> Void) {
+        fetchHTMLDocument(for: pageURL, redirectDepth: 0) { [weak self] document in
+            guard let self else {
+                completion(nil)
+                return
+            }
+
+            var candidates: [URL] = []
+            if let document {
+                candidates.append(contentsOf: self.iconURLs(in: document.html, baseURL: document.url))
+            }
+            if let fallbackURL = self.defaultFaviconURL(for: pageURL) {
+                candidates.append(fallbackURL)
+            }
+
+            self.tryNextCandidate(candidates, index: 0, seen: [], for: pageURL, completion: completion)
         }
-        
-        if let fallbackURL = defaultFaviconURL(for: pageURL) {
-            candidates.append(fallbackURL)
+    }
+
+    private func tryNextCandidate(
+        _ candidates: [URL],
+        index: Int,
+        seen: Set<String>,
+        for pageURL: URL,
+        completion: @escaping (UIImage?) -> Void
+    ) {
+        guard index < candidates.count else {
+            completion(nil)
+            return
         }
-        
-        var seenCandidateURLs = Set<String>()
-        for candidateURL in candidates {
-            guard !Task.isCancelled else {
-                return nil
-            }
-            
-            let normalizedCandidateURL = candidateURL.absoluteString.lowercased()
-            guard seenCandidateURLs.insert(normalizedCandidateURL).inserted else {
-                continue
-            }
-            
-            if let cachedImage = associateExistingIconIfPresent(candidateURL, with: pageURL) {
-                return cachedImage
-            }
-            
-            guard let remoteImage = await fetchRemoteImage(from: candidateURL) else {
-                continue
-            }
-            
-            stateQueue.sync {
-                storeLocked(remoteImage: remoteImage, for: pageURL, now: Date())
-            }
-            return remoteImage.image
+
+        let candidateURL = candidates[index]
+        var seen = seen
+        let normalizedCandidateURL = candidateURL.absoluteString.lowercased()
+        guard seen.insert(normalizedCandidateURL).inserted else {
+            tryNextCandidate(candidates, index: index + 1, seen: seen, for: pageURL, completion: completion)
+            return
         }
-        
-        return nil
+
+        if let cachedImage = associateExistingIconIfPresent(candidateURL, with: pageURL) {
+            completion(cachedImage)
+            return
+        }
+
+        fetchRemoteImage(from: candidateURL) { [weak self] remoteImage in
+            guard let self else {
+                completion(nil)
+                return
+            }
+            guard let remoteImage else {
+                self.tryNextCandidate(candidates, index: index + 1, seen: seen, for: pageURL, completion: completion)
+                return
+            }
+
+            self.stateQueue.sync {
+                self.storeLocked(remoteImage: remoteImage, for: pageURL, now: Date())
+            }
+            completion(remoteImage.image)
+        }
     }
     
     private func associateExistingIconIfPresent(_ iconURL: URL, with pageURL: URL) -> UIImage? {
@@ -690,70 +722,81 @@ final class FaviconStore {
     
     // MARK: - Networking
     
-    private func fetchHTMLDocument(for pageURL: URL, redirectDepth: Int) async -> HTMLDocument? {
+    private func fetchHTMLDocument(for pageURL: URL, redirectDepth: Int, completion: @escaping (HTMLDocument?) -> Void) {
         var request = URLRequest(url: pageURL)
         request.httpMethod = "GET"
         request.setValue("text/html,application/xhtml+xml", forHTTPHeaderField: "Accept")
-        
-        guard let (data, response) = await data(for: request),
-              data.count <= Self.maxHTMLBytes else {
-            return nil
+
+        data(for: request) { [weak self] result in
+            guard let self else {
+                completion(nil)
+                return
+            }
+            guard let (data, response) = result,
+                  data.count <= Self.maxHTMLBytes else {
+                completion(nil)
+                return
+            }
+
+            let mimeType = (response.mimeType ?? "").lowercased()
+            guard mimeType.isEmpty || mimeType.contains("html") || mimeType.contains("xml") else {
+                completion(nil)
+                return
+            }
+
+            let html = self.string(from: data, response: response)
+            guard !html.isEmpty else {
+                completion(nil)
+                return
+            }
+
+            let finalURL = response.url ?? pageURL
+            if redirectDepth < Self.maxRedirectDepth,
+               let redirectURL = self.metaRefreshRedirectURL(in: html, baseURL: finalURL),
+               redirectURL != finalURL {
+                self.fetchHTMLDocument(for: redirectURL, redirectDepth: redirectDepth + 1, completion: completion)
+                return
+            }
+
+            completion(HTMLDocument(html: html, url: finalURL))
         }
-        
-        let mimeType = (response.mimeType ?? "").lowercased()
-        guard mimeType.isEmpty || mimeType.contains("html") || mimeType.contains("xml") else {
-            return nil
-        }
-        
-        let html = string(from: data, response: response)
-        guard !html.isEmpty else {
-            return nil
-        }
-        
-        let finalURL = response.url ?? pageURL
-        if redirectDepth < Self.maxRedirectDepth,
-           let redirectURL = metaRefreshRedirectURL(in: html, baseURL: finalURL),
-           redirectURL != finalURL {
-            return await fetchHTMLDocument(for: redirectURL, redirectDepth: redirectDepth + 1)
-        }
-        
-        return HTMLDocument(html: html, url: finalURL)
     }
-    
-    private func fetchRemoteImage(from url: URL) async -> RemoteImage? {
+
+    private func fetchRemoteImage(from url: URL, completion: @escaping (RemoteImage?) -> Void) {
         var request = URLRequest(url: url)
         request.httpMethod = "GET"
         request.setValue("image/*,*/*;q=0.8", forHTTPHeaderField: "Accept")
-        
-        guard let (data, response) = await data(for: request),
-              data.count <= Self.maxImageBytes,
-              let image = UIImage(data: data) else {
-            return nil
-        }
-        
-        return RemoteImage(image: image, data: data, url: response.url ?? url)
-    }
-    
-    private func data(for request: URLRequest) async -> (Data, URLResponse)? {
-        await withCheckedContinuation { continuation in
-            let task = session.dataTask(with: request) { data, response, error in
-                guard error == nil,
-                      let data,
-                      let response else {
-                    continuation.resume(returning: nil)
-                    return
-                }
-                
-                if let httpResponse = response as? HTTPURLResponse,
-                   !(200...299).contains(httpResponse.statusCode) {
-                    continuation.resume(returning: nil)
-                    return
-                }
-                
-                continuation.resume(returning: (data, response))
+
+        data(for: request) { result in
+            guard let (data, response) = result,
+                  data.count <= Self.maxImageBytes,
+                  let image = UIImage(data: data) else {
+                completion(nil)
+                return
             }
-            task.resume()
+
+            completion(RemoteImage(image: image, data: data, url: response.url ?? url))
         }
+    }
+
+    private func data(for request: URLRequest, completion: @escaping ((Data, URLResponse)?) -> Void) {
+        let task = session.dataTask(with: request) { data, response, error in
+            guard error == nil,
+                  let data,
+                  let response else {
+                completion(nil)
+                return
+            }
+
+            if let httpResponse = response as? HTTPURLResponse,
+               !(200...299).contains(httpResponse.statusCode) {
+                completion(nil)
+                return
+            }
+
+            completion((data, response))
+        }
+        task.resume()
     }
     
     // MARK: - HTML Parsing

@@ -151,9 +151,7 @@ final class AddonDetailsPreferencesViewController: SettingsTableViewController {
     
     override func viewWillAppear(_ animated: Bool) {
         super.viewWillAppear(animated)
-        Task { [weak self] in
-            await self?.refreshAddon()
-        }
+        refreshAddon()
     }
     
     // MARK: - Table Data Source
@@ -257,69 +255,63 @@ final class AddonDetailsPreferencesViewController: SettingsTableViewController {
     
     @objc private func privateBrowsingSwitchChanged(_ sender: UISwitch) {
         let desiredState = sender.isOn
-        
-        Task { [weak self] in
-            guard let self, let addon = self.addon else {
-                await MainActor.run {
-                    sender.setOn(!desiredState, animated: true)
+
+        guard let addon = self.addon else {
+            sender.setOn(!desiredState, animated: true)
+            return
+        }
+
+        isUpdatingAddon = true
+        tableView.reloadData()
+
+        AddonRuntime.shared.setAllowedInPrivateBrowsing(addon, allowed: desiredState) { [weak self] result in
+            DispatchQueue.main.async {
+                guard let self else {
+                    return
                 }
-                return
-            }
-            
-            await MainActor.run {
-                self.isUpdatingAddon = true
-                self.tableView.reloadData()
-            }
-            
-            do {
-                let updatedAddon = try await AddonRuntime.shared.setAllowedInPrivateBrowsing(addon, allowed: desiredState)
-                
-                await MainActor.run {
-                    self.isUpdatingAddon = false
+                self.isUpdatingAddon = false
+                switch result {
+                case .success(let updatedAddon):
                     self.display(addon: updatedAddon)
-                }
-            } catch {
-                await MainActor.run {
-                    self.isUpdatingAddon = false
+                case .failure(let error):
                     self.display(addon: addon)
                     AlertPresenter.show(title: "Failed to update private browsing access", message: "\(error)")
                 }
             }
         }
     }
-    
+
     @objc private func enableSwitchChanged(_ sender: UISwitch) {
         let desiredState = sender.isOn
-        
-        Task { [weak self] in
-            guard let self, let addon = self.addon else {
-                await MainActor.run {
-                    sender.setOn(!desiredState, animated: true)
+
+        guard let addon = self.addon else {
+            sender.setOn(!desiredState, animated: true)
+            return
+        }
+
+        isUpdatingAddon = true
+        tableView.reloadData()
+
+        let handler: (Result<Addon, Error>) -> Void = { [weak self] result in
+            DispatchQueue.main.async {
+                guard let self else {
+                    return
                 }
-                return
-            }
-            
-            await MainActor.run {
-                self.isUpdatingAddon = true
-                self.tableView.reloadData()
-            }
-            
-            do {
-                let updatedAddon = try await (desiredState
-                                              ? AddonRuntime.shared.enable(addon)
-                                              : AddonRuntime.shared.disable(addon))
-                
-                await MainActor.run {
-                    self.isUpdatingAddon = false
+                self.isUpdatingAddon = false
+                switch result {
+                case .success(let updatedAddon):
                     self.display(addon: updatedAddon)
-                }
-            } catch {
-                await MainActor.run {
-                    self.isUpdatingAddon = false
+                case .failure(let error):
                     self.display(addon: addon)
                     AlertPresenter.show(title: "Failed to \(desiredState ? "enable" : "disable") add-on", message: "\(error)")
                 }
             }
+        }
+
+        if desiredState {
+            AddonRuntime.shared.enable(addon, completion: handler)
+        } else {
+            AddonRuntime.shared.disable(addon, completion: handler)
         }
     }
     
@@ -334,20 +326,22 @@ final class AddonDetailsPreferencesViewController: SettingsTableViewController {
     
     // MARK: - Add-on Loading
     
-    private func refreshAddon() async {
-        do {
-            let refreshedAddon = try await AddonRuntime.shared.addon(byID: addonID)
-            await MainActor.run {
-                guard let refreshedAddon else {
-                    self.navigationController?.popViewController(animated: true)
+    private func refreshAddon() {
+        AddonRuntime.shared.addon(byID: addonID) { [weak self] result in
+            DispatchQueue.main.async {
+                guard let self else {
                     return
                 }
-                
-                self.display(addon: refreshedAddon)
-            }
-        } catch {
-            await MainActor.run {
-                AlertPresenter.show(title: "Failed to reload add-on", message: "\(error)")
+                switch result {
+                case .success(let refreshedAddon):
+                    guard let refreshedAddon else {
+                        self.navigationController?.popViewController(animated: true)
+                        return
+                    }
+                    self.display(addon: refreshedAddon)
+                case .failure(let error):
+                    AlertPresenter.show(title: "Failed to reload add-on", message: "\(error)")
+                }
             }
         }
     }
@@ -460,23 +454,22 @@ final class AddonDetailsPreferencesViewController: SettingsTableViewController {
     }
     
     private func uninstallAddon() {
-        Task { [weak self] in
-            guard let self, let addon = self.addon else {
-                return
-            }
-            
-            await MainActor.run {
-                self.isUpdatingAddon = true
-                self.tableView.reloadData()
-            }
-            
-            do {
-                try await AddonRuntime.shared.uninstall(addon)
-                await MainActor.run {
-                    self.navigationController?.popViewController(animated: true)
+        guard let addon = self.addon else {
+            return
+        }
+
+        isUpdatingAddon = true
+        tableView.reloadData()
+
+        AddonRuntime.shared.uninstall(addon) { [weak self] result in
+            DispatchQueue.main.async {
+                guard let self else {
+                    return
                 }
-            } catch {
-                await MainActor.run {
+                switch result {
+                case .success:
+                    self.navigationController?.popViewController(animated: true)
+                case .failure(let error):
                     self.isUpdatingAddon = false
                     self.display(addon: addon)
                     AlertPresenter.show(title: "Failed to remove add-on", message: "\(error)")

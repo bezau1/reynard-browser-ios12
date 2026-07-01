@@ -39,7 +39,7 @@ final class TabManagerImplementation: NSObject, TabManager {
     private let faviconStore: FaviconStore
     private let historyStore: HistoryStore
     let sessionManager: SessionManager
-    private var faviconTasks: [UUID: Task<Void, Never>] = [:]
+    private var faviconRequests: [UUID: UUID] = [:]
     private var selectionCounter = 0
     
     private lazy var lenientURLExpression: NSRegularExpression = {
@@ -64,7 +64,7 @@ final class TabManagerImplementation: NSObject, TabManager {
     // MARK: - Persistence And Lookup
     
     private func cancelFaviconTask(for tabID: UUID) {
-        faviconTasks.removeValue(forKey: tabID)?.cancel()
+        faviconRequests.removeValue(forKey: tabID)
     }
     
     private func persistState() {
@@ -280,26 +280,25 @@ final class TabManagerImplementation: NSObject, TabManager {
         
         let tabID = tab.id
         let expectedURL = url.absoluteString
-        faviconTasks[tabID] = Task { [weak self] in
+        let requestToken = UUID()
+        faviconRequests[tabID] = requestToken
+        faviconStore.favicon(for: url) { [weak self] image in
             guard let self else {
                 return
             }
-            
-            let image = await self.faviconStore.favicon(for: url)
-            guard !Task.isCancelled else {
+            // Ignore if this request was cancelled or superseded by a newer one.
+            guard self.faviconRequests[tabID] == requestToken else {
                 return
             }
-            
-            await MainActor.run {
-                self.applyResolvedFavicon(image, toTabWithID: tabID, expectedURL: expectedURL)
-            }
+
+            self.applyResolvedFavicon(image, toTabWithID: tabID, expectedURL: expectedURL)
         }
     }
-    
+
     @MainActor
     private func applyResolvedFavicon(_ image: UIImage?, toTabWithID tabID: UUID, expectedURL: String) {
         defer {
-            faviconTasks.removeValue(forKey: tabID)
+            faviconRequests.removeValue(forKey: tabID)
         }
         
         guard let location = tabLocation(for: tabID),
@@ -919,8 +918,8 @@ extension TabManagerImplementation: ContentDelegate {
     
     func onWebAppManifest(session: GeckoSession, manifest: Any) {}
     
-    func onSlowScript(session: GeckoSession, scriptFileName: String) async -> SlowScriptResponse {
-        return .halt
+    func onSlowScript(session: GeckoSession, scriptFileName: String, completion: @escaping (SlowScriptResponse) -> Void) {
+        completion(.halt)
     }
     
     func onShowDynamicToolbar(session: GeckoSession) {}
@@ -1021,15 +1020,15 @@ extension TabManagerImplementation: NavigationDelegate {
         notifyUpdate(at: location.index, mode: location.mode, reason: .navigationState)
     }
     
-    func onLoadRequest(session: GeckoSession, request: LoadRequest) async -> AllowOrDeny {
-        return .allow
+    func onLoadRequest(session: GeckoSession, request: LoadRequest, completion: @escaping (AllowOrDeny) -> Void) {
+        completion(.allow)
     }
-    
-    func onSubframeLoadRequest(session: GeckoSession, request: LoadRequest) async -> AllowOrDeny {
-        return .allow
+
+    func onSubframeLoadRequest(session: GeckoSession, request: LoadRequest, completion: @escaping (AllowOrDeny) -> Void) {
+        completion(.allow)
     }
-    
-    func onNewSession(session: GeckoSession, uri: String, windowId: String) async -> GeckoSession? {
+
+    func onNewSession(session: GeckoSession, uri: String, windowId: String, completion: @escaping (GeckoSession?) -> Void) {
         let sourceLocation = tabLocation(for: session)
         let mode = sourceLocation?.mode ?? selectedTabMode
         let sourceIsPrivate = mode == .private
@@ -1082,7 +1081,7 @@ extension TabManagerImplementation: NavigationDelegate {
         delegate?.tabManager(self, animateNewTabSelectionAt: index) { [weak self] in
             self?.selectTab(at: index, mode: mode)
         }
-        return newSession
+        completion(newSession)
     }
 }
 

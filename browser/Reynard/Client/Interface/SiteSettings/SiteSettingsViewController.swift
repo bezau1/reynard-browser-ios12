@@ -125,9 +125,7 @@ final class SiteSettingsViewController: UITableViewController {
     override func viewDidLoad() {
         super.viewDidLoad()
         configureView()
-        Task { [weak self] in
-            await self?.loadPermissionsFromGecko()
-        }
+        loadPermissionsFromGecko()
     }
     
     override func numberOfSections(in tableView: UITableView) -> Int {
@@ -330,15 +328,30 @@ final class SiteSettingsViewController: UITableViewController {
     // MARK: - Permissions
     
     @MainActor
-    private func loadPermissionsFromGecko() async {
-        let permissions = (try? await PermissionDelegate.permissions(
+    private func loadPermissionsFromGecko() {
+        PermissionDelegate.permissions(
             for: origin,
             privateMode: session.isPrivateMode
-        )) ?? []
-        loadedGeckoPermissions = permissions
-        syncStore(with: permissions)
-        loadState = .loaded
-        tableView.reloadData()
+        ) { [weak self] result in
+            let permissions: [ContentPermission]
+            switch result {
+            case .success(let perms):
+                permissions = perms
+            case .failure:
+                permissions = []
+            }
+
+            DispatchQueue.main.async {
+                guard let self = self else {
+                    return
+                }
+
+                self.loadedGeckoPermissions = permissions
+                self.syncStore(with: permissions)
+                self.loadState = .loaded
+                self.tableView.reloadData()
+            }
+        }
     }
     
     private func syncStore(with permissions: [ContentPermission]) {

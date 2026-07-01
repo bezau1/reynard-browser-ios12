@@ -38,7 +38,7 @@ final class ContentView: UIView {
     private(set) var state: State = .browsing
     private var layoutState = LayoutState(mode: .standard)
     private var session: GeckoSession?
-    private var focusedInputTask: Task<Void, Never>?
+    private var focusedInputToken: Int = 0
     private var inputBottomRatio: CGFloat?
     private var focusedInputOffset: CGFloat = 0
     
@@ -60,10 +60,6 @@ final class ContentView: UIView {
     
     required init?(coder: NSCoder) {
         fatalError("init(coder:) has not been implemented")
-    }
-    
-    deinit {
-        focusedInputTask?.cancel()
     }
     
     // MARK: - Configuration
@@ -163,7 +159,7 @@ final class ContentView: UIView {
         animationDuration: TimeInterval,
         animationOptions: UIView.AnimationOptions
     ) {
-        focusedInputTask?.cancel()
+        focusedInputToken += 1
         guard let session else {
             resetFocusedInputRelocation(
                 animationDuration: animationDuration,
@@ -171,22 +167,24 @@ final class ContentView: UIView {
             )
             return
         }
-        
-        focusedInputTask = Task { @MainActor [weak self] in
-            guard let self else { return }
-            let bottomRatio = await session.focusedInputBottomRatio()
-            guard !Task.isCancelled else { return }
-            
-            inputBottomRatio = bottomRatio
-            superview?.layoutIfNeeded()
-            let newOffset = calculateFocusedInputOffset(keyboardFrame: keyboardFrame)
-            guard abs(newOffset - focusedInputOffset) > UX.focusedInputOffsetThreshold else {
-                return
+
+        let token = focusedInputToken
+        session.focusedInputBottomRatio { [weak self] bottomRatio in
+            DispatchQueue.main.async {
+                guard let self else { return }
+                guard token == self.focusedInputToken else { return }
+
+                self.inputBottomRatio = bottomRatio
+                self.superview?.layoutIfNeeded()
+                let newOffset = self.calculateFocusedInputOffset(keyboardFrame: keyboardFrame)
+                guard abs(newOffset - self.focusedInputOffset) > UX.focusedInputOffsetThreshold else {
+                    return
+                }
+
+                self.focusedInputOffset = newOffset
+                self.updateLayoutOffsets()
+                self.animateLayout(duration: animationDuration, options: animationOptions)
             }
-            
-            focusedInputOffset = newOffset
-            updateLayoutOffsets()
-            animateLayout(duration: animationDuration, options: animationOptions)
         }
     }
     
@@ -211,8 +209,7 @@ final class ContentView: UIView {
         animationDuration: TimeInterval = 0,
         animationOptions: UIView.AnimationOptions = []
     ) {
-        focusedInputTask?.cancel()
-        focusedInputTask = nil
+        focusedInputToken += 1
         inputBottomRatio = nil
         guard focusedInputOffset != 0 else { return }
         

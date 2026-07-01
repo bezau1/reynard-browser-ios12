@@ -23,7 +23,7 @@ final class EditBookmarkViewController: UIViewController, UITableViewDataSource,
     private let limitsToFavorites: Bool
     private var folderRows: [BookmarkFolderRow] = []
     private var selectedFolderID: String?
-    private var faviconTask: Task<Void, Never>?
+    private var faviconLoadToken: UUID?
     private var storeObserver: NSObjectProtocol?
     
     private lazy var tableView: UITableView = {
@@ -117,7 +117,7 @@ final class EditBookmarkViewController: UIViewController, UITableViewDataSource,
     }
     
     deinit {
-        faviconTask?.cancel()
+        faviconLoadToken = nil
         if let storeObserver {
             NotificationCenter.default.removeObserver(storeObserver)
         }
@@ -170,17 +170,19 @@ final class EditBookmarkViewController: UIViewController, UITableViewDataSource,
                 urlFaviconView.image = image
                 urlFaviconView.tintColor = nil
             } else {
-                faviconTask = Task { [weak self] in
-                    let image = await FaviconStore.shared.favicon(for: url)
-                    await MainActor.run {
-                        guard let self, let image else {
-                            return
-                        }
-                        self.titleFaviconView.image = image
-                        self.titleFaviconView.tintColor = nil
-                        self.urlFaviconView.image = image
-                        self.urlFaviconView.tintColor = nil
+                let token = UUID()
+                faviconLoadToken = token
+                FaviconStore.shared.favicon(for: url) { [weak self] image in
+                    guard let self, let image else {
+                        return
                     }
+                    guard self.faviconLoadToken == token else {
+                        return
+                    }
+                    self.titleFaviconView.image = image
+                    self.titleFaviconView.tintColor = nil
+                    self.urlFaviconView.image = image
+                    self.urlFaviconView.tintColor = nil
                 }
             }
         }

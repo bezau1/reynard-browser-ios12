@@ -8,19 +8,29 @@
 import UIKit
 
 struct ImagePreviewLoader {
-    static func image(from url: URL) async -> UIImage? {
+    static func image(from url: URL, completion: @escaping (UIImage?) -> Void) {
         if url.isFileURL {
-            return UIImage(contentsOfFile: url.path)
+            let image = UIImage(contentsOfFile: url.path)
+            DispatchQueue.main.async {
+                completion(image)
+            }
+            return
         }
-        
+
         if url.scheme?.lowercased() == "data" {
-            return imageFromDataURL(url.absoluteString)
+            let image = imageFromDataURL(url.absoluteString)
+            DispatchQueue.main.async {
+                completion(image)
+            }
+            return
         }
-        
-        guard let (data, _) = try? await URLSession.shared.data(from: url) else {
-            return nil
-        }
-        return UIImage(data: data)
+
+        URLSession.shared.dataTask(with: url) { data, _, _ in
+            let image = data.flatMap { UIImage(data: $0) }
+            DispatchQueue.main.async {
+                completion(image)
+            }
+        }.resume()
     }
     
     private static func imageFromDataURL(_ value: String) -> UIImage? {

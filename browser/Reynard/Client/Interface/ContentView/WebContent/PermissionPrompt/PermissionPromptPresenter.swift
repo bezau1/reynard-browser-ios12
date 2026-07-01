@@ -14,32 +14,32 @@ struct PermissionPromptPresenter: PermissionPromptPresenting {
         title: String,
         message: String?,
         cancelTitle: String,
-        for session: GeckoSession
-    ) async -> Bool {
+        for session: GeckoSession,
+        completion: @escaping (Bool) -> Void
+    ) {
         guard let presenter = UIApplication.shared.topViewController() else {
-            return false
+            completion(false)
+            return
         }
-        
-        return await withCheckedContinuation { continuation in
-            let alert = UIAlertController(
-                title: title,
-                message: message,
-                preferredStyle: .alert
-            )
-            alert.setValue(
-                NSAttributedString(
-                    string: title,
-                    attributes: [.font: UIFont.boldSystemFont(ofSize: 17)]
-                ),
-                forKey: "attributedTitle"
-            )
-            alert.addAction(UIAlertAction(title: cancelTitle, style: .cancel) { _ in
-                continuation.resume(returning: false)
-            })
-            alert.addAction(UIAlertAction(title: "Allow", style: .default) { _ in
-                continuation.resume(returning: true)
-            })
-            presenter.present(alert, animated: true)
-        }
+
+        let alert = UIAlertController(
+            title: title,
+            message: message,
+            preferredStyle: .alert
+        )
+        alert.setValue(
+            NSAttributedString(
+                string: title,
+                attributes: [.font: UIFont.boldSystemFont(ofSize: 17)]
+            ),
+            forKey: "attributedTitle"
+        )
+        alert.addAction(UIAlertAction(title: cancelTitle, style: .cancel) { _ in
+            completion(false)
+        })
+        alert.addAction(UIAlertAction(title: "Allow", style: .default) { _ in
+            completion(true)
+        })
+        presenter.present(alert, animated: true)
     }
 }
