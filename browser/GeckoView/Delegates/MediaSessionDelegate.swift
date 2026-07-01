@@ -129,13 +129,14 @@ func newMediaSessionHandler(_ session: GeckoSession) -> GeckoSessionHandler {
         moduleName: "GeckoViewMediaControl",
         events: MediaSessionEvent.allCases.map(\.rawValue),
         session: session
-    ) { @MainActor session, delegate, type, message in
+    ) { @MainActor session, delegate, type, message, completion in
         guard let event = MediaSessionEvent(rawValue: type) else {
-            throw GeckoHandlerError("unknown message \(type)")
+            completion(.failure(GeckoHandlerError("unknown message \(type)")))
+            return
         }
-        
+
         let delegate = delegate as? MediaSessionDelegate
-        
+
         switch event {
         case .activated:
             delegate?.onActivated(session: session)
@@ -189,7 +190,7 @@ func newMediaSessionHandler(_ session: GeckoSession) -> GeckoSessionHandler {
                 delegate?.onPositionState(session: session, state: positionState)
             }
         }
-        
-        return nil
+
+        completion(.success(nil))
     }
 }

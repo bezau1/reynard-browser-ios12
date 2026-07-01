@@ -8,145 +8,193 @@
 import Foundation
 
 public extension AddonRuntime {
-    func list() async throws -> [Addon] {
-        let response = try await GeckoEventDispatcherWrapper.runtimeInstance.query(type: "GeckoView:WebExtension:List")
-        guard let payload = response as? [String: Any?] else {
-            return Array(addonsByID.values)
+    func list(completion: @escaping (Result<[Addon], Error>) -> Void) {
+        GeckoEventDispatcherWrapper.runtimeInstance.query(type: "GeckoView:WebExtension:List") { result in
+            switch result {
+            case .failure(let error):
+                completion(.failure(error))
+            case .success(let response):
+                guard let payload = response as? [String: Any?] else {
+                    completion(.success(Array(self.addonsByID.values)))
+                    return
+                }
+
+                let entries = payload["extensions"] as? [[String: Any?]] ?? []
+                let listedAddonIDs = Set(entries.compactMap { $0["webExtensionId"] as? String })
+                let staleAddonIDs = self.addonsByID.keys.filter { !listedAddonIDs.contains($0) }
+                let removedAddons = staleAddonIDs.compactMap { self.removeAddon(byID: $0) }
+                entries.forEach { _ = self.upsertAddon(from: $0) }
+                removedAddons.forEach { self.delegate?.addonController(self, didUpdate: $0) }
+                completion(.success(self.installedAddons))
+            }
         }
-        
-        let entries = payload["extensions"] as? [[String: Any?]] ?? []
-        let listedAddonIDs = Set(entries.compactMap { $0["webExtensionId"] as? String })
-        let staleAddonIDs = addonsByID.keys.filter { !listedAddonIDs.contains($0) }
-        let removedAddons = staleAddonIDs.compactMap { removeAddon(byID: $0) }
-        entries.forEach { _ = upsertAddon(from: $0) }
-        removedAddons.forEach { delegate?.addonController(self, didUpdate: $0) }
-        return installedAddons
     }
-    
-    func addon(byID id: String) async throws -> Addon? {
+
+    func addon(byID id: String, completion: @escaping (Result<Addon?, Error>) -> Void) {
         if let cached = addonsByID[id] {
-            return cached
+            completion(.success(cached))
+            return
         }
-        
-        let response = try await GeckoEventDispatcherWrapper.runtimeInstance.query(
+
+        GeckoEventDispatcherWrapper.runtimeInstance.query(
             type: "GeckoView:WebExtension:Get",
             message: ["extensionId": id]
-        )
-        guard let payload = response as? [String: Any?],
-              let addonPayload = payload["extension"] as? [String: Any?] else {
-            return nil
+        ) { result in
+            switch result {
+            case .failure(let error):
+                completion(.failure(error))
+            case .success(let response):
+                guard let payload = response as? [String: Any?],
+                      let addonPayload = payload["extension"] as? [String: Any?] else {
+                    completion(.success(nil))
+                    return
+                }
+                completion(.success(self.upsertAddon(from: addonPayload)))
+            }
         }
-        
-        return upsertAddon(from: addonPayload)
     }
-    
-    func install(url: String, installMethod: AddonInstallMethod? = nil) async throws -> Addon {
+
+    func install(url: String, installMethod: AddonInstallMethod? = nil, completion: @escaping (Result<Addon, Error>) -> Void) {
         installCounter += 1
-        let response = try await GeckoEventDispatcherWrapper.runtimeInstance.query(
+        GeckoEventDispatcherWrapper.runtimeInstance.query(
             type: "GeckoView:WebExtension:Install",
             message: [
                 "locationUri": url,
                 "installId": "reynard-\(installCounter)",
                 "installMethod": installMethod?.rawValue as Any,
             ]
-        )
-        guard let payload = response as? [String: Any?],
-              let addonPayload = payload["extension"] as? [String: Any?] else {
-            throw GeckoHandlerError("Invalid install response")
+        ) { result in
+            switch result {
+            case .failure(let error):
+                completion(.failure(error))
+            case .success(let response):
+                guard let payload = response as? [String: Any?],
+                      let addonPayload = payload["extension"] as? [String: Any?] else {
+                    completion(.failure(GeckoHandlerError("Invalid install response")))
+                    return
+                }
+                let addon = self.upsertAddon(from: addonPayload)
+                self.delegate?.addonController(self, didUpdate: addon)
+                completion(.success(addon))
+            }
         }
-        let addon = upsertAddon(from: addonPayload)
-        delegate?.addonController(self, didUpdate: addon)
-        return addon
     }
-    
-    func enable(_ addon: Addon, source: AddonEnableSource = .user) async throws -> Addon {
-        try await mutateAddon(
+
+    func enable(_ addon: Addon, source: AddonEnableSource = .user, completion: @escaping (Result<Addon, Error>) -> Void) {
+        mutateAddon(
             type: "GeckoView:WebExtension:Enable",
-            message: ["webExtensionId": addon.id, "source": source.rawValue]
+            message: ["webExtensionId": addon.id, "source": source.rawValue],
+            completion: completion
         )
     }
-    
-    func disable(_ addon: Addon, source: AddonEnableSource = .user) async throws -> Addon {
-        try await mutateAddon(
+
+    func disable(_ addon: Addon, source: AddonEnableSource = .user, completion: @escaping (Result<Addon, Error>) -> Void) {
+        mutateAddon(
             type: "GeckoView:WebExtension:Disable",
-            message: ["webExtensionId": addon.id, "source": source.rawValue]
+            message: ["webExtensionId": addon.id, "source": source.rawValue],
+            completion: completion
         )
     }
-    
-    func setAllowedInPrivateBrowsing(_ addon: Addon, allowed: Bool) async throws -> Addon {
-        try await mutateAddon(
+
+    func setAllowedInPrivateBrowsing(_ addon: Addon, allowed: Bool, completion: @escaping (Result<Addon, Error>) -> Void) {
+        mutateAddon(
             type: "GeckoView:WebExtension:SetPBAllowed",
-            message: ["extensionId": addon.id, "allowed": allowed]
+            message: ["extensionId": addon.id, "allowed": allowed],
+            completion: completion
         )
     }
-    
-    func addOptionalPermissions(_ request: AddonPermissionChangeRequest, to addon: Addon) async throws -> Addon {
-        try await mutateAddon(
+
+    func addOptionalPermissions(_ request: AddonPermissionChangeRequest, to addon: Addon, completion: @escaping (Result<Addon, Error>) -> Void) {
+        mutateAddon(
             type: "GeckoView:WebExtension:AddOptionalPermissions",
             message: [
                 "extensionId": addon.id,
                 "permissions": request.permissions,
                 "origins": request.origins,
                 "dataCollectionPermissions": request.dataCollectionPermissions,
-            ]
+            ],
+            completion: completion
         )
     }
-    
-    func removeOptionalPermissions(_ request: AddonPermissionChangeRequest, from addon: Addon) async throws -> Addon {
-        try await mutateAddon(
+
+    func removeOptionalPermissions(_ request: AddonPermissionChangeRequest, from addon: Addon, completion: @escaping (Result<Addon, Error>) -> Void) {
+        mutateAddon(
             type: "GeckoView:WebExtension:RemoveOptionalPermissions",
             message: [
                 "extensionId": addon.id,
                 "permissions": request.permissions,
                 "origins": request.origins,
                 "dataCollectionPermissions": request.dataCollectionPermissions,
-            ]
+            ],
+            completion: completion
         )
     }
-    
-    func uninstall(_ addon: Addon) async throws {
-        _ = try await GeckoEventDispatcherWrapper.runtimeInstance.query(
+
+    func uninstall(_ addon: Addon, completion: @escaping (Result<Void, Error>) -> Void) {
+        GeckoEventDispatcherWrapper.runtimeInstance.query(
             type: "GeckoView:WebExtension:Uninstall",
             message: ["webExtensionId": addon.id]
-        )
-        if let removedAddon = removeAddon(byID: addon.id) {
-            delegate?.addonController(self, didUpdate: removedAddon)
+        ) { result in
+            switch result {
+            case .failure(let error):
+                completion(.failure(error))
+            case .success:
+                if let removedAddon = self.removeAddon(byID: addon.id) {
+                    self.delegate?.addonController(self, didUpdate: removedAddon)
+                }
+                completion(.success(()))
+            }
         }
     }
-    
-    func update(_ addon: Addon) async throws -> Addon? {
-        let response = try await GeckoEventDispatcherWrapper.runtimeInstance.query(
+
+    func update(_ addon: Addon, completion: @escaping (Result<Addon?, Error>) -> Void) {
+        GeckoEventDispatcherWrapper.runtimeInstance.query(
             type: "GeckoView:WebExtension:Update",
             message: ["webExtensionId": addon.id]
-        )
-        guard let payload = response as? [String: Any?],
-              let addonPayload = payload["extension"] as? [String: Any?] else {
-            return nil
+        ) { result in
+            switch result {
+            case .failure(let error):
+                completion(.failure(error))
+            case .success(let response):
+                guard let payload = response as? [String: Any?],
+                      let addonPayload = payload["extension"] as? [String: Any?] else {
+                    completion(.success(nil))
+                    return
+                }
+                let updatedAddon = self.upsertAddon(from: addonPayload)
+                self.delegate?.addonController(self, didUpdate: updatedAddon)
+                completion(.success(updatedAddon))
+            }
         }
-        let updatedAddon = upsertAddon(from: addonPayload)
-        delegate?.addonController(self, didUpdate: updatedAddon)
-        return updatedAddon
     }
-    
-    func clickAction(kind: AddonActionKind, addon: Addon) async throws -> String? {
+
+    func clickAction(kind: AddonActionKind, addon: Addon, completion: @escaping (Result<String?, Error>) -> Void) {
         let event = kind == .browser ? "GeckoView:BrowserAction:Click" : "GeckoView:PageAction:Click"
-        let response = try await GeckoEventDispatcherWrapper.runtimeInstance.query(
+        GeckoEventDispatcherWrapper.runtimeInstance.query(
             type: event,
             message: ["extensionId": addon.id]
-        )
-        return response as? String
+        ) { result in
+            completion(result.map { $0 as? String })
+        }
     }
 }
 
 extension AddonRuntime {
-    func mutateAddon(type: String, message: [String: Any?]) async throws -> Addon {
-        let response = try await GeckoEventDispatcherWrapper.runtimeInstance.query(type: type, message: message)
-        guard let payload = response as? [String: Any?],
-              let addonPayload = payload["extension"] as? [String: Any?] else {
-            throw GeckoHandlerError("Invalid extension response")
+    func mutateAddon(type: String, message: [String: Any?], completion: @escaping (Result<Addon, Error>) -> Void) {
+        GeckoEventDispatcherWrapper.runtimeInstance.query(type: type, message: message) { result in
+            switch result {
+            case .failure(let error):
+                completion(.failure(error))
+            case .success(let response):
+                guard let payload = response as? [String: Any?],
+                      let addonPayload = payload["extension"] as? [String: Any?] else {
+                    completion(.failure(GeckoHandlerError("Invalid extension response")))
+                    return
+                }
+                let updatedAddon = self.upsertAddon(from: addonPayload)
+                self.delegate?.addonController(self, didUpdate: updatedAddon)
+                completion(.success(updatedAddon))
+            }
         }
-        let updatedAddon = upsertAddon(from: addonPayload)
-        delegate?.addonController(self, didUpdate: updatedAddon)
-        return updatedAddon
     }
 }

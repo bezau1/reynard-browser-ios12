@@ -8,7 +8,8 @@
 import Foundation
 
 final class GeckoSessionHandler: GeckoSessionHandlerCommon {
-    typealias MessageHandler = @MainActor (GeckoSession, Any?, String, [String: Any?]?) async throws -> Any?
+    typealias MessageCompletion = (Result<Any?, Error>) -> Void
+    typealias MessageHandler = @MainActor (GeckoSession, Any?, String, [String: Any?]?, @escaping MessageCompletion) -> Void
     
     let moduleName: String
     let events: [String]
@@ -53,13 +54,24 @@ final class GeckoSessionHandler: GeckoSessionHandlerCommon {
     }
     
     @MainActor
-    func handleMessage(type: String, message: [String: Any?]?) async throws -> Any? {
+    func handleMessage(type: String, message: [String: Any?]?, callback: EventCallback?) {
         guard events.contains(type) else {
-            throw GeckoHandlerError("unknown message \(type)")
+            callback?.sendError(GeckoHandlerError("unknown message \(type)").value)
+            return
         }
         guard let session else {
-            throw GeckoHandlerError("session has been destroyed")
+            callback?.sendError(GeckoHandlerError("session has been destroyed").value)
+            return
         }
-        return try await handle(session, delegateReference, type, message)
+        handle(session, delegateReference, type, message) { result in
+            switch result {
+            case .success(let value):
+                callback?.sendSuccess(value)
+            case .failure(let error as GeckoHandlerError):
+                callback?.sendError(error.value)
+            case .failure(let error):
+                callback?.sendError("\(error)")
+            }
+        }
     }
 }

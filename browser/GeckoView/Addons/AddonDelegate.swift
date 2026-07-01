@@ -18,7 +18,7 @@ public protocol AddonEmbedderDelegate: AnyObject {
     func addonController(_ controller: AddonRuntime, didUpdate addon: Addon)
     func addonController(_ controller: AddonRuntime, didFailInstall failure: AddonInstallFailure)
     @MainActor
-    func addonController(_ controller: AddonRuntime, promptFor prompt: AddonPermissionPrompt) async -> AddonPermissionPromptResponse
+    func addonController(_ controller: AddonRuntime, promptFor prompt: AddonPermissionPrompt, completion: @escaping (AddonPermissionPromptResponse) -> Void)
     func addonController(_ controller: AddonRuntime, didUpdate action: AddonAction, for addon: Addon, session: GeckoSession?)
     func addonController(_ controller: AddonRuntime, didRequestOpenPopup popupURL: String, for addon: Addon, action: AddonAction, session: GeckoSession?)
     func addonController(_ controller: AddonRuntime, didRequestOpenOptionsPageFor addon: Addon)
@@ -31,7 +31,7 @@ public extension AddonEmbedderDelegate {
     func addonController(_ controller: AddonRuntime, didUpdate addon: Addon) {}
     func addonController(_ controller: AddonRuntime, didFailInstall failure: AddonInstallFailure) {}
     @MainActor
-    func addonController(_ controller: AddonRuntime, promptFor prompt: AddonPermissionPrompt) async -> AddonPermissionPromptResponse { .deny }
+    func addonController(_ controller: AddonRuntime, promptFor prompt: AddonPermissionPrompt, completion: @escaping (AddonPermissionPromptResponse) -> Void) { completion(.deny) }
     func addonController(_ controller: AddonRuntime, didUpdate action: AddonAction, for addon: Addon, session: GeckoSession?) {}
     func addonController(_ controller: AddonRuntime, didRequestOpenPopup popupURL: String, for addon: Addon, action: AddonAction, session: GeckoSession?) {}
     func addonController(_ controller: AddonRuntime, didRequestOpenOptionsPageFor addon: Addon) {}

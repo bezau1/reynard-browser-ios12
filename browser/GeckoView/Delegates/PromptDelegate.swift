@@ -11,7 +11,7 @@ import Foundation
 
 public protocol PromptDelegate: AnyObject {
     @MainActor
-    func onPrompt(session: GeckoSession, request: PromptRequest) async -> PromptResponse?
+    func onPrompt(session: GeckoSession, request: PromptRequest, completion: @escaping (PromptResponse?) -> Void)
     @MainActor
     func onPromptUpdate(session: GeckoSession, request: PromptRequest)
     @MainActor
@@ -20,8 +20,8 @@ public protocol PromptDelegate: AnyObject {
 
 public extension PromptDelegate {
     @MainActor
-    func onPrompt(session: GeckoSession, request: PromptRequest) async -> PromptResponse? { nil }
-    
+    func onPrompt(session: GeckoSession, request: PromptRequest, completion: @escaping (PromptResponse?) -> Void) { completion(nil) }
+
     @MainActor
     func onPromptUpdate(session: GeckoSession, request: PromptRequest) {}
     
@@ -44,33 +44,42 @@ func newPromptHandler(_ session: GeckoSession) -> GeckoSessionHandler {
         moduleName: "GeckoViewPrompter",
         events: PromptEvents.allCases.map(\.rawValue),
         session: session
-    ) { @MainActor session, delegate, type, message in
+    ) { @MainActor session, delegate, type, message, completion in
         guard let event = PromptEvents(rawValue: type) else {
-            throw GeckoHandlerError("unknown message \(type)")
+            completion(.failure(GeckoHandlerError("unknown message \(type)")))
+            return
         }
-        
+
         let delegate = delegate as? PromptDelegate
         switch event {
         case .prompt:
             guard let promptData = message?["prompt"] as? [String: Any],
                   let request = parsePromptRequest(promptData) else {
-                return nil
+                completion(.success(nil))
+                return
             }
-            return await delegate?.onPrompt(session: session, request: request)?.geckoMessage
-            
+            guard let delegate else {
+                completion(.success(nil))
+                return
+            }
+            delegate.onPrompt(session: session, request: request) { response in
+                completion(.success(response?.geckoMessage))
+            }
+
         case .promptUpdate:
             guard let promptData = message?["prompt"] as? [String: Any],
                   let request = parsePromptRequest(promptData) else {
-                return nil
+                completion(.success(nil))
+                return
             }
             delegate?.onPromptUpdate(session: session, request: request)
-            return nil
-            
+            completion(.success(nil))
+
         case .promptDismiss:
             let prompt = message?["prompt"] as? [String: Any]
             let promptID = prompt?["id"] as? String ?? message?["id"] as? String ?? ""
             delegate?.onPromptDismiss(session: session, promptId: promptID)
-            return nil
+            completion(.success(nil))
         }
     }
 }

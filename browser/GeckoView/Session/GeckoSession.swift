@@ -243,14 +243,16 @@ public class GeckoSession {
         dispatcher.dispatch(type: "GeckoView:SetFocused", message: ["focused": focused])
     }
     
-    public func focusedInputBottomRatio() async -> CGFloat? {
-        let response = try? await dispatcher.query(type: "GeckoView:GetFocusedInputMetrics")
-        guard let values = response as? [AnyHashable: Any],
-              let bottomRatioValue = values["bottomRatio"] else {
-            return nil
+    public func focusedInputBottomRatio(completion: @escaping (CGFloat?) -> Void) {
+        dispatcher.query(type: "GeckoView:GetFocusedInputMetrics") { result in
+            guard case .success(let response) = result,
+                  let values = response as? [AnyHashable: Any],
+                  let bottomRatioValue = values["bottomRatio"] else {
+                completion(nil)
+                return
+            }
+            completion(PayloadValue.cgFloat(bottomRatioValue))
         }
-        
-        return PayloadValue.cgFloat(bottomRatioValue)
     }
     
     // MARK: - Selection Actions

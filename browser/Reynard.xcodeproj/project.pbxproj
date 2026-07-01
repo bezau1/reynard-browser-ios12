@@ -495,7 +495,7 @@
 				CODE_SIGN_IDENTITY = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = "$(CURRENT_BUILD)";
-				DEVELOPMENT_TEAM = NAR5D6HWAD;
+				DEVELOPMENT_TEAM = MH79SBCPK5;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = Reynard/Resources/Info.plist;
 				INFOPLIST_KEY_CFBundleDisplayName = Reynard;
@@ -509,7 +509,7 @@
 				INFOPLIST_KEY_UILaunchStoryboardName = LaunchScreen;
 				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
 				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = "UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
-				IPHONEOS_DEPLOYMENT_TARGET = "$(IPHONEOS_DEPLOYMENT_TARGET)";
+				IPHONEOS_DEPLOYMENT_TARGET = 12.4;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
@@ -535,7 +535,7 @@
 					"-lgkcodecs",
 					"-lmozinference",
 				);
-				PRODUCT_BUNDLE_IDENTIFIER = "com.minh-ton.Reynard";
+				PRODUCT_BUNDLE_IDENTIFIER = "com.minh-ton.Reynard.MH79SBCPK5";
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				PROVISIONING_PROFILE_SPECIFIER = "";
 				STRING_CATALOG_GENERATE_SYMBOLS = YES;
@@ -563,7 +563,7 @@
 				CODE_SIGN_IDENTITY = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = "$(CURRENT_BUILD)";
-				DEVELOPMENT_TEAM = NAR5D6HWAD;
+				DEVELOPMENT_TEAM = MH79SBCPK5;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = Reynard/Resources/Info.plist;
 				INFOPLIST_KEY_CFBundleDisplayName = Reynard;
@@ -577,7 +577,7 @@
 				INFOPLIST_KEY_UILaunchStoryboardName = LaunchScreen;
 				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
 				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = "UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
-				IPHONEOS_DEPLOYMENT_TARGET = "$(IPHONEOS_DEPLOYMENT_TARGET)";
+				IPHONEOS_DEPLOYMENT_TARGET = 12.4;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
@@ -603,7 +603,7 @@
 					"-lgkcodecs",
 					"-lmozinference",
 				);
-				PRODUCT_BUNDLE_IDENTIFIER = "com.minh-ton.Reynard";
+				PRODUCT_BUNDLE_IDENTIFIER = "com.minh-ton.Reynard.MH79SBCPK5";
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				PROVISIONING_PROFILE_SPECIFIER = "";
 				STRING_CATALOG_GENERATE_SYMBOLS = YES;
@@ -674,7 +674,7 @@
 				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
 				GCC_WARN_UNUSED_FUNCTION = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
-				IPHONEOS_DEPLOYMENT_TARGET = 13.0;
+				IPHONEOS_DEPLOYMENT_TARGET = 12.4;
 				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
 				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
 				MTL_FAST_MATH = YES;
@@ -732,7 +732,7 @@
 				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
 				GCC_WARN_UNUSED_FUNCTION = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
-				IPHONEOS_DEPLOYMENT_TARGET = 13.0;
+				IPHONEOS_DEPLOYMENT_TARGET = 12.4;
 				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
 				MTL_ENABLE_DEBUG_INFO = NO;
 				MTL_FAST_MATH = YES;
@@ -759,7 +759,7 @@
 				INFOPLIST_KEY_NSHumanReadableCopyright = "";
 				INFOPLIST_KEY_NSPrincipalClass = "";
 				INSTALL_PATH = "$(LOCAL_LIBRARY_DIR)/Frameworks";
-				IPHONEOS_DEPLOYMENT_TARGET = "$(IPHONEOS_DEPLOYMENT_TARGET)";
+				IPHONEOS_DEPLOYMENT_TARGET = 12.4;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
@@ -780,7 +780,7 @@
 					"-lgkcodecs",
 					"-lmozinference",
 				);
-				PRODUCT_BUNDLE_IDENTIFIER = "com.minh-ton.GeckoView";
+				PRODUCT_BUNDLE_IDENTIFIER = "com.minh-ton.Reynard.MH79SBCPK5.GeckoView";
 				PRODUCT_NAME = "$(TARGET_NAME:c99extidentifier)";
 				PROVISIONING_PROFILE_SPECIFIER = "";
 				SKIP_INSTALL = YES;
@@ -816,7 +816,7 @@
 				INFOPLIST_KEY_NSHumanReadableCopyright = "";
 				INFOPLIST_KEY_NSPrincipalClass = "";
 				INSTALL_PATH = "$(LOCAL_LIBRARY_DIR)/Frameworks";
-				IPHONEOS_DEPLOYMENT_TARGET = "$(IPHONEOS_DEPLOYMENT_TARGET)";
+				IPHONEOS_DEPLOYMENT_TARGET = 12.4;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
@@ -837,7 +837,7 @@
 					"-lgkcodecs",
 					"-lmozinference",
 				);
-				PRODUCT_BUNDLE_IDENTIFIER = "com.minh-ton.GeckoView";
+				PRODUCT_BUNDLE_IDENTIFIER = "com.minh-ton.Reynard.MH79SBCPK5.GeckoView";
 				PRODUCT_NAME = "$(TARGET_NAME:c99extidentifier)";
 				PROVISIONING_PROFILE_SPECIFIER = "";
 				SKIP_INSTALL = YES;
@@ -864,12 +864,12 @@
 				CODE_SIGN_ENTITLEMENTS = "$(SRCROOT)/Helper/Entitlements/Reynard-Helper.entitlements";
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = "$(CURRENT_BUILD)";
-				DEVELOPMENT_TEAM = NAR5D6HWAD;
+				DEVELOPMENT_TEAM = MH79SBCPK5;
 				ENABLE_DEBUG_DYLIB = NO;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = Helper/Info.plist;
 				INFOPLIST_KEY_CFBundleDisplayName = "Reynard Helper";
-				IPHONEOS_DEPLOYMENT_TARGET = "$(IPHONEOS_DEPLOYMENT_TARGET)";
+				IPHONEOS_DEPLOYMENT_TARGET = 12.4;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
@@ -892,7 +892,7 @@
 					"-lmozinference",
 					"-Wl,-u,_NSExtensionMain",
 				);
-				PRODUCT_BUNDLE_IDENTIFIER = "com.minh-ton.Reynard.Helper";
+				PRODUCT_BUNDLE_IDENTIFIER = "com.minh-ton.Reynard.MH79SBCPK5.Helper";
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SKIP_INSTALL = YES;
 				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
@@ -913,11 +913,11 @@
 				CODE_SIGN_ENTITLEMENTS = "$(SRCROOT)/Helper/Entitlements/Reynard-Helper.entitlements";
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = "$(CURRENT_BUILD)";
-				DEVELOPMENT_TEAM = NAR5D6HWAD;
+				DEVELOPMENT_TEAM = MH79SBCPK5;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = Helper/Info.plist;
 				INFOPLIST_KEY_CFBundleDisplayName = "Reynard Helper";
-				IPHONEOS_DEPLOYMENT_TARGET = "$(IPHONEOS_DEPLOYMENT_TARGET)";
+				IPHONEOS_DEPLOYMENT_TARGET = 12.4;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
@@ -940,7 +940,7 @@
 					"-lmozinference",
 					"-Wl,-u,_NSExtensionMain",
 				);
-				PRODUCT_BUNDLE_IDENTIFIER = "com.minh-ton.Reynard.Helper";
+				PRODUCT_BUNDLE_IDENTIFIER = "com.minh-ton.Reynard.MH79SBCPK5.Helper";
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SKIP_INSTALL = YES;
 				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
@@ -961,14 +961,14 @@
 				CODE_SIGN_IDENTITY = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = "$(CURRENT_BUILD)";
-				DEVELOPMENT_TEAM = NAR5D6HWAD;
+				DEVELOPMENT_TEAM = MH79SBCPK5;
 				ENABLE_DEBUG_DYLIB = NO;
 				FRAMEWORK_SEARCH_PATHS = "";
 				GENERATE_INFOPLIST_FILE = YES;
 				HEADER_SEARCH_PATHS = "";
 				INFOPLIST_FILE = Extensions/OpenIn/Info.plist;
 				INFOPLIST_KEY_CFBundleDisplayName = "Open in Reynard";
-				IPHONEOS_DEPLOYMENT_TARGET = "$(IPHONEOS_DEPLOYMENT_TARGET)";
+				IPHONEOS_DEPLOYMENT_TARGET = 12.4;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
@@ -977,7 +977,7 @@
 				LIBRARY_SEARCH_PATHS = "";
 				MARKETING_VERSION = "$(CURRENT_VERSION)";
 				OTHER_LDFLAGS = "";
-				PRODUCT_BUNDLE_IDENTIFIER = "com.minh-ton.Reynard.OpenIn";
+				PRODUCT_BUNDLE_IDENTIFIER = "com.minh-ton.Reynard.MH79SBCPK5.OpenIn";
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				PROVISIONING_PROFILE_SPECIFIER = "";
 				SKIP_INSTALL = YES;
@@ -999,13 +999,13 @@
 				CODE_SIGN_IDENTITY = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = "$(CURRENT_BUILD)";
-				DEVELOPMENT_TEAM = NAR5D6HWAD;
+				DEVELOPMENT_TEAM = MH79SBCPK5;
 				FRAMEWORK_SEARCH_PATHS = "";
 				GENERATE_INFOPLIST_FILE = YES;
 				HEADER_SEARCH_PATHS = "";
 				INFOPLIST_FILE = Extensions/OpenIn/Info.plist;
 				INFOPLIST_KEY_CFBundleDisplayName = "Open in Reynard";
-				IPHONEOS_DEPLOYMENT_TARGET = "$(IPHONEOS_DEPLOYMENT_TARGET)";
+				IPHONEOS_DEPLOYMENT_TARGET = 12.4;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
@@ -1014,7 +1014,7 @@
 				LIBRARY_SEARCH_PATHS = "";
 				MARKETING_VERSION = "$(CURRENT_VERSION)";
 				OTHER_LDFLAGS = "";
-				PRODUCT_BUNDLE_IDENTIFIER = "com.minh-ton.Reynard.OpenIn";
+				PRODUCT_BUNDLE_IDENTIFIER = "com.minh-ton.Reynard.MH79SBCPK5.OpenIn";
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				PROVISIONING_PROFILE_SPECIFIER = "";
 				SKIP_INSTALL = YES;

@@ -48,15 +48,25 @@ final class AddonSessionListener: GeckoEventListenerInternal {
     ]
     
     @MainActor
-    func handleMessage(type: String, message: [String: Any?]?) async throws -> Any? {
+    func handleMessage(type: String, message: [String: Any?]?, callback: EventCallback?) {
         guard let session else {
-            throw GeckoHandlerError("session has been destroyed")
+            callback?.sendError(GeckoHandlerError("session has been destroyed").value)
+            return
         }
-        return try await AddonRuntime.shared.handleSessionEvent(
+        AddonRuntime.shared.handleSessionEvent(
             type: type,
             message: message,
             session: session
-        )
+        ) { result in
+            switch result {
+            case .success(let value):
+                callback?.sendSuccess(value)
+            case .failure(let error as GeckoHandlerError):
+                callback?.sendError(error.value)
+            case .failure(let error):
+                callback?.sendError("\(error)")
+            }
+        }
     }
 }
 

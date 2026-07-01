@@ -20,20 +20,20 @@ public struct MediaPermissionRequest {
 
 public protocol PermissionEmbedderDelegate: AnyObject {
     @MainActor
-    func permissionDelegate(decideContentPermission permission: ContentPermission, session: GeckoSession) async -> ContentPermission.Value
+    func permissionDelegate(decideContentPermission permission: ContentPermission, session: GeckoSession, completion: @escaping (ContentPermission.Value) -> Void)
     @MainActor
-    func permissionDelegate(decideMediaPermission request: MediaPermissionRequest, session: GeckoSession) async -> Bool
+    func permissionDelegate(decideMediaPermission request: MediaPermissionRequest, session: GeckoSession, completion: @escaping (Bool) -> Void)
 }
 
 public extension PermissionEmbedderDelegate {
     @MainActor
-    func permissionDelegate(decideContentPermission permission: ContentPermission, session: GeckoSession) async -> ContentPermission.Value {
-        .prompt
+    func permissionDelegate(decideContentPermission permission: ContentPermission, session: GeckoSession, completion: @escaping (ContentPermission.Value) -> Void) {
+        completion(.prompt)
     }
-    
+
     @MainActor
-    func permissionDelegate(decideMediaPermission request: MediaPermissionRequest, session: GeckoSession) async -> Bool {
-        false
+    func permissionDelegate(decideMediaPermission request: MediaPermissionRequest, session: GeckoSession, completion: @escaping (Bool) -> Void) {
+        completion(false)
     }
 }
 
@@ -47,23 +47,28 @@ private enum PermissionEvents: String, CaseIterable {
 // MARK: - Permission Commands
 
 public enum PermissionDelegate {
-    public static func permissions(for uri: String, privateMode: Bool = false, contextId: String? = nil) async throws -> [ContentPermission] {
-        let response = try await GeckoEventDispatcherWrapper.runtimeInstance.query(
+    public static func permissions(for uri: String, privateMode: Bool = false, contextId: String? = nil, completion: @escaping (Result<[ContentPermission], Error>) -> Void) {
+        GeckoEventDispatcherWrapper.runtimeInstance.query(
             type: "GeckoView:GetPermissionsByURI",
             message: [
                 "uri": uri,
                 "contextId": contextId,
                 "privateBrowsingId": privateMode ? 1 : 0,
             ]
-        )
-        
-        guard let dictionary = response as? [String: Any],
-              let permissions = dictionary["permissions"] as? [[String: Any]] else {
-            return []
-        }
-        
-        return permissions.map { permission in
-            ContentPermission.fromDictionary(permission.mapValues { Optional($0) })
+        ) { result in
+            switch result {
+            case .failure(let error):
+                completion(.failure(error))
+            case .success(let response):
+                guard let dictionary = response as? [String: Any],
+                      let permissions = dictionary["permissions"] as? [[String: Any]] else {
+                    completion(.success([]))
+                    return
+                }
+                completion(.success(permissions.map { permission in
+                    ContentPermission.fromDictionary(permission.mapValues { Optional($0) })
+                }))
+            }
         }
     }
     
@@ -107,18 +112,19 @@ public enum PermissionDelegate {
     }
     
     @MainActor
-    static func handleMediaPermission(message: [String: Any?]?, session: GeckoSession, delegate: PermissionEmbedderDelegate?) async -> Any {
+    static func handleMediaPermission(message: [String: Any?]?, session: GeckoSession, delegate: PermissionEmbedderDelegate?, completion: @escaping (Any) -> Void) {
         let videoSources = message?["video"] as? [[String: Any?]]
         let audioSources = message?["audio"] as? [[String: Any?]]
         let videoRequested = videoSources != nil
         let audioRequested = audioSources != nil
-        
+
         guard videoSources != nil || audioSources != nil,
               videoSources?.first != nil || videoSources == nil,
               audioSources?.first != nil || audioSources == nil else {
-            return false
+            completion(false)
+            return
         }
-        
+
         let uri = message?["uri"] as? String ?? ""
         let request = MediaPermissionRequest(
             uri: uri,
@@ -126,17 +132,25 @@ public enum PermissionDelegate {
             videoRequested: videoRequested,
             audioRequested: audioRequested
         )
-        
-        guard await delegate?.permissionDelegate(decideMediaPermission: request, session: session) == true else {
-            return false
+
+        guard let delegate else {
+            completion(false)
+            return
         }
-        
-        let selectedVideoID = (videoSources?.first?["rawId"] as? String) ?? (videoSources?.first?["id"] as? String)
-        let selectedAudioID = (audioSources?.first?["rawId"] as? String) ?? (audioSources?.first?["id"] as? String)
-        return [
-            "video": selectedVideoID as Any? ?? NSNull(),
-            "audio": selectedAudioID as Any? ?? NSNull(),
-        ]
+
+        delegate.permissionDelegate(decideMediaPermission: request, session: session) { granted in
+            guard granted else {
+                completion(false)
+                return
+            }
+
+            let selectedVideoID = (videoSources?.first?["rawId"] as? String) ?? (videoSources?.first?["id"] as? String)
+            let selectedAudioID = (audioSources?.first?["rawId"] as? String) ?? (audioSources?.first?["id"] as? String)
+            completion([
+                "video": selectedVideoID as Any? ?? NSNull(),
+                "audio": selectedAudioID as Any? ?? NSNull(),
+            ])
+        }
     }
 }
 
@@ -147,23 +161,31 @@ func newPermissionHandler(_ session: GeckoSession) -> GeckoSessionHandler {
         moduleName: "GeckoViewPermission",
         events: PermissionEvents.allCases.map(\.rawValue),
         session: session
-    ) { @MainActor session, delegate, type, message in
+    ) { @MainActor session, delegate, type, message, completion in
         guard let event = PermissionEvents(rawValue: type) else {
-            throw GeckoHandlerError("unknown message \(type)")
+            completion(.failure(GeckoHandlerError("unknown message \(type)")))
+            return
         }
-        
+
         switch event {
         case .contentPermission:
             let permission = ContentPermission.fromDictionary(message ?? [:])
-            let delegate = delegate as? PermissionEmbedderDelegate
-            return await delegate?.permissionDelegate(decideContentPermission: permission, session: session).rawValue ?? ContentPermission.Value.prompt.rawValue
-            
+            guard let delegate = delegate as? PermissionEmbedderDelegate else {
+                completion(.success(ContentPermission.Value.prompt.rawValue))
+                return
+            }
+            delegate.permissionDelegate(decideContentPermission: permission, session: session) { value in
+                completion(.success(value.rawValue))
+            }
+
         case .mediaPermission:
-            return await PermissionDelegate.handleMediaPermission(
+            PermissionDelegate.handleMediaPermission(
                 message: message,
                 session: session,
                 delegate: delegate as? PermissionEmbedderDelegate
-            )
+            ) { response in
+                completion(.success(response))
+            }
         }
     }
 }

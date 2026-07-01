@@ -17,20 +17,24 @@ public enum GeckoStorageClearFlags {
 }
 
 public enum GeckoStorageController {
-    public static func clearData(flags: Int64) async throws {
-        _ = try await GeckoEventDispatcherWrapper.runtimeInstance.query(
+    public static func clearData(flags: Int64, completion: @escaping (Result<Void, Error>) -> Void) {
+        GeckoEventDispatcherWrapper.runtimeInstance.query(
             type: "GeckoView:ClearData",
             message: ["flags": flags]
-        )
+        ) { result in
+            completion(result.map { _ in () })
+        }
     }
-    
-    public static func clearTranslationModelCache() async {
-        _ = try? await GeckoEventDispatcherWrapper.runtimeInstance.query(
+
+    public static func clearTranslationModelCache(completion: @escaping () -> Void = {}) {
+        GeckoEventDispatcherWrapper.runtimeInstance.query(
             type: "GeckoView:Translations:ManageModel",
             message: [
                 "operation": "delete",
                 "operationLevel": "cache",
             ]
-        )
+        ) { _ in
+            completion()
+        }
     }
 }

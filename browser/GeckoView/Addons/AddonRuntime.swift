@@ -18,9 +18,8 @@ public final class AddonRuntime: NSObject, GeckoEventListenerInternal {
             guard delegate != nil else {
                 return
             }
-            Task { @MainActor in
-                _ = try? await self.list()
-                self.notifyActionDelegateAttached()
+            list { [weak self] _ in
+                self?.notifyActionDelegateAttached()
             }
         }
     }

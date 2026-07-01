@@ -9,81 +9,109 @@ import Foundation
 
 extension AddonRuntime {
     @MainActor
-    func handleSessionEvent(type: String, message: [String: Any?]?, session: GeckoSession) async throws -> Any? {
+    func handleSessionEvent(type: String, message: [String: Any?]?, session: GeckoSession, completion: @escaping (Result<Any?, Error>) -> Void) {
         switch type {
         case "GeckoView:BrowserAction:Update":
-            try await handleActionUpdate(kind: .browser, message: message, session: session)
-            return nil
+            handleActionUpdate(kind: .browser, message: message, session: session) { completion($0.map { _ in nil }) }
         case "GeckoView:PageAction:Update":
-            try await handleActionUpdate(kind: .page, message: message, session: session)
-            return nil
+            handleActionUpdate(kind: .page, message: message, session: session) { completion($0.map { _ in nil }) }
         case "GeckoView:BrowserAction:OpenPopup":
-            try await handleOpenPopup(kind: .browser, message: message, session: session)
-            return nil
+            handleOpenPopup(kind: .browser, message: message, session: session) { completion($0.map { _ in nil }) }
         case "GeckoView:PageAction:OpenPopup":
-            try await handleOpenPopup(kind: .page, message: message, session: session)
-            return nil
+            handleOpenPopup(kind: .page, message: message, session: session) { completion($0.map { _ in nil }) }
         case "GeckoView:WebExtension:OpenOptionsPage":
-            try await handleOpenOptionsPage(message: message)
-            return nil
+            handleOpenOptionsPage(message: message) { completion($0.map { _ in nil }) }
         case "GeckoView:WebExtension:NewTab":
-            return try await handleNewTab(message: message)
+            handleNewTab(message: message) { completion($0.map { $0 as Any? }) }
         case "GeckoView:WebExtension:UpdateTab":
-            guard let extensionID = message?["extensionId"] as? String,
-                  let addon = try await addon(byID: extensionID) else {
-                throw GeckoHandlerError("tabs.update is not supported")
+            guard let extensionID = message?["extensionId"] as? String else {
+                completion(.failure(GeckoHandlerError("tabs.update is not supported")))
+                return
             }
-            let details = AddonUpdateTabDetails(
-                dictionary: message?["updateProperties"] as? [String: Any?] ?? [:]
-            )
-            if delegate?.addonController(self, updateTab: session, for: addon, details: details) == .allow {
-                return nil
+            addon(byID: extensionID) { result in
+                switch result {
+                case .failure(let error):
+                    completion(.failure(error))
+                case .success(let addon):
+                    guard let addon else {
+                        completion(.failure(GeckoHandlerError("tabs.update is not supported")))
+                        return
+                    }
+                    let details = AddonUpdateTabDetails(
+                        dictionary: message?["updateProperties"] as? [String: Any?] ?? [:]
+                    )
+                    if self.delegate?.addonController(self, updateTab: session, for: addon, details: details) == .allow {
+                        completion(.success(nil))
+                    } else {
+                        completion(.failure(GeckoHandlerError("tabs.update is not supported")))
+                    }
+                }
             }
-            throw GeckoHandlerError("tabs.update is not supported")
         case "GeckoView:WebExtension:CloseTab":
-            guard let extensionID = message?["extensionId"] as? String,
-                  let addon = try await addon(byID: extensionID) else {
-                throw GeckoHandlerError("tabs.remove is not supported")
+            guard let extensionID = message?["extensionId"] as? String else {
+                completion(.failure(GeckoHandlerError("tabs.remove is not supported")))
+                return
             }
-            if delegate?.addonController(self, closeTab: session, for: addon) == .allow {
-                return nil
+            addon(byID: extensionID) { result in
+                switch result {
+                case .failure(let error):
+                    completion(.failure(error))
+                case .success(let addon):
+                    guard let addon else {
+                        completion(.failure(GeckoHandlerError("tabs.remove is not supported")))
+                        return
+                    }
+                    if self.delegate?.addonController(self, closeTab: session, for: addon) == .allow {
+                        completion(.success(nil))
+                    } else {
+                        completion(.failure(GeckoHandlerError("tabs.remove is not supported")))
+                    }
+                }
             }
-            throw GeckoHandlerError("tabs.remove is not supported")
         default:
-            throw GeckoHandlerError("Unhandled WebExtension session event \(type)")
+            completion(.failure(GeckoHandlerError("Unhandled WebExtension session event \(type)")))
         }
     }
-    
+
     @MainActor
-    public func handleMessage(type: String, message: [String: Any?]?) async throws -> Any? {
+    public func handleMessage(type: String, message: [String: Any?]?, callback: EventCallback?) {
         guard let event = AddonRuntimeEvent(rawValue: type) else {
-            throw GeckoHandlerError("unknown message \(type)")
+            callback?.sendError(GeckoHandlerError("unknown message \(type)").value)
+            return
         }
-        
+
+        handleRuntimeEvent(event, message: message) { result in
+            switch result {
+            case .success(let value):
+                callback?.sendSuccess(value)
+            case .failure(let error as GeckoHandlerError):
+                callback?.sendError(error.value)
+            case .failure(let error):
+                callback?.sendError("\(error)")
+            }
+        }
+    }
+
+    private func handleRuntimeEvent(_ event: AddonRuntimeEvent, message: [String: Any?]?, completion: @escaping (Result<Any?, Error>) -> Void) {
         switch event {
         case .browserActionUpdate:
-            try await handleActionUpdate(kind: .browser, message: message, session: nil)
-            return nil
+            handleActionUpdate(kind: .browser, message: message, session: nil) { completion($0.map { _ in nil }) }
         case .pageActionUpdate:
-            try await handleActionUpdate(kind: .page, message: message, session: nil)
-            return nil
+            handleActionUpdate(kind: .page, message: message, session: nil) { completion($0.map { _ in nil }) }
         case .browserActionOpenPopup:
-            try await handleOpenPopup(kind: .browser, message: message, session: nil)
-            return nil
+            handleOpenPopup(kind: .browser, message: message, session: nil) { completion($0.map { _ in nil }) }
         case .pageActionOpenPopup:
-            try await handleOpenPopup(kind: .page, message: message, session: nil)
-            return nil
+            handleOpenPopup(kind: .page, message: message, session: nil) { completion($0.map { _ in nil }) }
         case .openOptionsPage:
-            try await handleOpenOptionsPage(message: message)
-            return nil
+            handleOpenOptionsPage(message: message) { completion($0.map { _ in nil }) }
         case .newTab:
-            return try await handleNewTab(message: message)
+            handleNewTab(message: message) { completion($0.map { $0 as Any? }) }
         case .installPrompt:
-            return try await installPromptResponse(message: message)
+            installPromptResponse(message: message) { completion($0.map { $0 as Any? }) }
         case .optionalPrompt:
-            return try await permissionPromptResponse(for: .optionalPrompt, message: message)
+            permissionPromptResponse(for: .optionalPrompt, message: message) { completion($0.map { $0 as Any? }) }
         case .updatePrompt:
-            return try await permissionPromptResponse(for: .updatePrompt, message: message)
+            permissionPromptResponse(for: .updatePrompt, message: message) { completion($0.map { $0 as Any? }) }
         case .installationFailed:
             let failure = AddonInstallFailure(
                 code: PayloadValue.string(message?["error"]),
@@ -92,174 +120,264 @@ extension AddonRuntime {
                 extensionVersion: PayloadValue.string(message?["addonVersion"])
             )
             delegate?.addonController(self, didFailInstall: failure)
-            return nil
+            completion(.success(nil))
         case .uninstalled:
             if let removedAddon = removeAddon(from: message) {
                 delegate?.addonController(self, didUpdate: removedAddon)
             }
-            return nil
+            completion(.success(nil))
         case .optionalPermissionsChanged, .ready, .disabling, .disabled, .enabling, .enabled, .uninstalling, .installing, .installed:
             if let extensionDictionary = message?["extension"] as? [String: Any?] {
                 let addon = upsertAddon(from: extensionDictionary)
                 delegate?.addonController(self, didUpdate: addon)
             }
-            return nil
+            completion(.success(nil))
         }
     }
-    
-    private func handleOpenOptionsPage(message: [String: Any?]?) async throws {
+
+    private func handleOpenOptionsPage(message: [String: Any?]?, completion: @escaping (Result<Void, Error>) -> Void) {
+        guard let extensionID = message?["extensionId"] as? String else {
+            completion(.failure(GeckoHandlerError("runtime.openOptionsPage is not supported")))
+            return
+        }
+        addon(byID: extensionID) { result in
+            switch result {
+            case .failure(let error):
+                completion(.failure(error))
+            case .success(let addon):
+                guard let addon else {
+                    completion(.failure(GeckoHandlerError("runtime.openOptionsPage is not supported")))
+                    return
+                }
+                self.delegate?.addonController(self, didRequestOpenOptionsPageFor: addon)
+                completion(.success(()))
+            }
+        }
+    }
+
+    private func handleNewTab(message: [String: Any?]?, completion: @escaping (Result<Bool, Error>) -> Void) {
         guard let extensionID = message?["extensionId"] as? String,
-              let addon = try await addon(byID: extensionID) else {
-            throw GeckoHandlerError("runtime.openOptionsPage is not supported")
+              let newSessionID = message?["newSessionId"] as? String else {
+            completion(.success(false))
+            return
         }
-        delegate?.addonController(self, didRequestOpenOptionsPageFor: addon)
-    }
-    
-    private func handleNewTab(message: [String: Any?]?) async throws -> Bool {
-        guard let extensionID = message?["extensionId"] as? String,
-              let newSessionID = message?["newSessionId"] as? String,
-              let addon = try await addon(byID: extensionID) else {
-            return false
+        addon(byID: extensionID) { result in
+            switch result {
+            case .failure(let error):
+                completion(.failure(error))
+            case .success(let addon):
+                guard let addon else {
+                    completion(.success(false))
+                    return
+                }
+                let details = AddonCreateTabDetails(
+                    dictionary: message?["createProperties"] as? [String: Any?] ?? [:]
+                )
+                completion(.success(self.delegate?.addonController(
+                    self,
+                    createNewTabFor: addon,
+                    details: details,
+                    newSessionID: newSessionID
+                ) ?? false))
+            }
         }
-        let details = AddonCreateTabDetails(
-            dictionary: message?["createProperties"] as? [String: Any?] ?? [:]
-        )
-        return delegate?.addonController(
-            self,
-            createNewTabFor: addon,
-            details: details,
-            newSessionID: newSessionID
-        ) ?? false
     }
-    
-    private func installPromptResponse(message: [String: Any?]?) async throws -> [String: Any] {
-        guard let prompt = try await permissionPrompt(for: .installPrompt, message: message) else {
-            return [
-                "allow": false,
-                "privateBrowsingAllowed": false,
-                "isTechnicalAndInteractionDataGranted": false,
-            ]
+
+    private func installPromptResponse(message: [String: Any?]?, completion: @escaping (Result<[String: Any], Error>) -> Void) {
+        permissionPrompt(for: .installPrompt, message: message) { result in
+            switch result {
+            case .failure(let error):
+                completion(.failure(error))
+            case .success(let prompt):
+                guard let prompt else {
+                    completion(.success([
+                        "allow": false,
+                        "privateBrowsingAllowed": false,
+                        "isTechnicalAndInteractionDataGranted": false,
+                    ]))
+                    return
+                }
+                let respond: (AddonPermissionPromptResponse) -> Void = { response in
+                    completion(.success([
+                        "allow": response.allow,
+                        "privateBrowsingAllowed": response.privateBrowsingAllowed,
+                        "isTechnicalAndInteractionDataGranted": response.technicalAndInteractionDataGranted,
+                    ]))
+                }
+                guard let delegate = self.delegate else {
+                    respond(.deny)
+                    return
+                }
+                delegate.addonController(self, promptFor: prompt, completion: respond)
+            }
         }
-        let response = await delegate?.addonController(self, promptFor: prompt) ?? .deny
-        return [
-            "allow": response.allow,
-            "privateBrowsingAllowed": response.privateBrowsingAllowed,
-            "isTechnicalAndInteractionDataGranted": response.technicalAndInteractionDataGranted,
-        ]
     }
-    
+
     private func permissionPromptResponse(
         for event: AddonRuntimeEvent,
-        message: [String: Any?]?
-    ) async throws -> [String: Bool] {
-        guard let prompt = try await permissionPrompt(for: event, message: message) else {
-            return ["allow": false]
+        message: [String: Any?]?,
+        completion: @escaping (Result<[String: Bool], Error>) -> Void
+    ) {
+        permissionPrompt(for: event, message: message) { result in
+            switch result {
+            case .failure(let error):
+                completion(.failure(error))
+            case .success(let prompt):
+                guard let prompt else {
+                    completion(.success(["allow": false]))
+                    return
+                }
+                let respond: (AddonPermissionPromptResponse) -> Void = { response in
+                    completion(.success(["allow": response.allow]))
+                }
+                guard let delegate = self.delegate else {
+                    respond(.deny)
+                    return
+                }
+                delegate.addonController(self, promptFor: prompt, completion: respond)
+            }
         }
-        let response = await delegate?.addonController(self, promptFor: prompt) ?? .deny
-        return ["allow": response.allow]
     }
-    
-    private func addonForPrompt(from message: [String: Any?]?) async throws -> Addon? {
+
+    private func addonForPrompt(from message: [String: Any?]?, completion: @escaping (Result<Addon?, Error>) -> Void) {
         if let extensionDictionary = message?["extension"] as? [String: Any?] {
-            return Addon(dictionary: extensionDictionary)
+            completion(.success(Addon(dictionary: extensionDictionary)))
+            return
         }
-        
+
         guard let extensionID = addonID(from: message) else {
-            return nil
+            completion(.success(nil))
+            return
         }
-        
+
         if let cachedAddon = addonsByID[extensionID] {
-            return cachedAddon
+            completion(.success(cachedAddon))
+            return
         }
-        
-        return try await addon(byID: extensionID)
+
+        addon(byID: extensionID, completion: completion)
     }
-    
+
     private func permissionPrompt(
         for event: AddonRuntimeEvent,
-        message: [String: Any?]?
-    ) async throws -> AddonPermissionPrompt? {
-        guard let addon = try await addonForPrompt(from: message) else {
-            return nil
-        }
-        
-        switch event {
-        case .installPrompt:
-            return AddonPermissionPrompt(
-                kind: .install,
-                addon: addon,
-                permissions: PayloadValue.strings(message?["permissions"]),
-                origins: PayloadValue.strings(message?["origins"]),
-                dataCollectionPermissions: PayloadValue.strings(message?["dataCollectionPermissions"])
-            )
-        case .optionalPrompt:
-            let permissionDictionary = message?["permissions"] as? [String: Any?]
-            return AddonPermissionPrompt(
-                kind: .optional,
-                addon: addon,
-                permissions: PayloadValue.strings(permissionDictionary?["permissions"]),
-                origins: PayloadValue.strings(permissionDictionary?["origins"]),
-                dataCollectionPermissions: PayloadValue.strings(permissionDictionary?["data_collection"])
-            )
-        case .updatePrompt:
-            return AddonPermissionPrompt(
-                kind: .update,
-                addon: addon,
-                permissions: PayloadValue.strings(message?["newPermissions"]),
-                origins: PayloadValue.strings(message?["newOrigins"]),
-                dataCollectionPermissions: PayloadValue.strings(message?["newDataCollectionPermissions"])
-            )
-        default:
-            return nil
+        message: [String: Any?]?,
+        completion: @escaping (Result<AddonPermissionPrompt?, Error>) -> Void
+    ) {
+        addonForPrompt(from: message) { result in
+            switch result {
+            case .failure(let error):
+                completion(.failure(error))
+            case .success(let addon):
+                guard let addon else {
+                    completion(.success(nil))
+                    return
+                }
+
+                switch event {
+                case .installPrompt:
+                    completion(.success(AddonPermissionPrompt(
+                        kind: .install,
+                        addon: addon,
+                        permissions: PayloadValue.strings(message?["permissions"]),
+                        origins: PayloadValue.strings(message?["origins"]),
+                        dataCollectionPermissions: PayloadValue.strings(message?["dataCollectionPermissions"])
+                    )))
+                case .optionalPrompt:
+                    let permissionDictionary = message?["permissions"] as? [String: Any?]
+                    completion(.success(AddonPermissionPrompt(
+                        kind: .optional,
+                        addon: addon,
+                        permissions: PayloadValue.strings(permissionDictionary?["permissions"]),
+                        origins: PayloadValue.strings(permissionDictionary?["origins"]),
+                        dataCollectionPermissions: PayloadValue.strings(permissionDictionary?["data_collection"])
+                    )))
+                case .updatePrompt:
+                    completion(.success(AddonPermissionPrompt(
+                        kind: .update,
+                        addon: addon,
+                        permissions: PayloadValue.strings(message?["newPermissions"]),
+                        origins: PayloadValue.strings(message?["newOrigins"]),
+                        dataCollectionPermissions: PayloadValue.strings(message?["newDataCollectionPermissions"])
+                    )))
+                default:
+                    completion(.success(nil))
+                }
+            }
         }
     }
-    
+
     private func action(kind: AddonActionKind, from message: [String: Any?]?) -> AddonAction? {
         guard let dictionary = message?["action"] as? [String: Any?] else {
             return nil
         }
         return AddonAction(kind: kind, dictionary: dictionary)
     }
-    
+
     private func handleActionUpdate(
         kind: AddonActionKind,
         message: [String: Any?]?,
-        session: GeckoSession?
-    ) async throws {
+        session: GeckoSession?,
+        completion: @escaping (Result<Void, Error>) -> Void
+    ) {
         guard let extensionID = message?["extensionId"] as? String,
-              let action = action(kind: kind, from: message),
-              let addon = try await addon(byID: extensionID) else {
+              let action = action(kind: kind, from: message) else {
+            completion(.success(()))
             return
         }
-        
-        if session == nil {
-            if kind == .browser {
-                addon.browserAction = action
-            } else {
-                addon.pageAction = action
+        addon(byID: extensionID) { result in
+            switch result {
+            case .failure(let error):
+                completion(.failure(error))
+            case .success(let addon):
+                guard let addon else {
+                    completion(.success(()))
+                    return
+                }
+
+                if session == nil {
+                    if kind == .browser {
+                        addon.browserAction = action
+                    } else {
+                        addon.pageAction = action
+                    }
+                }
+                self.delegate?.addonController(self, didUpdate: action, for: addon, session: session)
+                completion(.success(()))
             }
         }
-        delegate?.addonController(self, didUpdate: action, for: addon, session: session)
     }
-    
+
     private func handleOpenPopup(
         kind: AddonActionKind,
         message: [String: Any?]?,
-        session: GeckoSession?
-    ) async throws {
-        guard let extensionID = message?["extensionId"] as? String,
-              let addon = try await addon(byID: extensionID),
-              let action = action(kind: kind, from: message),
-              let popupURL = message?["popupUri"] as? String,
-              !popupURL.isEmpty else {
+        session: GeckoSession?,
+        completion: @escaping (Result<Void, Error>) -> Void
+    ) {
+        guard let extensionID = message?["extensionId"] as? String else {
+            completion(.success(()))
             return
         }
-        delegate?.addonController(
-            self,
-            didRequestOpenPopup: popupURL,
-            for: addon,
-            action: action,
-            session: session
-        )
+        addon(byID: extensionID) { result in
+            switch result {
+            case .failure(let error):
+                completion(.failure(error))
+            case .success(let addon):
+                guard let addon,
+                      let action = self.action(kind: kind, from: message),
+                      let popupURL = message?["popupUri"] as? String,
+                      !popupURL.isEmpty else {
+                    completion(.success(()))
+                    return
+                }
+                self.delegate?.addonController(
+                    self,
+                    didRequestOpenPopup: popupURL,
+                    for: addon,
+                    action: action,
+                    session: session
+                )
+                completion(.success(()))
+            }
+        }
     }
 }

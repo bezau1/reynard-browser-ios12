@@ -64,7 +64,7 @@ public protocol ContentDelegate {
     func onFirstContentfulPaint(session: GeckoSession)
     func onPaintStatusReset(session: GeckoSession)
     func onWebAppManifest(session: GeckoSession, manifest: Any)
-    func onSlowScript(session: GeckoSession, scriptFileName: String) async -> SlowScriptResponse
+    func onSlowScript(session: GeckoSession, scriptFileName: String, completion: @escaping (SlowScriptResponse) -> Void)
     func onShowDynamicToolbar(session: GeckoSession)
     func onCookieBannerDetected(session: GeckoSession)
     func onCookieBannerHandled(session: GeckoSession)
@@ -87,7 +87,7 @@ extension ContentDelegate {
     public func onFirstContentfulPaint(session: GeckoSession) {}
     public func onPaintStatusReset(session: GeckoSession) {}
     public func onWebAppManifest(session: GeckoSession, manifest: Any) {}
-    public func onSlowScript(session: GeckoSession, scriptFileName: String) async -> SlowScriptResponse { .halt }
+    public func onSlowScript(session: GeckoSession, scriptFileName: String, completion: @escaping (SlowScriptResponse) -> Void) { completion(.halt) }
     public func onShowDynamicToolbar(session: GeckoSession) {}
     public func onCookieBannerDetected(session: GeckoSession) {}
     public func onCookieBannerHandled(session: GeckoSession) {}
@@ -125,7 +125,7 @@ func newContentHandler(_ session: GeckoSession) -> GeckoSessionHandler {
         moduleName: "GeckoViewContent",
         events: ContentEvents.allCases.map(\.rawValue),
         session: session
-    ) { @MainActor session, delegate, type, message in
+    ) { @MainActor session, delegate, type, message, completion in
         func parseStringDictionary(_ value: Any?) -> [String: String] {
             guard let dictionary = value as? [String: Any] else {
                 return [:]
@@ -141,18 +141,21 @@ func newContentHandler(_ session: GeckoSession) -> GeckoSessionHandler {
         }
         
         guard let event = ContentEvents(rawValue: type) else {
-            throw GeckoHandlerError("unknown message \(type)")
+            completion(.failure(GeckoHandlerError("unknown message \(type)")))
+            return
         }
-        
+
         let delegate = delegate as? ContentDelegate
         switch event {
         case .contentCrash:
             delegate?.onCrash(session: session)
-            return nil
+            completion(.success(nil))
+            return
             
         case .contentKill:
             delegate?.onKill(session: session)
-            return nil
+            completion(.success(nil))
+            return
             
         case .contextMenu:
             func parseElementType(_ value: String) -> ContextElement.ElementType {
@@ -184,22 +187,26 @@ func newContentHandler(_ session: GeckoSession) -> GeckoSessionHandler {
                 screenY: message?["screenY"] as? Int ?? 0,
                 element: contextElement
             )
-            return nil
+            completion(.success(nil))
+            return
             
         case .domMetaViewportFit:
             delegate?.onMetaViewportFitChange(
                 session: session,
                 viewportFit: message?["viewportfit"] as? String ?? ""
             )
-            return nil
+            completion(.success(nil))
+            return
             
         case .pageTitleChanged:
             delegate?.onTitleChange(session: session, title: message?["title"] as? String ?? "")
-            return nil
+            completion(.success(nil))
+            return
             
         case .domWindowClose:
             delegate?.onCloseRequest(session: session)
-            return nil
+            completion(.success(nil))
+            return
             
         case .externalResponse:
             delegate?.onExternalResponse(
@@ -214,48 +221,58 @@ func newContentHandler(_ session: GeckoSession) -> GeckoSessionHandler {
                     requestHeaders: parseStringDictionary(message?["requestHeaders"])
                 )
             )
-            return nil
+            completion(.success(nil))
+            return
             
         case .focusRequest:
             delegate?.onFocusRequest(session: session)
-            return nil
+            completion(.success(nil))
+            return
             
         case .fullscreenEnter:
             delegate?.onFullScreen(session: session, fullScreen: true)
-            return nil
+            completion(.success(nil))
+            return
             
         case .fullscreenExit:
             delegate?.onFullScreen(session: session, fullScreen: false)
-            return nil
+            completion(.success(nil))
+            return
             
         case .webAppManifest:
             if let manifest = message?["manifest"] {
                 delegate?.onWebAppManifest(session: session, manifest: manifest as Any)
             }
-            return nil
+            completion(.success(nil))
+            return
             
         case .firstContentfulPaint:
             delegate?.onFirstContentfulPaint(session: session)
-            return nil
+            completion(.success(nil))
+            return
             
         case .paintStatusReset:
             delegate?.onPaintStatusReset(session: session)
-            return nil
+            completion(.success(nil))
+            return
             
         case .previewImage:
             delegate?.onPreviewImage(
                 session: session,
                 previewImageUrl: message?["previewImageUrl"] as? String ?? ""
             )
-            return nil
+            completion(.success(nil))
+            return
             
         case .cookieBannerEventDetected:
             delegate?.onCookieBannerDetected(session: session)
-            return nil
+            completion(.success(nil))
+            return
             
         case .cookieBannerEventHandled:
             delegate?.onCookieBannerHandled(session: session)
-            return nil
+            completion(.success(nil))
+            return
             
         case .savePdf:
             delegate?.onSavePdf(
@@ -266,11 +283,13 @@ func newContentHandler(_ session: GeckoSession) -> GeckoSessionHandler {
                     originalUrl: message?["originalUrl"] as? String
                 )
             )
-            return nil
+            completion(.success(nil))
+            return
             
         case .onProductUrl:
             delegate?.onProductUrl(session: session)
-            return nil
+            completion(.success(nil))
+            return
         }
     }
 }
@@ -286,34 +305,44 @@ func newProcessHangHandler(_ session: GeckoSession) -> GeckoSessionHandler {
         moduleName: "GeckoViewProcessHangMonitor",
         events: ProcessHangEvents.allCases.map(\.rawValue),
         session: session
-    ) { @MainActor session, delegate, type, message in
+    ) { @MainActor session, delegate, type, message, completion in
         guard let event = ProcessHangEvents(rawValue: type) else {
-            throw GeckoHandlerError("unknown message \(type)")
+            completion(.failure(GeckoHandlerError("unknown message \(type)")))
+            return
         }
-        
+
         let delegate = delegate as? ContentDelegate
         switch event {
         case .hangReport:
             let reportID = PayloadValue.int(message?["hangId"]) ?? 0
-            
-            let response = await delegate?.onSlowScript(
-                session: session,
-                scriptFileName: message?["scriptFileName"] as? String ?? ""
-            )
-            
-            switch response {
-            case .resume:
-                session.dispatcher.dispatch(
-                    type: "GeckoView:HangReportWait",
-                    message: ["hangId": reportID]
-                )
-            default:
+
+            guard let delegate else {
                 session.dispatcher.dispatch(
                     type: "GeckoView:HangReportStop",
                     message: ["hangId": reportID]
                 )
+                completion(.success(nil))
+                return
             }
-            return nil
+
+            delegate.onSlowScript(
+                session: session,
+                scriptFileName: message?["scriptFileName"] as? String ?? ""
+            ) { response in
+                switch response {
+                case .resume:
+                    session.dispatcher.dispatch(
+                        type: "GeckoView:HangReportWait",
+                        message: ["hangId": reportID]
+                    )
+                default:
+                    session.dispatcher.dispatch(
+                        type: "GeckoView:HangReportStop",
+                        message: ["hangId": reportID]
+                    )
+                }
+                completion(.success(nil))
+            }
         }
     }
 }

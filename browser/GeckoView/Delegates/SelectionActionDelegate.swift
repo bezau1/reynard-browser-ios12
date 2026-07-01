@@ -38,24 +38,26 @@ func newSelectionActionHandler(_ session: GeckoSession) -> GeckoSessionHandler {
         moduleName: "GeckoViewSelectionAction",
         events: SelectionActionEvent.allCases.map(\.rawValue),
         session: session
-    ) { @MainActor session, delegate, type, message in
+    ) { @MainActor session, delegate, type, message, completion in
         guard let event = SelectionActionEvent(rawValue: type) else {
-            throw GeckoHandlerError("unknown message \(type)")
+            completion(.failure(GeckoHandlerError("unknown message \(type)")))
+            return
         }
-        
+
         let delegate = delegate as? SelectionActionDelegate
         switch event {
         case .show:
             guard let request = parseSelectionActionRequest(message) else {
                 delegate?.onHideSelectionAction(session: session)
-                return nil
+                completion(.success(nil))
+                return
             }
             delegate?.onShowSelectionAction(session: session, request: request)
-            
+
         case .hide:
             delegate?.onHideSelectionAction(session: session)
         }
-        
-        return nil
+
+        completion(.success(nil))
     }
 }

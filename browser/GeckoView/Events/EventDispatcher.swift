@@ -17,22 +17,7 @@ struct GeckoHandlerError: Error {
 
 protocol GeckoEventListenerInternal {
     @MainActor
-    func handleMessage(type: String, message: [String: Any?]?) async throws -> Any?
-}
-
-extension GeckoEventListenerInternal {
-    func handleMessage(type: String, message: [String: Any?]?, callback: EventCallback?) {
-        Task { @MainActor in
-            do {
-                let result = try await self.handleMessage(type: type, message: message)
-                callback?.sendSuccess(result)
-            } catch let error as GeckoHandlerError {
-                callback?.sendError(error.value)
-            } catch {
-                callback?.sendError("\(error)")
-            }
-        }
-    }
+    func handleMessage(type: String, message: [String: Any?]?, callback: EventCallback?)
 }
 
 public class GeckoEventDispatcherWrapper: NSObject, SwiftEventDispatcher {
@@ -83,29 +68,31 @@ public class GeckoEventDispatcherWrapper: NSObject, SwiftEventDispatcher {
         }
     }
     
-    public func query(type: String, message: [String: Any?]? = nil) async throws -> Any? {
-        class AsyncCallback: NSObject, EventCallback {
-            var continuation: CheckedContinuation<Any?, Error>?
-            init(_ continuation: CheckedContinuation<Any?, Error>) {
-                self.continuation = continuation
+    public func query(
+        type: String,
+        message: [String: Any?]? = nil,
+        completion: @escaping (Result<Any?, Error>) -> Void
+    ) {
+        class CallbackAdapter: NSObject, EventCallback {
+            var completion: ((Result<Any?, Error>) -> Void)?
+            init(_ completion: @escaping (Result<Any?, Error>) -> Void) {
+                self.completion = completion
             }
             func sendSuccess(_ response: Any?) {
-                continuation?.resume(returning: response)
-                continuation = nil
+                completion?(.success(response))
+                completion = nil
             }
             func sendError(_ response: Any?) {
-                continuation?.resume(throwing: GeckoHandlerError(response))
-                continuation = nil
+                completion?(.failure(GeckoHandlerError(response)))
+                completion = nil
             }
             deinit {
-                continuation?.resume(throwing: GeckoHandlerError("callback never invoked"))
-                continuation = nil
+                completion?(.failure(GeckoHandlerError("callback never invoked")))
+                completion = nil
             }
         }
-        
-        return try await withCheckedThrowingContinuation {
-            dispatch(type: type, message: message, callback: AsyncCallback($0))
-        }
+
+        dispatch(type: type, message: message, callback: CallbackAdapter(completion))
     }
     
     public func attach(_ dispatcher: (any GeckoEventDispatcher)?) {

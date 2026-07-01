@@ -29,18 +29,18 @@ public protocol NavigationDelegate {
     func onLocationChange(session: GeckoSession, url: String?, permissions: [ContentPermission])
     func onCanGoBack(session: GeckoSession, canGoBack: Bool)
     func onCanGoForward(session: GeckoSession, canGoForward: Bool)
-    func onLoadRequest(session: GeckoSession, request: LoadRequest) async -> AllowOrDeny
-    func onSubframeLoadRequest(session: GeckoSession, request: LoadRequest) async -> AllowOrDeny
-    func onNewSession(session: GeckoSession, uri: String, windowId: String) async -> GeckoSession?
+    func onLoadRequest(session: GeckoSession, request: LoadRequest, completion: @escaping (AllowOrDeny) -> Void)
+    func onSubframeLoadRequest(session: GeckoSession, request: LoadRequest, completion: @escaping (AllowOrDeny) -> Void)
+    func onNewSession(session: GeckoSession, uri: String, windowId: String, completion: @escaping (GeckoSession?) -> Void)
 }
 
 extension NavigationDelegate {
     public func onLocationChange(session: GeckoSession, url: String?, permissions: [ContentPermission]) {}
     public func onCanGoBack(session: GeckoSession, canGoBack: Bool) {}
     public func onCanGoForward(session: GeckoSession, canGoForward: Bool) {}
-    public func onLoadRequest(session: GeckoSession, request: LoadRequest) async -> AllowOrDeny { .allow }
-    public func onSubframeLoadRequest(session: GeckoSession, request: LoadRequest) async -> AllowOrDeny { .allow }
-    public func onNewSession(session: GeckoSession, uri: String, windowId: String) async -> GeckoSession? { nil }
+    public func onLoadRequest(session: GeckoSession, request: LoadRequest, completion: @escaping (AllowOrDeny) -> Void) { completion(.allow) }
+    public func onSubframeLoadRequest(session: GeckoSession, request: LoadRequest, completion: @escaping (AllowOrDeny) -> Void) { completion(.allow) }
+    public func onNewSession(session: GeckoSession, uri: String, windowId: String, completion: @escaping (GeckoSession?) -> Void) { completion(nil) }
 }
 
 // MARK: - Navigation Events
@@ -59,11 +59,12 @@ func newNavigationHandler(_ session: GeckoSession) -> GeckoSessionHandler {
         moduleName: "GeckoViewNavigation",
         events: NavigationEvents.allCases.map(\.rawValue),
         session: session
-    ) { @MainActor session, delegate, type, message in
+    ) { @MainActor session, delegate, type, message, completion in
         guard let event = NavigationEvents(rawValue: type) else {
-            throw GeckoHandlerError("unknown message \(type)")
+            completion(.failure(GeckoHandlerError("unknown message \(type)")))
+            return
         }
-        
+
         let delegate = delegate as? NavigationDelegate
         switch event {
         case .locationChange:
@@ -81,41 +82,52 @@ func newNavigationHandler(_ session: GeckoSession) -> GeckoSessionHandler {
                 session: session,
                 canGoForward: message?["canGoForward"] as? Bool ?? false
             )
-            return nil
-            
+            completion(.success(nil))
+
         case .onNewSession:
             guard
                 let uri = message?["uri"] as? String,
                 let requestedWindowID = message?["newSessionId"] as? String
             else {
-                return false
+                completion(.success(false))
+                return
             }
-            
-            if let newSession = await delegate?.onNewSession(
+
+            guard let delegate else {
+                completion(.success(false))
+                return
+            }
+
+            delegate.onNewSession(
                 session: session,
                 uri: uri,
                 windowId: requestedWindowID
-            ) {
+            ) { newSession in
+                guard let newSession else {
+                    completion(.success(false))
+                    return
+                }
                 if let windowId = newSession.id,
                    windowId != requestedWindowID {
                     assertionFailure("GeckoSession was opened with mismatched window id")
-                    return false
+                    completion(.success(false))
+                    return
                 }
                 if !newSession.isOpen() {
                     newSession.open(windowId: requestedWindowID)
                 }
-                return true
+                completion(.success(true))
             }
-            return false
-            
+
         case .onLoadError:
-            return nil
-            
+            completion(.success(nil))
+
         case .onLoadRequest:
             guard let uri = message?["uri"] as? String else {
-                return true
+                completion(.success(true))
+                return
             }
-            
+
             func convertTarget(_ value: Int32) -> LoadRequestTarget {
                 switch value {
                 case 0, 1:
@@ -138,13 +150,23 @@ func newNavigationHandler(_ session: GeckoSession) -> GeckoSessionHandler {
                 isDirectNavigation: true
             )
             
+            guard let delegate else {
+                completion(.success(false))
+                return
+            }
+
             let isTopLevel = message?["isTopLevel"] as? Bool ?? true
             if isTopLevel {
                 // GeckoView expects this response to mean "handled by the app".
                 // Allow must therefore return false so Gecko continues the load itself.
-                return await delegate?.onLoadRequest(session: session, request: request) == .deny
+                delegate.onLoadRequest(session: session, request: request) { decision in
+                    completion(.success(decision == .deny))
+                }
+            } else {
+                delegate.onSubframeLoadRequest(session: session, request: request) { decision in
+                    completion(.success(decision == .deny))
+                }
             }
-            return await delegate?.onSubframeLoadRequest(session: session, request: request) == .deny
         }
     }
 }
