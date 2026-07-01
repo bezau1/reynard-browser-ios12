@@ -2,6 +2,11 @@
 
 # Reynard Browser
 
+> [!WARNING]  
+> This is a silly trial using Claude to see if I can revive my iPad Mini 2 by getting Reynard to run on iOS 12. AI bad, I know, but how useful is this in the first place? 
+> I have some knowledge and so far, it seems like lots of APIs that Reynard uses aren't available on iOS 12, such as Swift Concurrency, which the app normally uses extensively.
+> I have ZERO intentions of upstreaming my changes, even if I succeed, as it would drastically decrease code readability and maintainability.
+
 Reynard is a **Gecko-based** web browser for iOS 13+.
 
 Unlike other browsers on iOS that are forced to use Apple's **WebKit** engine (including Safari and all third-party browsers), Reynard uses **Gecko**. This is the same engine that powers the Firefox browser on desktop and Android devices.
