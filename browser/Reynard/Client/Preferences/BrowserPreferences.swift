@@ -14,7 +14,14 @@ final class BrowserPreferences {
     static var shared = BrowserPreferences()
     
     let profile: String
-    
+
+    // In-memory cache for bool reads. UserDefaults.bool(forKey:) makes
+    // CFPreferences log a lookup on every call, which floods when read on hot
+    // paths (e.g. the address bar on every render / menu update). Bools only
+    // change through set(_:Bool...), so a write-through cache stays correct.
+    private var boolCache: [String: Bool] = [:]
+    private let boolCacheLock = NSLock()
+
     init(profile: String = "default") {
         self.profile = profile
         registerDefaults()
@@ -112,7 +119,19 @@ final class BrowserPreferences {
     }
     
     func bool(forSetting setting: String, key name: String) -> Bool {
-        UserDefaults.standard.bool(forKey: key(setting, name))
+        let cacheKey = key(setting, name)
+        boolCacheLock.lock()
+        if let cached = boolCache[cacheKey] {
+            boolCacheLock.unlock()
+            return cached
+        }
+        boolCacheLock.unlock()
+
+        let value = UserDefaults.standard.bool(forKey: cacheKey)
+        boolCacheLock.lock()
+        boolCache[cacheKey] = value
+        boolCacheLock.unlock()
+        return value
     }
     
     func string(forSetting setting: String, key name: String) -> String? {
@@ -132,7 +151,11 @@ final class BrowserPreferences {
     }
     
     func set(_ value: Bool, forSetting setting: String, key name: String) {
-        UserDefaults.standard.set(value, forKey: key(setting, name))
+        let cacheKey = key(setting, name)
+        boolCacheLock.lock()
+        boolCache[cacheKey] = value
+        boolCacheLock.unlock()
+        UserDefaults.standard.set(value, forKey: cacheKey)
     }
     
     func set(_ value: String?, forSetting setting: String, key name: String) {

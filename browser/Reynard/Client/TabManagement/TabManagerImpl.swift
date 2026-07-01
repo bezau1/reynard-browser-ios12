@@ -1132,8 +1132,14 @@ extension TabManagerImplementation: ProgressDelegate {
             return
         }
         let tab = tabs(for: location.mode)[location.index]
-        
-        tab.state.loadingState = .loading(progress: Float(progress) / 100)
+
+        // A session can emit the same progress repeatedly; skip redundant updates
+        // so we don't re-render the chrome (applyState) on every callback.
+        let newState = TabLoadingState.loading(progress: Float(progress) / 100)
+        guard tab.state.loadingState != newState else {
+            return
+        }
+        tab.state.loadingState = newState
         notifyUpdate(at: location.index, mode: location.mode, reason: .loading)
     }
 }

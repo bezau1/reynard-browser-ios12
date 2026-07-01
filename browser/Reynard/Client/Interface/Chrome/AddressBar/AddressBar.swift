@@ -43,7 +43,7 @@ final class AddressBar: UIView {
         case composing
     }
     
-    enum LoadingState {
+    enum LoadingState: Equatable {
         case idle
         case loading(progress: Float)
     }
@@ -95,6 +95,10 @@ final class AddressBar: UIView {
     private var currentLocationText: String?
     private var currentLocationTitle: String?
     private var canShowBarMenu = false
+
+    // Cached so rendering doesn't hit CFPreferences on every applyState() (which
+    // fires many times during a page load). Refreshed on the change notification.
+    private var showsFullWebsiteAddress = Prefs.AppearanceSettings.showsFullWebsiteAddress
     
     private var preserveAutocompleteAfterResign = false
     // NOTE: iOS 12 backport — type-erased to Any? because UIMenu is iOS 13+
@@ -437,7 +441,11 @@ final class AddressBar: UIView {
     // MARK: - Loading And Menu
     
     func setLoadingProgress(_ progress: Float, isLoading: Bool) {
-        loadingState = isLoading ? .loading(progress: progress) : .idle
+        let newState: LoadingState = isLoading ? .loading(progress: progress) : .idle
+        guard newState != loadingState else {
+            return
+        }
+        loadingState = newState
         applyState()
     }
     
@@ -578,7 +586,29 @@ final class AddressBar: UIView {
     
     // MARK: - State Rendering
     
+    // TEMP diagnostic: detect the idle render loop. Logs applyState() calls/sec
+    // and, once, the backtrace of who triggers it when the rate is high.
+    private static var applyStateCount = 0
+    private static var applyStateWindowStart: CFTimeInterval = 0
+    private static var applyStateLoggedStack = false
+
     private func applyState() {
+        AddressBar.applyStateCount += 1
+        let now = CACurrentMediaTime()
+        if AddressBar.applyStateWindowStart == 0 {
+            AddressBar.applyStateWindowStart = now
+        } else if now - AddressBar.applyStateWindowStart >= 1 {
+            let rate = AddressBar.applyStateCount
+            NSLog("[REYNARD_DEBUG] applyState calls/s = %d", rate)
+            if rate > 30 && !AddressBar.applyStateLoggedStack {
+                AddressBar.applyStateLoggedStack = true
+                NSLog("[REYNARD_DEBUG] applyState hot stack:\n%@",
+                      Thread.callStackSymbols.prefix(25).joined(separator: "\n"))
+            }
+            AddressBar.applyStateCount = 0
+            AddressBar.applyStateWindowStart = now
+        }
+
         applyRenderModel(resolveRenderModel())
         applyLoadingState()
         addressBarBackground.layer.shadowOpacity = chromeMode == .pad ? 0 : UX.addressBarBackgroundShadowOpacity
@@ -741,7 +771,7 @@ final class AddressBar: UIView {
             return nil
         }
         
-        guard !Prefs.AppearanceSettings.showsFullWebsiteAddress,
+        guard !showsFullWebsiteAddress,
               canShowBarMenu,
               let host = locationHost() else {
             return NSAttributedString(
@@ -784,6 +814,7 @@ final class AddressBar: UIView {
     
     @objc
     private func showFullWebsiteAddressDidChange() {
+        showsFullWebsiteAddress = Prefs.AppearanceSettings.showsFullWebsiteAddress
         guard editingState == .inactive else {
             return
         }
