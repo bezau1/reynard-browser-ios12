@@ -65,6 +65,13 @@ final class SidebarMenuViewController: UIViewController, UICollectionViewDelegat
     
     override func viewDidLoad() {
         super.viewDidLoad()
+        // On iOS 12 the sidebar is an old UISplitViewController embedded as a
+        // child VC, where the nav-bar safe-area inset doesn't propagate; keep the
+        // content from sliding under the title bar. iOS 13+ uses the column split
+        // view, which lays this out correctly on its own.
+        if #unavailable(iOS 13.0) {
+            edgesForExtendedLayout = []
+        }
         configureAppearance()
         configureCollectionView()
         if #available(iOS 13.0, *) {
@@ -86,6 +93,12 @@ final class SidebarMenuViewController: UIViewController, UICollectionViewDelegat
     // MARK: - UINavigationControllerDelegate
     
     func navigationController(_ navigationController: UINavigationController, willShow viewController: UIViewController, animated: Bool) {
+        // Apply the iOS 12 nav-bar inset fix to every pushed VC (submenus like
+        // Addons/Compatibility), not just the top-level menu/detail, so their
+        // content doesn't slide under the title bar either.
+        if #unavailable(iOS 13.0) {
+            viewController.edgesForExtendedLayout = []
+        }
         refreshSidebarButton(for: viewController)
     }
     

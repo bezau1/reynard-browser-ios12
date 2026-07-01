@@ -23,6 +23,11 @@ final class SidebarDetailViewController: UIViewController {
     
     override func viewDidLoad() {
         super.viewDidLoad()
+        // On iOS 12 (old embedded UISplitViewController) the nav-bar safe-area
+        // inset doesn't propagate, so keep content below the title bar.
+        if #unavailable(iOS 13.0) {
+            edgesForExtendedLayout = []
+        }
         configureTitle()
         configureHierarchy()
         configureConstraints()

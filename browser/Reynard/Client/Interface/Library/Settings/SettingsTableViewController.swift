@@ -14,6 +14,12 @@ class SettingsTableViewController: UITableViewController {
     
     override func viewDidLoad() {
         super.viewDidLoad()
+        // iOS 12: these settings screens are pushed onto the sidebar's nav stack,
+        // where the old embedded UISplitViewController doesn't propagate the
+        // nav-bar safe-area inset -- keep table content below the title bar.
+        if #unavailable(iOS 13.0) {
+            edgesForExtendedLayout = []
+        }
         configureTableView()
     }
     

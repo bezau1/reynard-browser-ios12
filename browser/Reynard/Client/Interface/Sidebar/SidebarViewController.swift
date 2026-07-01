@@ -98,6 +98,9 @@ final class SidebarViewController: UISplitViewController, UISplitViewControllerD
             preferredDisplayMode = visible ? .allVisible : .primaryHidden
         }
         updateBrowserLayoutIfNeeded()
+        // Keep the sidebar's own close button in sync with visibility (its
+        // presence depends on showChromeSidebarButton, which changed here).
+        menuController.refreshSidebarButton()
     }
     
     func toggleVisibility() {
