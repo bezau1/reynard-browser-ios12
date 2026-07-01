@@ -534,7 +534,7 @@ final class AddonsPreferencesViewController: SettingsTableViewController {
         updateFooterMessage = nil
         tableView.reloadData()
 
-        let statusHandler: @MainActor (String, String?) -> Void = { [weak self] addonID, statusText in
+        let statusHandler:  (String, String?) -> Void = { [weak self] addonID, statusText in
             self?.applyUpdateStatus(statusText, toAddonID: addonID)
         }
 

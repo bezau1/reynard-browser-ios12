@@ -12,7 +12,7 @@ import Foundation
 	func ping()
 }
 
-@MainActor
+
 private final class ProcessBootstrap {
 	private static var retainedConnections: [NSXPCConnection] = []
 	private static var retainedContexts: [NSExtensionContext] = []

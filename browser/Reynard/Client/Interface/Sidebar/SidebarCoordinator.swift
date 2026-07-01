@@ -169,11 +169,19 @@ final class SidebarCoordinator {
             return host.sidebarFallbackTopInsetSourceView.safeAreaInsets.top
         }
         
-        if let statusBarHeight = host.sidebarHostViewController.view.window?.windowScene?.statusBarManager?.statusBarFrame.height,
-           statusBarHeight > 0 {
+        // Status bar height via windowScene on iOS 13+, via the (deprecated) app-level
+        // status bar frame on iOS 12. See IOS12_GATES.md section 4.
+        let statusBarHeight: CGFloat?
+        if #available(iOS 13.0, *) {
+            statusBarHeight = host.sidebarHostViewController.view.window?.windowScene?.statusBarManager?.statusBarFrame.height
+        } else {
+            statusBarHeight = UIApplication.shared.statusBarFrame.height
+        }
+
+        if let statusBarHeight, statusBarHeight > 0 {
             return statusBarHeight
         }
-        
+
         return fallback
     }
     

@@ -68,8 +68,12 @@ final class JITFailureView: UIView {
         backgroundColor = .appSystemBackground
         let horizontalInset: CGFloat = 24
         
-        let symbolConfiguration = UIImage.SymbolConfiguration(pointSize: 96, weight: .regular)
-        symbolImageView.image = UIImage(named: "reynard.bolt.slash", in: .main, with: symbolConfiguration)
+        if #available(iOS 13.0, *) {
+            let symbolConfiguration = UIImage.SymbolConfiguration(pointSize: 96, weight: .regular)
+            symbolImageView.image = UIImage(named: "reynard.bolt.slash", in: .main, with: symbolConfiguration)
+        } else {
+            symbolImageView.image = UIImage(named: "reynard.bolt.slash", in: .main, compatibleWith: nil)
+        }
         symbolImageView.tintColor = .appLabel
         symbolImageView.contentMode = .scaleAspectFit
         symbolImageView.setContentHuggingPriority(.required, for: .vertical)
@@ -107,10 +111,13 @@ final class JITFailureView: UIView {
         errorLabel.textColor = .appLabel
         errorLabel.translatesAutoresizingMaskIntoConstraints = false
         errorLabel.adjustsFontForContentSizeCategory = true
-        errorLabel.font = .monospacedSystemFont(
-            ofSize: UIFont.preferredFont(forTextStyle: .footnote).pointSize,
-            weight: .regular
-        )
+        let monospacedSize = UIFont.preferredFont(forTextStyle: .footnote).pointSize
+        if #available(iOS 13.0, *) {
+            errorLabel.font = .monospacedSystemFont(ofSize: monospacedSize, weight: .regular)
+        } else {
+            // monospacedSystemFont is iOS 13+; fall back to Menlo on iOS 12. See IOS12_GATES.md.
+            errorLabel.font = UIFont(name: "Menlo", size: monospacedSize) ?? .systemFont(ofSize: monospacedSize)
+        }
         
         quitButton.setTitle(nil, for: .normal)
         quitButton.titleLabel?.font = .preferredFont(forTextStyle: .headline)
@@ -250,7 +257,9 @@ final class JITFailureViewController: UIViewController {
     
     override func viewDidLoad() {
         super.viewDidLoad()
-        isModalInPresentation = true
+        if #available(iOS 13.0, *) {
+            isModalInPresentation = true
+        }
         contentView.updateContent(title: titleText, message: messageText, buttonTitle: actionButtonTitle)
         contentView.updateError(code: errorCode, description: errorDescriptionText)
         contentView.setErrorDetailsHidden(!showsErrorDetails)

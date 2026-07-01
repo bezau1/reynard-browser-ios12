@@ -67,10 +67,12 @@ final class TabBarCell: UICollectionViewCell {
         let button = UIButton(type: .system)
         button.translatesAutoresizingMaskIntoConstraints = false
         button.setImage(UIImage(named: "reynard.x.square.fill"), for: .normal)
-        button.setPreferredSymbolConfiguration(
-            UIImage.SymbolConfiguration(pointSize: UX.tabCloseButtonSymbolPointSize, weight: .regular),
-            forImageIn: .normal
-        )
+        if #available(iOS 13.0, *) {
+            button.setPreferredSymbolConfiguration(
+                UIImage.SymbolConfiguration(pointSize: UX.tabCloseButtonSymbolPointSize, weight: .regular),
+                forImageIn: .normal
+            )
+        }
         button.tintColor = .appSecondaryLabel
         button.isHidden = true
         return button

@@ -42,6 +42,7 @@ extension FilePicker {
         ])
     }
     
+    @available(iOS 14.0, *)
     private func presentMenuFromAnchorButton() {
         DispatchQueue.main.async { [weak self] in
             guard let button = self?.anchorButton else { return }
@@ -165,7 +166,7 @@ extension FilePicker {
         }
     }
     
-    func launchFollowupPicker(_ action: @escaping @MainActor () -> Void) {
+    func launchFollowupPicker(_ action: @escaping  () -> Void) {
         launchedFollowupPicker = true
         DispatchQueue.main.async(execute: action)
     }

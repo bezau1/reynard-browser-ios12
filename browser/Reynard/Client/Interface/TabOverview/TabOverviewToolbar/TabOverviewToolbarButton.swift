@@ -53,10 +53,12 @@ final class TabOverviewToolbarButton: UIButton {
     
     private func configureImage() {
         setImage(UIImage(named: symbolName), for: .normal)
-        setPreferredSymbolConfiguration(
-            UIImage.SymbolConfiguration(pointSize: UX.toolbarButtonSymbolPointSize, weight: .regular),
-            forImageIn: .normal
-        )
+        if #available(iOS 13.0, *) {
+            setPreferredSymbolConfiguration(
+                UIImage.SymbolConfiguration(pointSize: UX.toolbarButtonSymbolPointSize, weight: .regular),
+                forImageIn: .normal
+            )
+        }
     }
     
     private func configureConstraints() {

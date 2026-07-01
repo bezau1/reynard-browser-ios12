@@ -15,9 +15,12 @@ final class AddressBarButton: UIButton {
     
     private var isMenuVisible = false
     
-    private var pendingMenuAfterDismissal: UIMenu?
+    // NOTE: iOS 12 backport — type-erased to Any? because UIMenu /
+    // LegacyContextMenuDelegate are iOS 13+ and stored properties can't be
+    // @available-gated. Cast back inside `if #available(iOS 13.0, *)`.
+    private var pendingMenuAfterDismissal: Any?
     private var pendingMenuDismissalHandlers: [() -> Void] = []
-    private var legacyMenuDelegate: LegacyContextMenuDelegate?
+    private var legacyMenuDelegate: Any?
     
     override init(frame: CGRect) {
         super.init(frame: frame)
@@ -36,19 +39,27 @@ final class AddressBarButton: UIButton {
         contentHorizontalAlignment = .fill
         contentVerticalAlignment = .fill
         contentEdgeInsets = .zero
-        setPreferredSymbolConfiguration(
-            UIImage.SymbolConfiguration(pointSize: UX.addressBarButtonSymbolPointSize, weight: .regular),
-            forImageIn: .normal
-        )
+        if #available(iOS 13.0, *) {
+            setPreferredSymbolConfiguration(
+                UIImage.SymbolConfiguration(pointSize: UX.addressBarButtonSymbolPointSize, weight: .regular),
+                forImageIn: .normal
+            )
+        }
         if #unavailable(iOS 14.0) {
-            let delegate = LegacyContextMenuDelegate(owner: self)
-            addInteraction(UIContextMenuInteraction(delegate: delegate))
-            legacyMenuDelegate = delegate
-            addTarget(self, action: #selector(handleLegacyPrimaryTap), for: .touchUpInside)
+            // iOS 13 only: the context-menu interaction does not exist on iOS 12.
+            if #available(iOS 13.0, *) {
+                let delegate = LegacyContextMenuDelegate(owner: self)
+                addInteraction(UIContextMenuInteraction(delegate: delegate))
+                legacyMenuDelegate = delegate
+                addTarget(self, action: #selector(handleLegacyPrimaryTap), for: .touchUpInside)
+            }
         }
     }
     
     @objc private func handleLegacyPrimaryTap() {
+        guard #available(iOS 13.0, *) else {
+            return
+        }
         guard let interaction = interactions.compactMap({ $0 as? UIContextMenuInteraction }).first else {
             return
         }
@@ -62,8 +73,9 @@ final class AddressBarButton: UIButton {
     
     // MARK: - Menu Updates
     
+    @available(iOS 13.0, *)
     func setMenuPreservingPresentation(_ menu: UIMenu?) {
-        legacyMenuDelegate?.menu = menu
+        (legacyMenuDelegate as? LegacyContextMenuDelegate)?.menu = menu
         if #available(iOS 14.0, *) {
             if isMenuVisible,
                let menu,
@@ -93,6 +105,7 @@ final class AddressBarButton: UIButton {
         pendingMenuDismissalHandlers.append(action)
     }
     
+    @available(iOS 13.0, *)
     private func replacementMenu(for visibleMenu: UIMenu, in rootMenu: UIMenu) -> UIMenu? {
         if visibleMenu.identifier == rootMenu.identifier {
             return rootMenu
@@ -141,8 +154,8 @@ final class AddressBarButton: UIButton {
             }
             
             if #available(iOS 14.0, *),
-               let pendingMenuAfterDismissal {
-                self.menu = pendingMenuAfterDismissal
+               let pendingMenu = self.pendingMenuAfterDismissal as? UIMenu {
+                self.menu = pendingMenu
                 self.pendingMenuAfterDismissal = nil
             }
             
@@ -163,6 +176,7 @@ final class AddressBarButton: UIButton {
         isMenuVisible = true
     }
     
+    @available(iOS 13.0, *)
     fileprivate func legacyContextMenuWillEnd(animator: UIContextMenuInteractionAnimating?) {
         isMenuVisible = false
         let finalizeDismissal = { [weak self] in
@@ -201,6 +215,7 @@ final class AddressBarButton: UIButton {
 
 // MARK: - iOS 13 Context Menu Support
 
+@available(iOS 13.0, *)
 private final class LegacyContextMenuDelegate: NSObject, UIContextMenuInteractionDelegate {
     weak var owner: AddressBarButton?
     var menu: UIMenu?

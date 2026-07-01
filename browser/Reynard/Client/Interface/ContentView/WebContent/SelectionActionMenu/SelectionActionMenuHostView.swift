@@ -8,7 +8,7 @@
 import GeckoView
 import UIKit
 
-@MainActor
+
 final class SelectionActionMenuHostView: UIView {
     private weak var session: GeckoSession?
     private var actionId: String?
@@ -103,18 +103,22 @@ final class SelectionActionMenuHostView: UIView {
             becomeFirstResponder()
         }
         
-        let menuController = UIMenuController.shared
-        menuController.hideMenu(from: self)
-        menuController.showMenu(from: self, rect: bounds)
+        if #available(iOS 13.0, *) {
+            let menuController = UIMenuController.shared
+            menuController.hideMenu(from: self)
+            menuController.showMenu(from: self, rect: bounds)
+        }
     }
     
     func hideMenu() {
-        if superview != nil {
-            UIMenuController.shared.hideMenu(from: self)
-        } else {
-            UIMenuController.shared.hideMenu()
+        if #available(iOS 13.0, *) {
+            if superview != nil {
+                UIMenuController.shared.hideMenu(from: self)
+            } else {
+                UIMenuController.shared.hideMenu()
+            }
         }
-        
+
         if isFirstResponder {
             resignFirstResponder()
         }

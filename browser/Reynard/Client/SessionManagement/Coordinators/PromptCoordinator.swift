@@ -7,14 +7,14 @@
 
 import GeckoView
 
-@MainActor
+
 protocol PromptPresenting {
     func present(_ request: PromptRequest, for session: GeckoSession, completion: @escaping (PromptResponse?) -> Void)
     func update(_ request: PromptRequest)
     func dismiss(promptID: String)
 }
 
-@MainActor
+
 final class PromptCoordinator: PromptDelegate {
     private let presenter: PromptPresenting
 

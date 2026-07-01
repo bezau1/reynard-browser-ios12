@@ -72,7 +72,7 @@ final class ChromeOverlayContentView: UIView {
     private var pageControllers: [Page: UIViewController] = [:]
     
     private let backgroundView: UIVisualEffectView = {
-        let view = UIVisualEffectView(effect: UIBlurEffect(style: .systemChromeMaterial))
+        let view = UIVisualEffectView(effect: UIBlurEffect(style: .appChromeMaterial))
         view.translatesAutoresizingMaskIntoConstraints = false
         view.contentView.backgroundColor = UIColor.appSystemBackground.withAlphaComponent(UX.backgroundAlpha)
         view.layer.applyContinuousCornerCurve()

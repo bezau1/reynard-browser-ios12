@@ -7,6 +7,7 @@
 
 import UIKit
 
+@available(iOS 13.0, *)
 struct FavoritesItemActions {
     static func configuration(
         for bookmark: BookmarkSnapshot,
@@ -68,6 +69,7 @@ struct FavoritesItemActions {
     }
 }
 
+@available(iOS 13.0, *)
 extension FavoritesSectionViewController: UIContextMenuInteractionDelegate {
     func contextMenuInteraction(
         _ interaction: UIContextMenuInteraction,

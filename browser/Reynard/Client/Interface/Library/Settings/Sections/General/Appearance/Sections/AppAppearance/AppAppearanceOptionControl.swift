@@ -89,8 +89,13 @@ final class AppAppearanceOptionControl: UIControl {
         previewImageView.translatesAutoresizingMaskIntoConstraints = false
         previewImageView.isUserInteractionEnabled = false
         previewImageView.contentMode = .scaleAspectFit
-        let symbolConfiguration = UIImage.SymbolConfiguration(pointSize: UX.previewSymbolSize, weight: .regular)
-        previewImageView.image = UIImage(named: symbolName)?.applyingSymbolConfiguration(symbolConfiguration)
+        let previewImage = UIImage(named: symbolName)
+        if #available(iOS 13.0, *) {
+            let symbolConfiguration = UIImage.SymbolConfiguration(pointSize: UX.previewSymbolSize, weight: .regular)
+            previewImageView.image = previewImage?.applyingSymbolConfiguration(symbolConfiguration)
+        } else {
+            previewImageView.image = previewImage
+        }
     }
     
     private func configureNameLabel(title: String) {

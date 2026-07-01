@@ -125,7 +125,7 @@ func newContentHandler(_ session: GeckoSession) -> GeckoSessionHandler {
         moduleName: "GeckoViewContent",
         events: ContentEvents.allCases.map(\.rawValue),
         session: session
-    ) { @MainActor session, delegate, type, message, completion in
+    ) {  session, delegate, type, message, completion in
         func parseStringDictionary(_ value: Any?) -> [String: String] {
             guard let dictionary = value as? [String: Any] else {
                 return [:]
@@ -305,7 +305,7 @@ func newProcessHangHandler(_ session: GeckoSession) -> GeckoSessionHandler {
         moduleName: "GeckoViewProcessHangMonitor",
         events: ProcessHangEvents.allCases.map(\.rawValue),
         session: session
-    ) { @MainActor session, delegate, type, message, completion in
+    ) {  session, delegate, type, message, completion in
         guard let event = ProcessHangEvents(rawValue: type) else {
             completion(.failure(GeckoHandlerError("unknown message \(type)")))
             return

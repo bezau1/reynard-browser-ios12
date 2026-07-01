@@ -243,7 +243,9 @@ final class FrequentlyVisitedSectionViewController: UIViewController {
             cardView.tag = index
             cardView.configure(site: site, metadata: metadata(for: site))
             cardView.addTarget(self, action: #selector(handleCardTap(_:)), for: .touchUpInside)
-            cardView.addInteraction(UIContextMenuInteraction(delegate: self))
+            if #available(iOS 13.0, *) {
+                cardView.addInteraction(UIContextMenuInteraction(delegate: self))
+            }
             cardStackView.addArrangedSubview(cardView)
             
             NSLayoutConstraint.activate([

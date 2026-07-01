@@ -98,10 +98,12 @@ final class TabOverviewCard: UICollectionViewCell {
         button.translatesAutoresizingMaskIntoConstraints = false
         button.touchTargetScale = UX.closeButtonTouchTargetScale
         button.setImage(UIImage(named: "reynard.xmark"), for: .normal)
-        button.setPreferredSymbolConfiguration(
-            UIImage.SymbolConfiguration(pointSize: UX.closeButtonSymbolPointSize, weight: .medium),
-            forImageIn: .normal
-        )
+        if #available(iOS 13.0, *) {
+            button.setPreferredSymbolConfiguration(
+                UIImage.SymbolConfiguration(pointSize: UX.closeButtonSymbolPointSize, weight: .medium),
+                forImageIn: .normal
+            )
+        }
         button.backgroundColor = .systemGray.withAlphaComponent(UX.closeButtonBackgroundAlpha)
         button.tintColor = .white
         button.layer.cornerRadius = UX.closeButtonCornerRadius
@@ -370,7 +372,7 @@ final class TabOverviewCard: UICollectionViewCell {
     }
     
     private func updateWebpagePreviewShadowColor() {
-        webpagePreviewShadowView.layer.shadowColor = UITraitCollection.current.userInterfaceStyle == .dark
+        webpagePreviewShadowView.layer.shadowColor = webpagePreviewShadowView.traitCollection.userInterfaceStyle == .dark
         ? UIColor.white.cgColor
         : UIColor.black.cgColor
     }

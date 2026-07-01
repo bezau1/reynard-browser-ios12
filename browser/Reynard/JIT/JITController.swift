@@ -330,7 +330,12 @@ final class JITController {
         guard UIApplication.shared.applicationState == .active else {
             return false
         }
-        
+
+        // iOS 12 has no scenes; an active application is sufficient. See IOS12_GATES.md section 4.
+        guard #available(iOS 13.0, *) else {
+            return true
+        }
+
         return UIApplication.shared.connectedScenes
             .compactMap { $0 as? UIWindowScene }
             .contains { $0.activationState == .foregroundActive }

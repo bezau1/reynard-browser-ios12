@@ -7,6 +7,7 @@
 
 import UIKit
 
+@available(iOS 13.0, *)
 struct FrequentlyVisitedSiteActions {
     static func configuration(
         for site: HistorySiteSnapshot,
@@ -41,6 +42,7 @@ struct FrequentlyVisitedSiteActions {
     }
 }
 
+@available(iOS 13.0, *)
 extension FrequentlyVisitedSectionViewController: UIContextMenuInteractionDelegate {
     func contextMenuInteraction(
         _ interaction: UIContextMenuInteraction,

@@ -7,7 +7,7 @@
 
 import UIKit
 
-@MainActor
+
 final class ColorPicker: NSObject, UIPopoverPresentationControllerDelegate {
     private let anchorRect: CGRect
     private weak var geckoView: UIView?
@@ -61,7 +61,7 @@ final class ColorPicker: NSObject, UIPopoverPresentationControllerDelegate {
     
     // MARK: - UIPopoverPresentationControllerDelegate
     
-    nonisolated func adaptivePresentationStyle(
+    func adaptivePresentationStyle(
         for controller: UIPresentationController,
         traitCollection: UITraitCollection
     ) -> UIModalPresentationStyle {

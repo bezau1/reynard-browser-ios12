@@ -8,42 +8,39 @@
 import UIKit
 
 extension UIApplication {
+    /// The active key window. Resolved via scenes on iOS 13+, and via the
+    /// `windows` array on iOS 12 (which has no scene support). See IOS12_GATES.md section 4.
+    var appKeyWindow: UIWindow? {
+        if #available(iOS 13.0, *) {
+            return connectedScenes
+                .compactMap { $0 as? UIWindowScene }
+                .first(where: { $0.activationState == .foregroundActive })?
+                .windows.first(where: { $0.isKeyWindow })
+        }
+        return windows.first(where: { $0.isKeyWindow })
+    }
+
     var isTwoThirdSplitScreenOrSmaller: Bool {
-        guard
-            let windowScene = connectedScenes
-                .compactMap({ $0 as? UIWindowScene })
-                .first(where: { $0.activationState == .foregroundActive }),
-            let window = windowScene.windows.first(where: { $0.isKeyWindow })
-        else {
+        guard let window = appKeyWindow else {
             return false
         }
-        
+
         return isTwoThirdSplitScreenOrSmaller(forWindowWidth: window.bounds.width, screen: window.screen)
     }
-    
+
     var isOneThirdSplitScreenOrSmaller: Bool {
-        guard
-            let windowScene = connectedScenes
-                .compactMap({ $0 as? UIWindowScene })
-                .first(where: { $0.activationState == .foregroundActive }),
-            let window = windowScene.windows.first(where: { $0.isKeyWindow })
-        else {
+        guard let window = appKeyWindow else {
             return false
         }
-        
+
         return isOneThirdSplitScreenOrSmaller(forWindowWidth: window.bounds.width, screen: window.screen)
     }
-    
+
     var isHalfSplitScreenOrSmaller: Bool {
-        guard
-            let windowScene = connectedScenes
-                .compactMap({ $0 as? UIWindowScene })
-                .first(where: { $0.activationState == .foregroundActive }),
-            let window = windowScene.windows.first(where: { $0.isKeyWindow })
-        else {
+        guard let window = appKeyWindow else {
             return false
         }
-        
+
         return isHalfSplitScreenOrSmaller(forWindowWidth: window.bounds.width, screen: window.screen)
     }
     
@@ -63,17 +60,10 @@ extension UIApplication {
     }
     
     func topViewController() -> UIViewController? {
-        let rootViewController = connectedScenes
-            .compactMap { $0 as? UIWindowScene }
-            .filter { $0.activationState == .foregroundActive }
-            .flatMap(\.windows)
-            .first(where: \.isKeyWindow)?
-            .rootViewController
-        
-        guard let rootViewController else {
+        guard let rootViewController = appKeyWindow?.rootViewController else {
             return nil
         }
-        
+
         return topViewController(from: rootViewController)
     }
     

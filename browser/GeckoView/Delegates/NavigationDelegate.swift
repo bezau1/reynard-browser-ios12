@@ -59,7 +59,7 @@ func newNavigationHandler(_ session: GeckoSession) -> GeckoSessionHandler {
         moduleName: "GeckoViewNavigation",
         events: NavigationEvents.allCases.map(\.rawValue),
         session: session
-    ) { @MainActor session, delegate, type, message, completion in
+    ) {  session, delegate, type, message, completion in
         guard let event = NavigationEvents(rawValue: type) else {
             completion(.failure(GeckoHandlerError("unknown message \(type)")))
             return

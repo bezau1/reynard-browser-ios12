@@ -13,6 +13,16 @@ enum LibraryTabBarStyle {
     }
     
     static func apply(to tabBar: UITabBar) {
+        tabBar.tintColor = .appLabel
+        tabBar.unselectedItemTintColor = .appSecondaryLabel
+
+        // UITabBarAppearance is iOS 13+. On iOS 12 use legacy bar styling. See IOS12_GATES.md.
+        guard #available(iOS 13.0, *) else {
+            tabBar.barTintColor = .appSystemBackground
+            tabBar.isTranslucent = false
+            return
+        }
+
         let appearance = UITabBarAppearance()
         appearance.configureWithOpaqueBackground()
         appearance.backgroundColor = .appSystemBackground
@@ -30,7 +40,5 @@ enum LibraryTabBarStyle {
         if #available(iOS 15.0, *) {
             tabBar.scrollEdgeAppearance = appearance
         }
-        tabBar.tintColor = .appLabel
-        tabBar.unselectedItemTintColor = .appSecondaryLabel
     }
 }

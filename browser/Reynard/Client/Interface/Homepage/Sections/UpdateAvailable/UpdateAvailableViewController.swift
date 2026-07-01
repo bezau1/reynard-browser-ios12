@@ -205,10 +205,14 @@ final class UpdateAvailableViewController: UIViewController, HomepageRecommendat
     }
     
     private func makeActionButton(title: String, imageName: String, action: Selector) -> UIButton {
-        let configuration = UIImage.SymbolConfiguration(pointSize: UX.actionIconSize, weight: .regular)
         let button = UIButton(type: .system)
         button.setTitle(title, for: .normal)
-        button.setImage(UIImage(named: imageName, in: .main, with: configuration), for: .normal)
+        if #available(iOS 13.0, *) {
+            let configuration = UIImage.SymbolConfiguration(pointSize: UX.actionIconSize, weight: .regular)
+            button.setImage(UIImage(named: imageName, in: .main, with: configuration), for: .normal)
+        } else {
+            button.setImage(UIImage(named: imageName, in: .main, compatibleWith: nil), for: .normal)
+        }
         button.tintColor = .appLabel
         button.titleLabel?.font = .preferredFont(forTextStyle: .body)
         button.titleLabel?.adjustsFontForContentSizeCategory = true

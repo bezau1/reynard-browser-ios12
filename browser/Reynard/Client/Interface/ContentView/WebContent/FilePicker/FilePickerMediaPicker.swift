@@ -114,7 +114,9 @@ extension FilePicker {
         }
         
         picker.modalPresentationStyle = .fullScreen
-        picker.isModalInPresentation = true
+        if #available(iOS 13.0, *) {
+            picker.isModalInPresentation = true
+        }
         if let preferredDevice = resolvedCameraDevice(),
            UIImagePickerController.isCameraDeviceAvailable(preferredDevice) {
             picker.cameraDevice = preferredDevice

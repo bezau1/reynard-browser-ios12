@@ -176,9 +176,9 @@ final class HistoryViewController: UIViewController, UITableViewDataSource, UITa
             constraints.append(contentsOf: [
                 searchBar.trailingAnchor.constraint(equalTo: clearHistoryButton.leadingAnchor),
                 clearHistoryButton.trailingAnchor.constraint(equalTo: headerView.trailingAnchor, constant: -UX.headerClearButtonTrailingInset),
-                clearHistoryButton.centerYAnchor.constraint(equalTo: searchBar.searchTextField.centerYAnchor),
+                clearHistoryButton.centerYAnchor.constraint(equalTo: searchBar.compatAlignmentView.centerYAnchor),
                 clearHistoryButton.widthAnchor.constraint(equalTo: clearHistoryButton.heightAnchor),
-                clearHistoryButton.heightAnchor.constraint(equalTo: searchBar.searchTextField.heightAnchor),
+                clearHistoryButton.heightAnchor.constraint(equalTo: searchBar.compatAlignmentView.heightAnchor),
             ])
         }
         

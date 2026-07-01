@@ -7,6 +7,7 @@
 
 import UIKit
 
+@available(iOS 13.0, *)
 struct RecentlyCloseTabItemActions {
     static func configuration(
         for tab: TabManagementStore.RecentlyClosedTabSnapshot,
@@ -47,6 +48,7 @@ struct RecentlyCloseTabItemActions {
     }
 }
 
+@available(iOS 13.0, *)
 extension RecentlyClosedTabsSectionViewController: UIContextMenuInteractionDelegate {
     func contextMenuInteraction(
         _ interaction: UIContextMenuInteraction,

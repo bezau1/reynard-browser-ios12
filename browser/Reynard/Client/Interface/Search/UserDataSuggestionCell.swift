@@ -19,7 +19,18 @@ final class UserDataSuggestionCell: UITableViewCell {
     static let reuseIdentifier = "UserDataSuggestionCell"
     
     private static let faviconStore = FaviconStore.shared
-    private static let relativeDateFormatter = RelativeDateTimeFormatter()
+
+    /// Relative date string. Uses `RelativeDateTimeFormatter` on iOS 13+, a short
+    /// absolute date on iOS 12. See IOS12_GATES.md.
+    private static func relativeDateString(for date: Date) -> String {
+        if #available(iOS 13.0, *) {
+            return RelativeDateTimeFormatter().localizedString(for: date, relativeTo: Date())
+        }
+        let formatter = DateFormatter()
+        formatter.dateStyle = .short
+        formatter.timeStyle = .short
+        return formatter.string(from: date)
+    }
     
     private let sourceIconView: UIImageView = {
         let imageView = UIImageView()
@@ -101,7 +112,7 @@ final class UserDataSuggestionCell: UITableViewCell {
             subtitleLabel.text = URLUtils.displayString(for: result.url)
             sourceIconView.image = UIImage(named: "reynard.book")
         case .history:
-            let relativeDate = Self.relativeDateFormatter.localizedString(for: result.lastVisitedAt ?? Date(), relativeTo: Date())
+            let relativeDate = Self.relativeDateString(for: result.lastVisitedAt ?? Date())
             subtitleLabel.text = "\(URLUtils.hostDisplayString(for: result.url)) · Visited \(relativeDate)"
             sourceIconView.image = UIImage(named: "reynard.clock")
         case .tab:

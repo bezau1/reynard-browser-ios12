@@ -10,22 +10,22 @@ import Foundation
 // MARK: - Prompt Delegate
 
 public protocol PromptDelegate: AnyObject {
-    @MainActor
+    
     func onPrompt(session: GeckoSession, request: PromptRequest, completion: @escaping (PromptResponse?) -> Void)
-    @MainActor
+    
     func onPromptUpdate(session: GeckoSession, request: PromptRequest)
-    @MainActor
+    
     func onPromptDismiss(session: GeckoSession, promptId: String)
 }
 
 public extension PromptDelegate {
-    @MainActor
+    
     func onPrompt(session: GeckoSession, request: PromptRequest, completion: @escaping (PromptResponse?) -> Void) { completion(nil) }
 
-    @MainActor
+    
     func onPromptUpdate(session: GeckoSession, request: PromptRequest) {}
     
-    @MainActor
+    
     func onPromptDismiss(session: GeckoSession, promptId: String) {}
 }
 
@@ -44,7 +44,7 @@ func newPromptHandler(_ session: GeckoSession) -> GeckoSessionHandler {
         moduleName: "GeckoViewPrompter",
         events: PromptEvents.allCases.map(\.rawValue),
         session: session
-    ) { @MainActor session, delegate, type, message, completion in
+    ) {  session, delegate, type, message, completion in
         guard let event = PromptEvents(rawValue: type) else {
             completion(.failure(GeckoHandlerError("unknown message \(type)")))
             return

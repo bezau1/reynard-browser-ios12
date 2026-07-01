@@ -19,19 +19,19 @@ public struct MediaPermissionRequest {
 // MARK: - Permission Delegate
 
 public protocol PermissionEmbedderDelegate: AnyObject {
-    @MainActor
+    
     func permissionDelegate(decideContentPermission permission: ContentPermission, session: GeckoSession, completion: @escaping (ContentPermission.Value) -> Void)
-    @MainActor
+    
     func permissionDelegate(decideMediaPermission request: MediaPermissionRequest, session: GeckoSession, completion: @escaping (Bool) -> Void)
 }
 
 public extension PermissionEmbedderDelegate {
-    @MainActor
+    
     func permissionDelegate(decideContentPermission permission: ContentPermission, session: GeckoSession, completion: @escaping (ContentPermission.Value) -> Void) {
         completion(.prompt)
     }
 
-    @MainActor
+    
     func permissionDelegate(decideMediaPermission request: MediaPermissionRequest, session: GeckoSession, completion: @escaping (Bool) -> Void) {
         completion(false)
     }
@@ -111,7 +111,7 @@ public enum PermissionDelegate {
         )
     }
     
-    @MainActor
+    
     static func handleMediaPermission(message: [String: Any?]?, session: GeckoSession, delegate: PermissionEmbedderDelegate?, completion: @escaping (Any) -> Void) {
         let videoSources = message?["video"] as? [[String: Any?]]
         let audioSources = message?["audio"] as? [[String: Any?]]
@@ -161,7 +161,7 @@ func newPermissionHandler(_ session: GeckoSession) -> GeckoSessionHandler {
         moduleName: "GeckoViewPermission",
         events: PermissionEvents.allCases.map(\.rawValue),
         session: session
-    ) { @MainActor session, delegate, type, message, completion in
+    ) {  session, delegate, type, message, completion in
         guard let event = PermissionEvents(rawValue: type) else {
             completion(.failure(GeckoHandlerError("unknown message \(type)")))
             return

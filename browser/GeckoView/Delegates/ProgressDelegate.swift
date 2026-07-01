@@ -38,7 +38,7 @@ func newProgressHandler(_ session: GeckoSession) -> GeckoSessionHandler {
         moduleName: "GeckoViewProgress",
         events: ProgressEvents.allCases.map(\.rawValue),
         session: session
-    ) { @MainActor session, delegate, type, message, completion in
+    ) {  session, delegate, type, message, completion in
         guard let event = ProgressEvents(rawValue: type) else {
             completion(.failure(GeckoHandlerError("unknown message \(type)")))
             return

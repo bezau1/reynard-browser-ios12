@@ -7,7 +7,7 @@
 
 import UIKit
 
-@MainActor
+
 final class FilePicker: NSObject {
     enum UX {
         static let imageCompressionQuality: CGFloat = 0.92

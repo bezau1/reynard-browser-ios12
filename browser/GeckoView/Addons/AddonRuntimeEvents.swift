@@ -8,7 +8,7 @@
 import Foundation
 
 extension AddonRuntime {
-    @MainActor
+    
     func handleSessionEvent(type: String, message: [String: Any?]?, session: GeckoSession, completion: @escaping (Result<Any?, Error>) -> Void) {
         switch type {
         case "GeckoView:BrowserAction:Update":
@@ -73,7 +73,7 @@ extension AddonRuntime {
         }
     }
 
-    @MainActor
+    
     public func handleMessage(type: String, message: [String: Any?]?, callback: EventCallback?) {
         guard let event = AddonRuntimeEvent(rawValue: type) else {
             callback?.sendError(GeckoHandlerError("unknown message \(type)").value)

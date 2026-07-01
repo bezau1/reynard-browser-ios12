@@ -43,8 +43,12 @@ private func configureUnsandboxedAppDataDirectories() {
 
 UserDataMigration.shared.run()
 JITController.shared.start()
-if #unavailable(iOS 14.0),
-   getEntitlementValue("com.apple.private.security.no-sandbox") {
-    configureUnsandboxedAppDataDirectories()
+// configureUnsandboxedAppDataDirectories is available on iOS 13.x only (introduced 13.0,
+// obsoleted 14.0); narrow the guard so it isn't called on iOS 12. See IOS12_GATES.md.
+if #available(iOS 13.0, *) {
+    if #unavailable(iOS 14.0),
+       getEntitlementValue("com.apple.private.security.no-sandbox") {
+        configureUnsandboxedAppDataDirectories()
+    }
 }
 GeckoRuntime.main(argc: CommandLine.argc, argv: CommandLine.unsafeArgv)

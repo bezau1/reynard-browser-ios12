@@ -44,7 +44,7 @@ final class BookmarksViewController: UIViewController, UITableViewDataSource, UI
         iconName: "reynard.ellipsis",
         action: #selector(didTapBookmarkMenu)
     )
-    private var legacyBookmarkMenuDelegate: LibraryLegacyMenuDelegate?
+    private var legacyBookmarkMenuDelegate: AnyObject?
     private lazy var bookmarkMenuItem: UIBarButtonItem = {
         let item = UIBarButtonItem(
             image: UIImage(named: "reynard.ellipsis"),
@@ -448,6 +448,7 @@ final class BookmarksViewController: UIViewController, UITableViewDataSource, UI
         }
     }
     
+    @available(iOS 13.0, *)
     fileprivate func makeBookmarkMenu() -> UIMenu {
         UIMenu(title: "", children: [
             makeSortMenu(),
@@ -471,6 +472,7 @@ final class BookmarksViewController: UIViewController, UITableViewDataSource, UI
         ])
     }
     
+    @available(iOS 13.0, *)
     private func makeSortMenu() -> UIMenu {
         let selectedOrder = Prefs.BookmarkSettings.sortOrders
         let sortOptions: [(title: String, order: BookmarkSortOrder)] = [
@@ -654,9 +656,9 @@ final class BookmarksViewController: UIViewController, UITableViewDataSource, UI
             constraints.append(contentsOf: [
                 searchBar.trailingAnchor.constraint(equalTo: bookmarkMenuButton.leadingAnchor),
                 bookmarkMenuButton.trailingAnchor.constraint(equalTo: headerView.trailingAnchor, constant: -UX.headerMenuButtonTrailingInset),
-                bookmarkMenuButton.centerYAnchor.constraint(equalTo: searchBar.searchTextField.centerYAnchor),
+                bookmarkMenuButton.centerYAnchor.constraint(equalTo: searchBar.compatAlignmentView.centerYAnchor),
                 bookmarkMenuButton.widthAnchor.constraint(equalTo: bookmarkMenuButton.heightAnchor),
-                bookmarkMenuButton.heightAnchor.constraint(equalTo: searchBar.searchTextField.heightAnchor),
+                bookmarkMenuButton.heightAnchor.constraint(equalTo: searchBar.compatAlignmentView.heightAnchor),
             ])
         }
         

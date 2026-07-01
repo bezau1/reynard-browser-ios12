@@ -7,7 +7,7 @@
 
 import UIKit
 
-@MainActor
+
 final class DateTimePicker: NSObject, UIPopoverPresentationControllerDelegate {
     let inputMode: String
     let anchorRect: CGRect
@@ -64,7 +64,7 @@ final class DateTimePicker: NSObject, UIPopoverPresentationControllerDelegate {
     
     // MARK: - UIPopoverPresentationControllerDelegate
     
-    nonisolated func adaptivePresentationStyle(
+    func adaptivePresentationStyle(
         for controller: UIPresentationController,
         traitCollection: UITraitCollection
     ) -> UIModalPresentationStyle {

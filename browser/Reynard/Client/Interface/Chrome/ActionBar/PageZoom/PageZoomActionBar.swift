@@ -40,7 +40,7 @@ final class PageZoomActionBar: UIView {
     private(set) var zoomLevel = Prefs.AppearanceSettings.defaultPageZoomLevel
     
     private let backgroundView: UIVisualEffectView = {
-        let view = UIVisualEffectView(effect: UIBlurEffect(style: .systemChromeMaterial))
+        let view = UIVisualEffectView(effect: UIBlurEffect(style: .appChromeMaterial))
         view.translatesAutoresizingMaskIntoConstraints = false
         view.contentView.backgroundColor = UIColor.appSystemBackground.withAlphaComponent(UX.backgroundAlpha)
         return view
@@ -59,7 +59,7 @@ final class PageZoomActionBar: UIView {
     }()
     
     private let controlsBackground: UIVisualEffectView = {
-        let view = UIVisualEffectView(effect: UIBlurEffect(style: .systemMaterial))
+        let view = UIVisualEffectView(effect: UIBlurEffect(style: .appMaterial))
         view.translatesAutoresizingMaskIntoConstraints = false
         view.contentView.backgroundColor = UIColor.appSystemBackground.withAlphaComponent(UX.backgroundAlpha)
         view.layer.applyContinuousCornerCurve()
@@ -94,7 +94,7 @@ final class PageZoomActionBar: UIView {
     }()
     
     private let closeBackground: UIVisualEffectView = {
-        let view = UIVisualEffectView(effect: UIBlurEffect(style: .systemMaterial))
+        let view = UIVisualEffectView(effect: UIBlurEffect(style: .appMaterial))
         view.translatesAutoresizingMaskIntoConstraints = false
         view.contentView.backgroundColor = UIColor.appSystemBackground.withAlphaComponent(UX.backgroundAlpha)
         view.layer.applyContinuousCornerCurve()
@@ -107,8 +107,12 @@ final class PageZoomActionBar: UIView {
     private lazy var closeButton: UIButton = {
         let button = UIButton(type: .system)
         button.translatesAutoresizingMaskIntoConstraints = false
-        let configuration = UIImage.SymbolConfiguration(pointSize: UX.closeSymbolPointSize, weight: .regular)
-        button.setImage(UIImage(named: "reynard.xmark", in: .main, with: configuration), for: .normal)
+        if #available(iOS 13.0, *) {
+            let configuration = UIImage.SymbolConfiguration(pointSize: UX.closeSymbolPointSize, weight: .regular)
+            button.setImage(UIImage(named: "reynard.xmark", in: .main, with: configuration), for: .normal)
+        } else {
+            button.setImage(UIImage(named: "reynard.xmark", in: .main, compatibleWith: nil), for: .normal)
+        }
         button.tintColor = .appSecondaryLabel
         button.backgroundColor = .clear
         button.addTarget(self, action: #selector(closeTapped), for: .touchUpInside)
@@ -294,8 +298,12 @@ final class PageZoomActionBar: UIView {
     private func makeControlButton(named: String, action: Selector) -> UIButton {
         let button = UIButton(type: .system)
         button.translatesAutoresizingMaskIntoConstraints = false
-        let configuration = UIImage.SymbolConfiguration(pointSize: UX.controlSymbolPointSize, weight: .regular)
-        button.setImage(UIImage(named: named, in: .main, with: configuration), for: .normal)
+        if #available(iOS 13.0, *) {
+            let configuration = UIImage.SymbolConfiguration(pointSize: UX.controlSymbolPointSize, weight: .regular)
+            button.setImage(UIImage(named: named, in: .main, with: configuration), for: .normal)
+        } else {
+            button.setImage(UIImage(named: named, in: .main, compatibleWith: nil), for: .normal)
+        }
         button.tintColor = .appLabel
         button.addTarget(self, action: action, for: .touchUpInside)
         return button

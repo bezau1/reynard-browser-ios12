@@ -17,7 +17,7 @@ public struct AddonInstallFailure: Error {
 public protocol AddonEmbedderDelegate: AnyObject {
     func addonController(_ controller: AddonRuntime, didUpdate addon: Addon)
     func addonController(_ controller: AddonRuntime, didFailInstall failure: AddonInstallFailure)
-    @MainActor
+    
     func addonController(_ controller: AddonRuntime, promptFor prompt: AddonPermissionPrompt, completion: @escaping (AddonPermissionPromptResponse) -> Void)
     func addonController(_ controller: AddonRuntime, didUpdate action: AddonAction, for addon: Addon, session: GeckoSession?)
     func addonController(_ controller: AddonRuntime, didRequestOpenPopup popupURL: String, for addon: Addon, action: AddonAction, session: GeckoSession?)
@@ -30,7 +30,7 @@ public protocol AddonEmbedderDelegate: AnyObject {
 public extension AddonEmbedderDelegate {
     func addonController(_ controller: AddonRuntime, didUpdate addon: Addon) {}
     func addonController(_ controller: AddonRuntime, didFailInstall failure: AddonInstallFailure) {}
-    @MainActor
+    
     func addonController(_ controller: AddonRuntime, promptFor prompt: AddonPermissionPrompt, completion: @escaping (AddonPermissionPromptResponse) -> Void) { completion(.deny) }
     func addonController(_ controller: AddonRuntime, didUpdate action: AddonAction, for addon: Addon, session: GeckoSession?) {}
     func addonController(_ controller: AddonRuntime, didRequestOpenPopup popupURL: String, for addon: Addon, action: AddonAction, session: GeckoSession?) {}

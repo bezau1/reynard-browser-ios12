@@ -57,12 +57,21 @@ enum LibrarySection: Int, CaseIterable {
     }
     
     var tabBarItem: UITabBarItem {
-        let configuration = UIImage.SymbolConfiguration(pointSize: UX.itemSymbolPointSize, weight: .regular)
-        let item = UITabBarItem(
-            title: title,
-            image: UIImage(named: symbolName, in: .main, with: configuration),
-            selectedImage: UIImage(named: selectedSymbolName, in: .main, with: configuration)
-        )
+        let item: UITabBarItem
+        if #available(iOS 13.0, *) {
+            let configuration = UIImage.SymbolConfiguration(pointSize: UX.itemSymbolPointSize, weight: .regular)
+            item = UITabBarItem(
+                title: title,
+                image: UIImage(named: symbolName, in: .main, with: configuration),
+                selectedImage: UIImage(named: selectedSymbolName, in: .main, with: configuration)
+            )
+        } else {
+            item = UITabBarItem(
+                title: title,
+                image: UIImage(named: symbolName, in: .main, compatibleWith: nil),
+                selectedImage: UIImage(named: selectedSymbolName, in: .main, compatibleWith: nil)
+            )
+        }
         item.tag = rawValue
         return item
     }

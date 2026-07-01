@@ -8,6 +8,7 @@
 import UIKit
 
 enum AddressBarMenu {
+    @available(iOS 13.0, *)
     private struct Identifier {
         static let addressBarMenu = UIMenu.Identifier("com.minh-ton.Reynard.AddressBarMenu")
         static let manageAddonsMenu = UIMenu.Identifier("com.minh-ton.Reynard.AddressBarMenu.ManageAddons")
@@ -18,6 +19,7 @@ enum AddressBarMenu {
         let image: UIImage?
     }
     
+    @available(iOS 13.0, *)
     static func makeMenu(
         selectedURL: String?,
         usesDesktopWebsite: Bool?,

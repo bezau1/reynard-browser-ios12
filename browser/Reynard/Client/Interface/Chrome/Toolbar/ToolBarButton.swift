@@ -104,8 +104,12 @@ final class ToolbarButton: UIButton {
             }
         }
         
-        let configuration = UIImage.SymbolConfiguration(pointSize: UX.downloadSymbolPointSize, weight: .regular)
-        downloadIconView.image = UIImage(named: "reynard.arrow.down.circle", in: .main, with: configuration)
+        if #available(iOS 13.0, *) {
+            let configuration = UIImage.SymbolConfiguration(pointSize: UX.downloadSymbolPointSize, weight: .regular)
+            downloadIconView.image = UIImage(named: "reynard.arrow.down.circle", in: .main, with: configuration)
+        } else {
+            downloadIconView.image = UIImage(named: "reynard.arrow.down.circle", in: .main, compatibleWith: nil)
+        }
         
         let progress = min(max(CGFloat(summary.aggregateProgress), 0), 1)
         let showsProgress = summary.activeCount > 0
@@ -129,13 +133,15 @@ final class ToolbarButton: UIButton {
             return
         }
         setImage(UIImage(named: symbolName), for: .normal)
-        let pointSize = toolbarButtonType == .newTab
-        ? UX.newTabSymbolPointSize
-        : UX.standardSymbolPointSize
-        setPreferredSymbolConfiguration(
-            UIImage.SymbolConfiguration(pointSize: pointSize, weight: .regular),
-            forImageIn: .normal
-        )
+        if #available(iOS 13.0, *) {
+            let pointSize = toolbarButtonType == .newTab
+            ? UX.newTabSymbolPointSize
+            : UX.standardSymbolPointSize
+            setPreferredSymbolConfiguration(
+                UIImage.SymbolConfiguration(pointSize: pointSize, weight: .regular),
+                forImageIn: .normal
+            )
+        }
     }
     
     private func configureTarget(_ target: AnyObject, action: Selector) {

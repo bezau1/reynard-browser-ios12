@@ -295,7 +295,7 @@ final class TabManagerImplementation: NSObject, TabManager {
         }
     }
 
-    @MainActor
+    
     private func applyResolvedFavicon(_ image: UIImage?, toTabWithID tabID: UUID, expectedURL: String) {
         defer {
             faviconRequests.removeValue(forKey: tabID)

@@ -49,7 +49,7 @@ final class AddonUpdateCoordinator {
         }
     }
     
-    @MainActor
+    
     func responseForUpdatePrompt(
         _ prompt: AddonPermissionPrompt,
         presentPrompt: @escaping (AddonPermissionPrompt, @escaping (AddonPermissionPromptResponse) -> Void) -> Void,
@@ -76,7 +76,7 @@ final class AddonUpdateCoordinator {
     }
 
     func updateAllAddons(
-        status: @escaping @MainActor (String, String?) -> Void,
+        status: @escaping  (String, String?) -> Void,
         completion: @escaping (AddonUpdateBatchResult) -> Void
     ) {
         runUpdateBatch(
@@ -87,7 +87,7 @@ final class AddonUpdateCoordinator {
     }
 
     func completePendingUpdates(
-        status: @escaping @MainActor (String, String?) -> Void,
+        status: @escaping  (String, String?) -> Void,
         completion: @escaping (AddonUpdateBatchResult) -> Void
     ) {
         let pendingIDs = Set(Prefs.AddonSettings.pendingApprovalAddonIDs)
@@ -138,7 +138,7 @@ final class AddonUpdateCoordinator {
 
     private func runUpdateBatch(
         addons: [Addon],
-        status: @escaping @MainActor (String, String?) -> Void,
+        status: @escaping  (String, String?) -> Void,
         completion: @escaping (AddonUpdateBatchResult) -> Void
     ) {
         guard !isRunningBatch else {

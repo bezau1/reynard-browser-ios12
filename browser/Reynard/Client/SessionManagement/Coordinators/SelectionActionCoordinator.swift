@@ -7,13 +7,13 @@
 
 import GeckoView
 
-@MainActor
+
 protocol SelectionActionPresenting {
     func show(_ request: SelectionActionRequest, for session: GeckoSession)
     func hide(for session: GeckoSession)
 }
 
-@MainActor
+
 final class SelectionActionCoordinator: SelectionActionDelegate {
     private let presenter: SelectionActionPresenting
     

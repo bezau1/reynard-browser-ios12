@@ -46,7 +46,10 @@ final class FavoritesSectionViewController: UIViewController {
     private var lastLaidOutWidth: CGFloat = -1
     private var collectionMaskLayer: CALayer?
     private var reorderState: ReorderState = .idle
-    private var contextMenuInteraction: UIContextMenuInteraction?
+    // NOTE: Typed as UIInteraction? (iOS 11+) rather than UIContextMenuInteraction?
+    // (iOS 13+) because @available cannot be applied to a stored property. The
+    // concrete UIContextMenuInteraction is cast back inside `if #available` blocks.
+    private var contextMenuInteraction: UIInteraction?
     
     private let headerView: UIView = {
         let view = UIView()
@@ -414,6 +417,7 @@ final class FavoritesSectionViewController: UIViewController {
         _ = bookmarkStore.removeFolder(guid: folder.guid)
     }
     
+    @available(iOS 13.0, *)
     func removeFavoriteContextMenuInteraction(_ interaction: UIContextMenuInteraction) {
         guard contextMenuInteraction === interaction else {
             return
@@ -445,7 +449,9 @@ final class FavoritesSectionViewController: UIViewController {
                 
                 Haptics.prepareRigid()
                 Haptics.rigid()
-                self.presentFavoriteContextMenu(for: cell)
+                if #available(iOS 13.0, *) {
+                    self.presentFavoriteContextMenu(for: cell)
+                }
             }
             reorderState = .pending(cell: cell, indexPath: indexPath, startLocation: pressLocation, workItem: workItem)
             DispatchQueue.main.asyncAfter(deadline: .now() + UX.contextMenuPresentationDelay, execute: workItem)
@@ -495,6 +501,7 @@ final class FavoritesSectionViewController: UIViewController {
         finishFavoriteReordering(cancelled: true)
     }
     
+    @available(iOS 13.0, *)
     private func presentFavoriteContextMenu(for cell: UICollectionViewCell) {
         if let contextMenuInteraction {
             contextMenuInteraction.view?.removeInteraction(contextMenuInteraction)

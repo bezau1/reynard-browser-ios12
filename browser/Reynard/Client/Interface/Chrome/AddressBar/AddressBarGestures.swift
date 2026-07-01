@@ -180,9 +180,15 @@ final class AddressBarGestures: NSObject {
     
     private func createAddressBarPreview(for tab: Tab) -> UIView {
         let container = UIView()
-        container.backgroundColor = UIColor { traitCollection in
-            traitCollection.userInterfaceStyle == .dark ? .appTertiarySystemBackground : .appSystemBackground
+        let backgroundColor: UIColor
+        if #available(iOS 13.0, *) {
+            backgroundColor = UIColor { traitCollection in
+                traitCollection.userInterfaceStyle == .dark ? .appTertiarySystemBackground : .appSystemBackground
+            }
+        } else {
+            backgroundColor = .appSystemBackground
         }
+        container.backgroundColor = backgroundColor
         container.layer.cornerRadius = UX.addressBarPreviewCornerRadius
         container.layer.applyContinuousCornerCurve()
         container.layer.shadowColor = UIColor.black.cgColor
@@ -277,7 +283,7 @@ final class AddressBarGestures: NSObject {
     
     private func placeholderPreviewText() -> NSAttributedString {
         NSAttributedString(
-            string: AddressBar.appPlaceholderText,
+            string: AddressBar.placeholderText,
             attributes: [.foregroundColor: UIColor.appPlaceholderText]
         )
     }

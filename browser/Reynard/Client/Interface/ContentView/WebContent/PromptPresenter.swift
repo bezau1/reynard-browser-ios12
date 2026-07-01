@@ -8,7 +8,7 @@
 import GeckoView
 import UIKit
 
-@MainActor
+
 final class PromptPresenter: PromptPresenting {
     private var selectPickers: [String: SelectPicker] = [:]
     private var colorPickers: [String: ColorPicker] = [:]

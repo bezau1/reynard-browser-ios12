@@ -9,7 +9,7 @@ import Foundation
 import GeckoView
 
 protocol PermissionPromptPresenting {
-    @MainActor
+    
     func request(
         title: String,
         message: String?,
@@ -72,7 +72,7 @@ final class PermissionCoordinator: NSObject, PermissionEmbedderDelegate {
     
     // MARK: - PermissionEmbedderDelegate
     
-    @MainActor
+    
     func permissionDelegate(decideContentPermission permission: ContentPermission, session: GeckoSession, completion: @escaping (ContentPermission.Value) -> Void) {
         if permission.permission == .deviceSensors,
            let title = permission.alertTitle {
@@ -129,7 +129,7 @@ final class PermissionCoordinator: NSObject, PermissionEmbedderDelegate {
         }
     }
 
-    @MainActor
+    
     func permissionDelegate(decideMediaPermission request: MediaPermissionRequest, session: GeckoSession, completion: @escaping (Bool) -> Void) {
         let requestedPermissions = requestedPermissions(for: request)
         guard !requestedPermissions.isEmpty else {

@@ -12,20 +12,20 @@ import UniformTypeIdentifiers
 extension FilePicker {
     // MARK: - File Staging
     
-    nonisolated static func stageFiles(from urls: [URL], in directory: URL) throws -> SelectionResult {
+    static func stageFiles(from urls: [URL], in directory: URL) throws -> SelectionResult {
         try prepareDirectory(directory)
         let copiedURLs = try urls.map { try copyItem(at: $0, into: directory) }
         return SelectionResult(files: copiedURLs.map(\.path), filesInWebKitDirectory: [])
     }
     
-    nonisolated static func stageImageData(_ imageData: Data, in directory: URL) throws -> SelectionResult {
+    static func stageImageData(_ imageData: Data, in directory: URL) throws -> SelectionResult {
         try prepareDirectory(directory)
         let destinationURL = uniqueDestinationURL(in: directory, preferredName: "photo.jpg")
         try imageData.write(to: destinationURL, options: .atomic)
         return SelectionResult(files: [destinationURL.path], filesInWebKitDirectory: [])
     }
     
-    nonisolated static func stageFolder(from url: URL, in directory: URL) throws -> SelectionResult {
+    static func stageFolder(from url: URL, in directory: URL) throws -> SelectionResult {
         try prepareDirectory(directory)
         
         let rootName = sanitizeFileName(url.lastPathComponent.isEmpty ? "Folder" : url.lastPathComponent)
@@ -66,7 +66,7 @@ extension FilePicker {
         return SelectionResult(files: [destinationURL.path], filesInWebKitDirectory: entries)
     }
     
-    nonisolated static func prepareDirectory(_ directory: URL) throws {
+    static func prepareDirectory(_ directory: URL) throws {
         let fileManager = FileManager.default
         if fileManager.fileExists(atPath: directory.path) {
             try fileManager.removeItem(at: directory)
@@ -74,7 +74,7 @@ extension FilePicker {
         try fileManager.createDirectory(at: directory, withIntermediateDirectories: true)
     }
     
-    private nonisolated static func copyItem(at sourceURL: URL, into directory: URL) throws -> URL {
+    private static func copyItem(at sourceURL: URL, into directory: URL) throws -> URL {
         try withSecurityScopedAccess(to: sourceURL) {
             let destinationURL = uniqueDestinationURL(
                 in: directory,
@@ -85,7 +85,7 @@ extension FilePicker {
         }
     }
     
-    private nonisolated static func withSecurityScopedAccess<T>(to url: URL, _ body: () throws -> T) throws -> T {
+    private static func withSecurityScopedAccess<T>(to url: URL, _ body: () throws -> T) throws -> T {
         let accessed = url.startAccessingSecurityScopedResource()
         defer {
             if accessed {
@@ -95,7 +95,7 @@ extension FilePicker {
         return try body()
     }
     
-    nonisolated static func uniqueDestinationURL(in directory: URL, preferredName: String) -> URL {
+    static func uniqueDestinationURL(in directory: URL, preferredName: String) -> URL {
         let fileManager = FileManager.default
         let sanitizedName = sanitizeFileName(preferredName.isEmpty ? "File" : preferredName)
         let extensionPart = URL(fileURLWithPath: sanitizedName).pathExtension
@@ -114,14 +114,14 @@ extension FilePicker {
         return candidate
     }
     
-    private nonisolated static func sanitizeFileName(_ name: String) -> String {
+    private static func sanitizeFileName(_ name: String) -> String {
         let invalidCharacters = CharacterSet(charactersIn: "/:\n")
         let pieces = name.components(separatedBy: invalidCharacters)
         let sanitized = pieces.joined(separator: "-").trimmingCharacters(in: .whitespacesAndNewlines)
         return sanitized.isEmpty ? "File" : sanitized
     }
     
-    private nonisolated static func mimeType(for url: URL) -> String {
+    private static func mimeType(for url: URL) -> String {
         let ext = url.pathExtension as CFString
         guard let uti = UTTypeCreatePreferredIdentifierForTag(
             kUTTagClassFilenameExtension,

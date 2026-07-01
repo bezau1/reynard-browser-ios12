@@ -47,11 +47,18 @@ final class AddressBarPositionOptionControl: UIControl {
         let secondary = UIColor.appSecondaryLabel
         previewImageView.tintColor = selected ? accent : secondary
         nameLabel.textColor = .appLabel
-        let radioConfig = UIImage.SymbolConfiguration(pointSize: UX.indicatorSymbolSize, weight: .regular)
-        selectionIndicatorView.image = UIImage(
-            named: selected ? "reynard.checkmark.circle.fill" : "reynard.circle", in: .main,
-            with: radioConfig
-        )
+        if #available(iOS 13.0, *) {
+            let radioConfig = UIImage.SymbolConfiguration(pointSize: UX.indicatorSymbolSize, weight: .regular)
+            selectionIndicatorView.image = UIImage(
+                named: selected ? "reynard.checkmark.circle.fill" : "reynard.circle", in: .main,
+                with: radioConfig
+            )
+        } else {
+            selectionIndicatorView.image = UIImage(
+                named: selected ? "reynard.checkmark.circle.fill" : "reynard.circle", in: .main,
+                compatibleWith: nil
+            )
+        }
         selectionIndicatorView.tintColor = selected ? accent : secondary
     }
     
@@ -64,8 +71,13 @@ final class AddressBarPositionOptionControl: UIControl {
     private func configurePreview(symbolName: String) {
         previewImageView.translatesAutoresizingMaskIntoConstraints = false
         previewImageView.contentMode = .scaleAspectFit
-        let symbolConfiguration = UIImage.SymbolConfiguration(pointSize: UX.previewSymbolSize, weight: .ultraLight)
-        previewImageView.image = UIImage(named: symbolName)?.applyingSymbolConfiguration(symbolConfiguration)
+        let previewImage = UIImage(named: symbolName)
+        if #available(iOS 13.0, *) {
+            let symbolConfiguration = UIImage.SymbolConfiguration(pointSize: UX.previewSymbolSize, weight: .ultraLight)
+            previewImageView.image = previewImage?.applyingSymbolConfiguration(symbolConfiguration)
+        } else {
+            previewImageView.image = previewImage
+        }
     }
     
     private func configureNameLabel(title: String) {

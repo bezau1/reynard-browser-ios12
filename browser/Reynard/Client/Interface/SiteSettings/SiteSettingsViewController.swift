@@ -327,7 +327,7 @@ final class SiteSettingsViewController: UITableViewController {
     
     // MARK: - Permissions
     
-    @MainActor
+    
     private func loadPermissionsFromGecko() {
         PermissionDelegate.permissions(
             for: origin,

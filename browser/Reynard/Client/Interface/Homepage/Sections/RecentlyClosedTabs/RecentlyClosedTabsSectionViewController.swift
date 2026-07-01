@@ -280,8 +280,10 @@ extension RecentlyClosedTabsSectionViewController: UICollectionViewDataSource, U
             for: indexPath
         ) as! RecentlyClosedTabCollectionViewCell
         cell.configure(tab: closedTabs[indexPath.item])
-        if !cell.interactions.contains(where: { $0 is UIContextMenuInteraction }) {
-            cell.addInteraction(UIContextMenuInteraction(delegate: self))
+        if #available(iOS 13.0, *) {
+            if !cell.interactions.contains(where: { $0 is UIContextMenuInteraction }) {
+                cell.addInteraction(UIContextMenuInteraction(delegate: self))
+            }
         }
         return cell
     }

@@ -197,7 +197,7 @@ final class AddonCoordinator: NSObject, AddonEmbedderDelegate {
         _ = failure
     }
     
-    @MainActor
+    
     func addonController(_ controller: AddonRuntime, promptFor prompt: AddonPermissionPrompt, completion: @escaping (AddonPermissionPromptResponse) -> Void) {
         let presentPrompt: (AddonPermissionPrompt, @escaping (AddonPermissionPromptResponse) -> Void) -> Void = { [weak self] prompt, promptCompletion in
             guard let self, let delegate = self.delegate else {
@@ -366,7 +366,7 @@ final class AddonCoordinator: NSObject, AddonEmbedderDelegate {
     
     // MARK: - Presentation
     
-    @MainActor
+    
     private func presentPopupAfterMenuDismissal(url: String) {
         delegate?.performAfterAddonMenuDismissal(self, work: { [weak self] in
             self?.presentPopup(url: url)
@@ -393,7 +393,10 @@ final class AddonCoordinator: NSObject, AddonEmbedderDelegate {
         
         // Hack: Use .overFullScreen so GeckoView can scroll
         popupViewController.modalPresentationStyle = .overFullScreen
-        popupViewController.isModalInPresentation = true
+        // isModalInPresentation is iOS 13+; no interactive sheet-dismissal to block on iOS 12.
+        if #available(iOS 13.0, *) {
+            popupViewController.isModalInPresentation = true
+        }
         delegate?.presentAddonViewController(self, popupViewController)
     }
     

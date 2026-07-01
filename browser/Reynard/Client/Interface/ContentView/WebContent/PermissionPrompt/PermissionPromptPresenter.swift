@@ -9,7 +9,7 @@ import GeckoView
 import UIKit
 
 struct PermissionPromptPresenter: PermissionPromptPresenting {
-    @MainActor
+    
     func request(
         title: String,
         message: String?,

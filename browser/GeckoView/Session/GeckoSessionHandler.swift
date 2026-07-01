@@ -9,7 +9,7 @@ import Foundation
 
 final class GeckoSessionHandler: GeckoSessionHandlerCommon {
     typealias MessageCompletion = (Result<Any?, Error>) -> Void
-    typealias MessageHandler = @MainActor (GeckoSession, Any?, String, [String: Any?]?, @escaping MessageCompletion) -> Void
+    typealias MessageHandler =  (GeckoSession, Any?, String, [String: Any?]?, @escaping MessageCompletion) -> Void
     
     let moduleName: String
     let events: [String]
@@ -53,7 +53,7 @@ final class GeckoSessionHandler: GeckoSessionHandlerCommon {
         self.handle = handle
     }
     
-    @MainActor
+    
     func handleMessage(type: String, message: [String: Any?]?, callback: EventCallback?) {
         guard events.contains(type) else {
             callback?.sendError(GeckoHandlerError("unknown message \(type)").value)

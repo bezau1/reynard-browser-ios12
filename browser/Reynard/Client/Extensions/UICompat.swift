@@ -100,3 +100,25 @@ extension CALayer {
         }
     }
 }
+
+extension UISearchBar {
+    /// The inner search text field on iOS 13+, or the search bar itself on iOS 12
+    /// (used only for layout alignment). See IOS12_GATES.md.
+    var compatAlignmentView: UIView {
+        if #available(iOS 13.0, *) { return searchTextField }
+        return self
+    }
+}
+
+extension UIBlurEffect.Style {
+    /// `.systemChromeMaterial` on iOS 13+, `.regular` on iOS 12.
+    static var appChromeMaterial: UIBlurEffect.Style {
+        if #available(iOS 13.0, *) { return .systemChromeMaterial }
+        return .regular
+    }
+    /// `.systemMaterial` on iOS 13+, `.regular` on iOS 12.
+    static var appMaterial: UIBlurEffect.Style {
+        if #available(iOS 13.0, *) { return .systemMaterial }
+        return .regular
+    }
+}

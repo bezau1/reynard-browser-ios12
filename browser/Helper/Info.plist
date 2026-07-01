@@ -14,7 +14,7 @@
 		<key>NSExtensionContextHostClass</key>
 		<string>NSExtensionContext</string>
 		<key>NSExtensionPointIdentifier</key>
-		<string>com.apple.ar.viewer</string>
+		<string>com.apple.app.non-ui-extension.multiple-instances</string>
 		<key>NSExtensionPrincipalClass</key>
 		<string>ReynardHelperMain</string>
 	</dict>

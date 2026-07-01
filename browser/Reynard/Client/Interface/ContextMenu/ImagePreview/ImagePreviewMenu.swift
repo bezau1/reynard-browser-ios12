@@ -7,6 +7,7 @@
 
 import UIKit
 
+@available(iOS 13.0, *)
 struct ImagePreviewMenu {
     static func configuration(
         for context: ContextMenuContext,

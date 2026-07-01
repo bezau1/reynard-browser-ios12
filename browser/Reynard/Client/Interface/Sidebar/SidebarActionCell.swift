@@ -19,7 +19,9 @@ final class SidebarActionCell: UICollectionViewCell {
         let view = UIImageView()
         view.translatesAutoresizingMaskIntoConstraints = false
         view.tintColor = .appLabel
-        view.preferredSymbolConfiguration = UIImage.SymbolConfiguration(textStyle: .body)
+        if #available(iOS 13.0, *) {
+            view.preferredSymbolConfiguration = UIImage.SymbolConfiguration(textStyle: .body)
+        }
         return view
     }()
     

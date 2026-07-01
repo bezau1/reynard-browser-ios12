@@ -36,9 +36,15 @@ final class PrivateBrowsingSectionViewController: UIViewController {
         view.layer.applyContinuousCornerCurve()
         view.layer.cornerRadius = UX.cornerRadius
         view.clipsToBounds = true
-        view.backgroundColor = UIColor { traitCollection in
-            traitCollection.userInterfaceStyle == .dark ? .appSystemGray6 : UIColor.black.withAlphaComponent(0.7)
+        let backgroundColor: UIColor
+        if #available(iOS 13.0, *) {
+            backgroundColor = UIColor { traitCollection in
+                traitCollection.userInterfaceStyle == .dark ? .appSystemGray6 : UIColor.black.withAlphaComponent(0.7)
+            }
+        } else {
+            backgroundColor = UIColor.black.withAlphaComponent(0.7)
         }
+        view.backgroundColor = backgroundColor
         return view
     }()
     

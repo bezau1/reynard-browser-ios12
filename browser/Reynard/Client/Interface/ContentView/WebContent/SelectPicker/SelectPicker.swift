@@ -8,7 +8,7 @@
 import GeckoView
 import UIKit
 
-@MainActor
+
 final class SelectPicker {
     private var mode: String
     private var choices: [PromptChoice]
@@ -145,6 +145,7 @@ final class SelectPicker {
         return result
     }
     
+    @available(iOS 14.0, *)
     private func buildMenuElements(from items: [PromptChoice]) -> [UIMenuElement] {
         var elements: [UIMenuElement] = []
         var pendingItems: [UIMenuElement] = []

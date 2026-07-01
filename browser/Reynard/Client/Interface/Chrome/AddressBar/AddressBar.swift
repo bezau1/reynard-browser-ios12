@@ -97,7 +97,10 @@ final class AddressBar: UIView {
     private var canShowBarMenu = false
     
     private var preserveAutocompleteAfterResign = false
-    private var addonsMenu: UIMenu?
+    // NOTE: iOS 12 backport — type-erased to Any? because UIMenu is iOS 13+
+    // and stored properties can't be @available-gated. Cast to UIMenu inside
+    // `if #available(iOS 13.0, *)` at use sites.
+    private var addonsMenu: Any?
     
     private var lastEditingText = ""
     private var lastEditWasDelete = false
@@ -123,9 +126,15 @@ final class AddressBar: UIView {
     private let addressBarContent: UIView = {
         let view = UIView()
         view.translatesAutoresizingMaskIntoConstraints = false
-        view.backgroundColor = UIColor { traitCollection in
-            traitCollection.userInterfaceStyle == .dark ? .appTertiarySystemBackground : .appSystemBackground
+        let backgroundColor: UIColor
+        if #available(iOS 13.0, *) {
+            backgroundColor = UIColor { traitCollection in
+                traitCollection.userInterfaceStyle == .dark ? .appTertiarySystemBackground : .appSystemBackground
+            }
+        } else {
+            backgroundColor = .appSystemBackground
         }
+        view.backgroundColor = backgroundColor
         view.layer.applyContinuousCornerCurve()
         view.layer.cornerRadius = UX.addressBarBackgroundCornerRadius
         view.clipsToBounds = true
@@ -157,7 +166,7 @@ final class AddressBar: UIView {
         field.translatesAutoresizingMaskIntoConstraints = false
         field.borderStyle = .none
         field.backgroundColor = .clear
-        field.placeholder = AddressBar.appPlaceholderText
+        field.placeholder = AddressBar.placeholderText
         field.keyboardType = .webSearch
         field.autocapitalizationType = .none
         field.autocorrectionType = .no
@@ -289,31 +298,33 @@ final class AddressBar: UIView {
     }
     
     func updateMenu(url: String?, usesDesktopWebsite: Bool?) {
-        addonsMenu = AddressBarMenu.makeMenu(
-            selectedURL: url,
-            usesDesktopWebsite: usesDesktopWebsite,
-            addonItems: delegate?.addressBarAddonItems(self) ?? [],
-            onAddonSelected: { [weak self] item in
-                guard let self else { return }
-                self.delegate?.addressBar(self, didSelectAddon: item)
-            },
-            onPageZoom: { [weak self] in
-                guard let self else { return }
-                self.delegate?.addressBarDidRequestPageZoom(self)
-            },
-            onChangeWebsiteMode: { [weak self] in
-                guard let self else { return }
-                self.delegate?.addressBarDidRequestWebsiteModeChange(self)
-            },
-            onWebsiteSettings: { [weak self] in
-                guard let self else { return }
-                self.delegate?.addressBarDidRequestWebsiteSettings(self)
-            },
-            onBookmark: { [weak self] favorites in
-                guard let self else { return }
-                self.delegate?.addressBar(self, didRequestBookmarkInFavorites: favorites)
-            }
-        )
+        if #available(iOS 13.0, *) {
+            addonsMenu = AddressBarMenu.makeMenu(
+                selectedURL: url,
+                usesDesktopWebsite: usesDesktopWebsite,
+                addonItems: delegate?.addressBarAddonItems(self) ?? [],
+                onAddonSelected: { [weak self] item in
+                    guard let self else { return }
+                    self.delegate?.addressBar(self, didSelectAddon: item)
+                },
+                onPageZoom: { [weak self] in
+                    guard let self else { return }
+                    self.delegate?.addressBarDidRequestPageZoom(self)
+                },
+                onChangeWebsiteMode: { [weak self] in
+                    guard let self else { return }
+                    self.delegate?.addressBarDidRequestWebsiteModeChange(self)
+                },
+                onWebsiteSettings: { [weak self] in
+                    guard let self else { return }
+                    self.delegate?.addressBarDidRequestWebsiteSettings(self)
+                },
+                onBookmark: { [weak self] favorites in
+                    guard let self else { return }
+                    self.delegate?.addressBar(self, didRequestBookmarkInFavorites: favorites)
+                }
+            )
+        }
         applyState()
     }
     
@@ -669,31 +680,39 @@ final class AddressBar: UIView {
         guard state != .hidden else {
             leadingButton.isHidden = true
             leadingButton.setImage(nil, for: .normal)
-            leadingButton.setMenuPreservingPresentation(nil)
+            if #available(iOS 13.0, *) {
+                leadingButton.setMenuPreservingPresentation(nil)
+            }
             leadingButton.isUserInteractionEnabled = false
             return
         }
-        
+
         leadingButton.isHidden = false
         if state == .search {
             leadingButton.tintColor = .appSecondaryLabel
             leadingButton.setImage(UIImage(named: "reynard.magnifyingglass"), for: .normal)
-            leadingButton.setMenuPreservingPresentation(nil)
+            if #available(iOS 13.0, *) {
+                leadingButton.setMenuPreservingPresentation(nil)
+            }
             leadingButton.isUserInteractionEnabled = false
             return
         }
-        
+
         if state == .loading {
             leadingButton.tintColor = .appSecondaryLabel
             leadingButton.setImage(UIImage(named: "reynard.list.bullet.below.rectangle"), for: .normal)
-            leadingButton.setMenuPreservingPresentation(nil)
+            if #available(iOS 13.0, *) {
+                leadingButton.setMenuPreservingPresentation(nil)
+            }
             leadingButton.isUserInteractionEnabled = false
             return
         }
-        
+
         leadingButton.tintColor = .appLabel
         leadingButton.setImage(UIImage(named: "reynard.list.bullet.below.rectangle"), for: .normal)
-        leadingButton.setMenuPreservingPresentation(addonsMenu)
+        if #available(iOS 13.0, *) {
+            leadingButton.setMenuPreservingPresentation(addonsMenu as? UIMenu)
+        }
         leadingButton.isUserInteractionEnabled = addonsMenu != nil
     }
     

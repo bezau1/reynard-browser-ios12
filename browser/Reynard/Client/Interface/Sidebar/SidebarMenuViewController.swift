@@ -15,7 +15,14 @@ final class SidebarMenuViewController: UIViewController, UICollectionViewDelegat
     private let mainSection = "main"
     private let cellReuseIdentifier = "SidebarActionCell"
     private let childSidebarButtonTag = 9101
-    private var dataSource: UICollectionViewDiffableDataSource<String, LibrarySection>!
+    // Diffable data source is iOS 13+. Stored type-erased so this class stays
+    // available on iOS 12 (where the sidebar list is empty). See IOS12_GATES.md.
+    private var dataSourceStorage: AnyObject?
+    @available(iOS 13.0, *)
+    private var dataSource: UICollectionViewDiffableDataSource<String, LibrarySection>? {
+        get { dataSourceStorage as? UICollectionViewDiffableDataSource<String, LibrarySection> }
+        set { dataSourceStorage = newValue }
+    }
     
     private lazy var sidebarButton: UIButton = {
         let button = ToolbarButton(buttonType: .sidebar, target: self, action: #selector(collapseFromRoot))
@@ -59,8 +66,10 @@ final class SidebarMenuViewController: UIViewController, UICollectionViewDelegat
         super.viewDidLoad()
         configureAppearance()
         configureCollectionView()
-        configureDataSource()
-        applySnapshot()
+        if #available(iOS 13.0, *) {
+            configureDataSource()
+            applySnapshot()
+        }
     }
     
     override func viewWillAppear(_ animated: Bool) {
@@ -83,10 +92,13 @@ final class SidebarMenuViewController: UIViewController, UICollectionViewDelegat
     // MARK: - UICollectionViewDelegate
     
     func collectionView(_ collectionView: UICollectionView, didSelectItemAt indexPath: IndexPath) {
-        guard let section = dataSource.itemIdentifier(for: indexPath) else {
+        guard #available(iOS 13.0, *) else {
             return
         }
-        
+        guard let section = dataSource?.itemIdentifier(for: indexPath) else {
+            return
+        }
+
         showSection(section, animated: true)
     }
     
@@ -94,12 +106,15 @@ final class SidebarMenuViewController: UIViewController, UICollectionViewDelegat
     
     func showSection(_ section: LibrarySection, animated: Bool) {
         loadViewIfNeeded()
-        
-        let indexPath = dataSource.indexPath(for: section)
+
+        var indexPath: IndexPath?
+        if #available(iOS 13.0, *) {
+            indexPath = dataSource?.indexPath(for: section)
+        }
         if let indexPath {
             collectionView.selectItem(at: indexPath, animated: false, scrollPosition: [])
         }
-        
+
         let viewController = makeSectionViewController(for: section)
         navigationController?.setViewControllers([self, viewController], animated: animated)
         if let indexPath {
@@ -214,6 +229,7 @@ final class SidebarMenuViewController: UIViewController, UICollectionViewDelegat
         ])
     }
     
+    @available(iOS 13.0, *)
     private func configureDataSource() {
         if #available(iOS 14.0, *) {
             let cellRegistration = UICollectionView.CellRegistration<UICollectionViewListCell, LibrarySection> { cell, _, section in
@@ -240,10 +256,11 @@ final class SidebarMenuViewController: UIViewController, UICollectionViewDelegat
         }
     }
     
+    @available(iOS 13.0, *)
     private func applySnapshot() {
         var snapshot = NSDiffableDataSourceSnapshot<String, LibrarySection>()
         snapshot.appendSections([mainSection])
         snapshot.appendItems(LibrarySection.allCases, toSection: mainSection)
-        dataSource.apply(snapshot, animatingDifferences: false)
+        dataSource?.apply(snapshot, animatingDifferences: false)
     }
 }

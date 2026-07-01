@@ -36,7 +36,7 @@ final class DownloadsViewController: UIViewController, UITableViewDataSource, UI
         iconName: "reynard.ellipsis",
         action: #selector(didTapDownloadsMenu)
     )
-    private var legacyDownloadsMenuDelegate: LibraryLegacyMenuDelegate?
+    private var legacyDownloadsMenuDelegate: AnyObject?
     private lazy var downloadsMenuItem: UIBarButtonItem = {
         let item = UIBarButtonItem(
             image: UIImage(named: "reynard.ellipsis"),
@@ -218,9 +218,9 @@ final class DownloadsViewController: UIViewController, UITableViewDataSource, UI
             constraints.append(contentsOf: [
                 searchBar.trailingAnchor.constraint(equalTo: downloadsMenuButton.leadingAnchor),
                 downloadsMenuButton.trailingAnchor.constraint(equalTo: headerView.trailingAnchor, constant: -UX.headerMenuButtonTrailingInset),
-                downloadsMenuButton.centerYAnchor.constraint(equalTo: searchBar.searchTextField.centerYAnchor),
+                downloadsMenuButton.centerYAnchor.constraint(equalTo: searchBar.compatAlignmentView.centerYAnchor),
                 downloadsMenuButton.widthAnchor.constraint(equalTo: downloadsMenuButton.heightAnchor),
-                downloadsMenuButton.heightAnchor.constraint(equalTo: searchBar.searchTextField.heightAnchor),
+                downloadsMenuButton.heightAnchor.constraint(equalTo: searchBar.compatAlignmentView.heightAnchor),
             ])
         }
         
@@ -259,6 +259,7 @@ final class DownloadsViewController: UIViewController, UITableViewDataSource, UI
         }
     }
     
+    @available(iOS 13.0, *)
     fileprivate func makeDownloadsMenu() -> UIMenu {
         UIMenu(title: "", children: [
             UIAction(title: "Open Downloads Folder", image: UIImage(named: "reynard.folder")) { [weak self] _ in

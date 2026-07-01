@@ -49,21 +49,29 @@ final class AddressBarDismissButton: UIButton {
         translatesAutoresizingMaskIntoConstraints = false
         alpha = 0
         isHidden = true
-        backgroundColor = UIColor { traitCollection in
-            traitCollection.userInterfaceStyle == .dark ? .appTertiarySystemBackground : .appSystemBackground
+        let backgroundColor: UIColor
+        if #available(iOS 13.0, *) {
+            backgroundColor = UIColor { traitCollection in
+                traitCollection.userInterfaceStyle == .dark ? .appTertiarySystemBackground : .appSystemBackground
+            }
+        } else {
+            backgroundColor = .appSystemBackground
         }
+        self.backgroundColor = backgroundColor
         tintColor = .appLabel
         layer.applyContinuousCornerCurve()
-        layer.shadowColor = UITraitCollection.current.userInterfaceStyle == .dark
+        layer.shadowColor = traitCollection.userInterfaceStyle == .dark
         ? UIColor.white.withAlphaComponent(UX.dismissButtonDarkModeShadowAlpha).cgColor
         : UIColor.black.cgColor
         layer.shadowRadius = UX.dismissButtonShadowRadius
         layer.shadowOffset = UX.dismissButtonShadowOffset
         layer.masksToBounds = false
         setImage(UIImage(named: "reynard.xmark"), for: .normal)
-        setPreferredSymbolConfiguration(
-            UIImage.SymbolConfiguration(pointSize: UX.dismissButtonSymbolPointSize, weight: .regular),
-            forImageIn: .normal
-        )
+        if #available(iOS 13.0, *) {
+            setPreferredSymbolConfiguration(
+                UIImage.SymbolConfiguration(pointSize: UX.dismissButtonSymbolPointSize, weight: .regular),
+                forImageIn: .normal
+            )
+        }
     }
 }

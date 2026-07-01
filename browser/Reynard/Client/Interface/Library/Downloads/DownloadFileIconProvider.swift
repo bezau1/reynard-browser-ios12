@@ -13,7 +13,7 @@ import MobileCoreServices
 final class DownloadFileIconProvider {
     static let shared = DownloadFileIconProvider()
     
-    private let thumbnailGenerator = QLThumbnailGenerator.shared
+    // QLThumbnailGenerator is iOS 13+; accessed inline in generateIcon under #available. See IOS12_GATES.md.
     private let thumbnailCache = NSCache<NSURL, UIImage>()
     private let placeholderCache = NSCache<NSString, UIImage>()
     private let fileManager = FileManager.default
@@ -58,7 +58,13 @@ final class DownloadFileIconProvider {
             completion(cachedImage)
             return
         }
-        
+
+        // QuickLook thumbnails are iOS 13+; on iOS 12 use the document-interaction placeholder.
+        guard #available(iOS 13.0, *) else {
+            fallbackIcon(for: fileURL, size: size, completion: completion)
+            return
+        }
+
         generateIcon(for: fileURL, size: size, contentTypeIdentifier: nil) { [weak self] image in
             if let image {
                 self?.thumbnailCache.setObject(image, forKey: fileURL as NSURL)
@@ -74,6 +80,7 @@ final class DownloadFileIconProvider {
         return thumbnailCache.object(forKey: fileURL as NSURL)
     }
     
+    @available(iOS 13.0, *)
     private func generateIcon(
         for fileURL: URL,
         size: CGSize,
@@ -94,7 +101,7 @@ final class DownloadFileIconProvider {
             request.contentType = contentType
         }
         
-        thumbnailGenerator.generateBestRepresentation(for: request) { thumbnail, _ in
+        QLThumbnailGenerator.shared.generateBestRepresentation(for: request) { thumbnail, _ in
             DispatchQueue.main.async {
                 completion(thumbnail?.uiImage)
             }
@@ -113,7 +120,17 @@ final class DownloadFileIconProvider {
             completion(nil)
             return
         }
-        
+
+        // QuickLook thumbnail generation is iOS 13+; on iOS 12 use the document-interaction icon directly.
+        guard #available(iOS 13.0, *) else {
+            let resolvedImage = documentInteractionIcon(for: placeholderFileURL)
+            if let resolvedImage {
+                placeholderCache.setObject(resolvedImage, forKey: cacheKey)
+            }
+            completion(resolvedImage)
+            return
+        }
+
         generateIcon(
             for: placeholderFileURL,
             size: size,

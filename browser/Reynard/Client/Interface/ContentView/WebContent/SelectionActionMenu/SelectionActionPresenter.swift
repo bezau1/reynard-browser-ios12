@@ -8,7 +8,7 @@
 import GeckoView
 import UIKit
 
-@MainActor
+
 final class SelectionActionPresenter: SelectionActionPresenting {
     private enum UX {
         static let modernMenuVerticalOffset: CGFloat = 40

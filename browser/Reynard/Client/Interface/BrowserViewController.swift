@@ -469,12 +469,21 @@ final class BrowserViewController: UIViewController {
         : resolvePhoneLayout()
     }
     
+    /// Interface orientation via `windowScene` on iOS 13+, via the (deprecated)
+    /// app status-bar orientation on iOS 12. See IOS12_GATES.md section 4.
+    private var currentInterfaceOrientation: UIInterfaceOrientation {
+        if #available(iOS 13.0, *) {
+            return view.window?.windowScene?.interfaceOrientation ?? .unknown
+        }
+        return UIApplication.shared.statusBarOrientation
+    }
+
     private func currentViewportOrientation() -> BrowserLayout.ViewportOrientation {
-        if let interfaceOrientation = view.window?.windowScene?.interfaceOrientation,
-           interfaceOrientation != .unknown {
+        let interfaceOrientation = currentInterfaceOrientation
+        if interfaceOrientation != .unknown {
             return interfaceOrientation.isLandscape ? .landscape : .portrait
         }
-        
+
         return view.bounds.width > view.bounds.height ? .landscape : .portrait
     }
     
@@ -750,16 +759,15 @@ final class BrowserViewController: UIViewController {
         }
         
         if fullScreen {
-            if let currentOrientation = view.window?.windowScene?.interfaceOrientation,
-               currentOrientation != .unknown {
+            let currentOrientation = currentInterfaceOrientation
+            if currentOrientation != .unknown {
                 preFullscreenOrientation = currentOrientation
             } else if preFullscreenOrientation == nil {
                 preFullscreenOrientation = .portrait
             }
-            
+
             let targetOrientation: UIInterfaceOrientation
-            if let currentOrientation = view.window?.windowScene?.interfaceOrientation,
-               currentOrientation.isLandscape {
+            if currentOrientation.isLandscape {
                 targetOrientation = currentOrientation
             } else {
                 targetOrientation = .landscapeRight

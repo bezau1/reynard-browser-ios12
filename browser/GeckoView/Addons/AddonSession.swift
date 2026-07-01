@@ -47,7 +47,7 @@ final class AddonSessionListener: GeckoEventListenerInternal {
         "GeckoView:WebExtension:CloseTab",
     ]
     
-    @MainActor
+    
     func handleMessage(type: String, message: [String: Any?]?, callback: EventCallback?) {
         guard let session else {
             callback?.sendError(GeckoHandlerError("session has been destroyed").value)

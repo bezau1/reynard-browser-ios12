@@ -28,7 +28,9 @@ final class ContextMenuCoordinator: NSObject {
     private weak var host: ContextMenuCoordinatorHost?
     private let sessionManager: SessionManager
     private var pendingContext: ContextMenuContext?
-    private var interaction: UIContextMenuInteraction?
+    // NOTE: iOS 12 backport — stored as UIInteraction? (iOS 11) because
+    // UIContextMenuInteraction is iOS 13+ and stored properties can't be @available-gated.
+    private var interaction: UIInteraction?
     private var linkPreview: LinkPreviewViewController?
     private var isCommitting = false
     private var isPresenting = false
@@ -44,10 +46,12 @@ final class ContextMenuCoordinator: NSObject {
               let host else {
             return
         }
-        
-        let interaction = UIContextMenuInteraction(delegate: self)
-        host.contextMenuSourceView.addWebViewInteraction(interaction)
-        self.interaction = interaction
+
+        if #available(iOS 13.0, *) {
+            let interaction = UIContextMenuInteraction(delegate: self)
+            host.contextMenuSourceView.addWebViewInteraction(interaction)
+            self.interaction = interaction
+        }
     }
     
     func present(at point: CGPoint, target: ContextMenuContext.Target) {
@@ -98,6 +102,7 @@ final class ContextMenuCoordinator: NSObject {
         }
     }
     
+    @available(iOS 13.0, *)
     private func makeTargetedPreview() -> UITargetedPreview? {
         guard let host else {
             return nil
@@ -150,6 +155,7 @@ final class ContextMenuCoordinator: NSObject {
     }
 }
 
+@available(iOS 13.0, *)
 extension ContextMenuCoordinator: UIContextMenuInteractionDelegate {
     func contextMenuInteraction(
         _ interaction: UIContextMenuInteraction,

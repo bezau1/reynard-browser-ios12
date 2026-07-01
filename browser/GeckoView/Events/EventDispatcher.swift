@@ -16,7 +16,7 @@ struct GeckoHandlerError: Error {
 }
 
 protocol GeckoEventListenerInternal {
-    @MainActor
+    
     func handleMessage(type: String, message: [String: Any?]?, callback: EventCallback?)
 }
 

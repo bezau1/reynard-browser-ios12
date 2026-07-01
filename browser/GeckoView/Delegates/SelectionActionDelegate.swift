@@ -10,17 +10,17 @@ import Foundation
 // MARK: - Selection Action Delegate
 
 public protocol SelectionActionDelegate: AnyObject {
-    @MainActor
+    
     func onShowSelectionAction(session: GeckoSession, request: SelectionActionRequest)
-    @MainActor
+    
     func onHideSelectionAction(session: GeckoSession)
 }
 
 public extension SelectionActionDelegate {
-    @MainActor
+    
     func onShowSelectionAction(session: GeckoSession, request: SelectionActionRequest) {}
     
-    @MainActor
+    
     func onHideSelectionAction(session: GeckoSession) {}
 }
 
@@ -38,7 +38,7 @@ func newSelectionActionHandler(_ session: GeckoSession) -> GeckoSessionHandler {
         moduleName: "GeckoViewSelectionAction",
         events: SelectionActionEvent.allCases.map(\.rawValue),
         session: session
-    ) { @MainActor session, delegate, type, message, completion in
+    ) {  session, delegate, type, message, completion in
         guard let event = SelectionActionEvent(rawValue: type) else {
             completion(.failure(GeckoHandlerError("unknown message \(type)")))
             return
