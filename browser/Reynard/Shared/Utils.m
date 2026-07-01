@@ -65,15 +65,9 @@ int spawnRoot(NSString *path, NSArray<NSString *> *args) {
     
     posix_spawnattr_t attributes;
     posix_spawnattr_init(&attributes);
-    // Personas are an iOS 13+ / TrollStore mechanism. On iOS 12 (e.g. Chimera)
-    // they don't exist, so these attributes are ineffective and the helper would
-    // spawn as mobile. Spawn plainly instead and let the jailbreak platformize
-    // the child, which then setuid(0)s itself to root (see ptrace_jit.c).
-    if (@available(iOS 13.0, *)) {
-        posix_spawnattr_set_persona_np(&attributes, 99, POSIX_SPAWN_PERSONA_FLAGS_OVERRIDE);
-        posix_spawnattr_set_persona_uid_np(&attributes, 0);
-        posix_spawnattr_set_persona_gid_np(&attributes, 0);
-    }
+    posix_spawnattr_set_persona_np(&attributes, 99, POSIX_SPAWN_PERSONA_FLAGS_OVERRIDE);
+    posix_spawnattr_set_persona_uid_np(&attributes, 0);
+    posix_spawnattr_set_persona_gid_np(&attributes, 0);
     
     pid_t taskPID = 0;
     int spawnError = posix_spawn(&taskPID, path.fileSystemRepresentation, NULL, &attributes, argv, NULL);

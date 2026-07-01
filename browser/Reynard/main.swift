@@ -62,7 +62,12 @@ if #unavailable(iOS 13.0) {
 }
 
 UserDataMigration.shared.run()
-JITController.shared.start()
+// JIT enablement is iOS 13+ only. On iOS 12 (Chimera) none of the available
+// mechanisms work (see IOS12_GATES.md), so don't attempt it -- otherwise it
+// fails and blocks the browser with a failure screen.
+if #available(iOS 13.0, *) {
+    JITController.shared.start()
+}
 // configureUnsandboxedAppDataDirectories is available on iOS 13.x only (introduced 13.0,
 // obsoleted 14.0); narrow the guard so it isn't called on iOS 12. See IOS12_GATES.md.
 if #available(iOS 13.0, *) {

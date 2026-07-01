@@ -28,7 +28,7 @@ final class JITController {
     private func usePtraceJIT() -> Bool {
         getEntitlementValue("com.apple.private.security.no-sandbox")
     }
-
+    
     func start() {
         guard usePtraceJIT() || !isDDIMissing() else {
             hasHandledFailure = true
@@ -220,14 +220,6 @@ final class JITController {
     }
     
     private func presentEnablementFailureScreen(error: NSError, showsErrorDetails: Bool, retryCount: Int = 0) {
-        // On iOS 12 (jailbreak) JIT is best-effort via a direct ptrace attach; if
-        // it doesn't engage, never block the browser behind a modal.
-        if #unavailable(iOS 13.0) {
-            NSLog("[REYNARD_DEBUG] JIT enablement failed (iOS 12), not blocking: %@",
-                  error.localizedDescription)
-            return
-        }
-
         guard retryCount <= failurePresentationRetryLimit else {
             return
         }

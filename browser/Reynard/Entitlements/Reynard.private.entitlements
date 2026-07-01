@@ -10,13 +10,6 @@
     <true/>
 	<key>get-task-allow</key>
 	<true/>
-	<!-- Debugger entitlements so the app can ptrace-attach the content process
-	     (a non-child, get-task-allow process) to enable JIT, the way debugserver
-	     does. Honored on jailbroken iOS via the patched AMFI. -->
-	<key>task_for_pid-allow</key>
-	<true/>
-	<key>com.apple.private.cs.debugger</key>
-	<true/>
 	<key>com.apple.private.memorystatus</key>
     <true/>
 	<key>platform-application</key>
