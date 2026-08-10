@@ -17,6 +17,7 @@ jobs:
       - name: Install Rust target
         run: |
           rustup target add aarch64-apple-ios
+          cargo install cbindgen
 
       - name: Install ldid
         run: brew install ldid
