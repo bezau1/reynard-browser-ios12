@@ -24,7 +24,9 @@ jobs:
       - name: Install lld (Firefox cross-linker for iOS target)
         run: |
           brew install llvm
-          echo "$(brew --prefix llvm)/bin" >> "$GITHUB_PATH"
+          # Append (not prepend) so Xcode's clang stays primary; only pick up
+          # ld64.lld from Homebrew's LLVM for the -fuse-ld=lld linker check.
+          echo "PATH=$PATH:$(brew --prefix llvm)/bin" >> "$GITHUB_ENV"
 
       - name: Read engine release tag
         id: engine
