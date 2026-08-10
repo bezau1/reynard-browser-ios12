@@ -28,6 +28,19 @@ jobs:
           # ld64.lld from Homebrew's LLVM for the -fuse-ld=lld linker check.
           echo "PATH=$PATH:$(brew --prefix llvm)/bin" >> "$GITHUB_ENV"
 
+      - name: Diagnose linker probe
+        run: |
+          SDK="$(xcrun --sdk iphoneos --show-sdk-path)"
+          COMMON="-isysroot $SDK -mios-version-min=12.4 --target=aarch64-apple-ios"
+          echo "clang: $(which clang)"
+          echo "PATH: $PATH"
+          which ld64.lld && ld64.lld --version || echo "ld64.lld not found directly on PATH"
+          echo "--- try lld (with LD_PRINT_OPTIONS/LC_ALL like moz.configure) ---"
+          LD_PRINT_OPTIONS=1 LC_ALL=C clang $COMMON -fuse-ld=lld -Wl,--version; echo "retcode=$?"
+          echo "--- try default (no -fuse-ld) ---"
+          LD_PRINT_OPTIONS=1 LC_ALL=C clang $COMMON -Wl,--version; echo "retcode=$?"
+          exit 1
+
       - name: Read engine release tag
         id: engine
         run: echo "tag=$(tr -d '\000\r' < engine/release.txt | sed 's/^[[:space:]]*//; s/[[:space:]]*$//')" >> "$GITHUB_OUTPUT"
