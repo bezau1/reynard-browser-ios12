@@ -112,6 +112,7 @@ final class TopToolbar: UIView {
     private var layoutInterfaceIdiom: UIUserInterfaceIdiom = .unspecified
     private var layoutSidebarButtonVisible = false
     private var isUsingStandardAddressBarWidthLimit = false
+    private var isUpdatingStandardAddressBarLayout = false
     
     // MARK: - Lifecycle
     
@@ -322,8 +323,13 @@ final class TopToolbar: UIView {
         guard layoutState == .standard else {
             return
         }
-        
+        guard !isUpdatingStandardAddressBarLayout else {
+            return
+        }
+
+        isUpdatingStandardAddressBarLayout = true
         setStandardAddressBarWidthLimitEnabled(shouldLimitStandardAddressBarWidth)
+        isUpdatingStandardAddressBarLayout = false
     }
     
     private func setStandardAddressBarWidthLimitEnabled(_ isEnabled: Bool) {

@@ -1,0 +1,60 @@
+name: Build
+
+on:
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: macos-14
+    timeout-minutes: 360
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          submodules: false
+
+      - name: Install Rust target
+        run: |
+          rustup target add aarch64-apple-ios
+
+      - name: Install ldid
+        run: brew install ldid
+
+      - name: Read engine release tag
+        id: engine
+        run: echo "tag=$(tr -d '\000\r' < engine/release.txt | sed 's/^[[:space:]]*//; s/[[:space:]]*$//')" >> "$GITHUB_OUTPUT"
+
+      - name: Cache Gecko build
+        id: gecko-cache
+        uses: actions/cache@v4
+        with:
+          path: engine/firefox
+          key: gecko-${{ runner.os }}-${{ steps.engine.outputs.tag }}-${{ hashFiles('patches/**') }}
+
+      - name: Fetch Gecko source
+        if: steps.gecko-cache.outputs.cache-hit != 'true'
+        run: zsh tools/development/update-gecko.sh
+
+      - name: Apply patches
+        if: steps.gecko-cache.outputs.cache-hit != 'true'
+        run: yes "" | zsh tools/development/apply-patches.sh
+
+      - name: Build Gecko
+        if: steps.gecko-cache.outputs.cache-hit != 'true'
+        run: sh tools/development/build-gecko.sh
+
+      - name: Build app
+        run: sh tools/release/build-app.sh
+
+      - name: Create IPA
+        run: sh tools/release/create-ipa.sh
+
+      - name: Upload build artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: Reynard-ios12-build
+          path: |
+            dist/*.ipa
+            dist/*.tipa
+          if-no-files-found: error
