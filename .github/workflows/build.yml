@@ -21,6 +21,11 @@ jobs:
       - name: Install ldid
         run: brew install ldid
 
+      - name: Install lld (Firefox cross-linker for iOS target)
+        run: |
+          brew install llvm
+          echo "$(brew --prefix llvm)/bin" >> "$GITHUB_PATH"
+
       - name: Read engine release tag
         id: engine
         run: echo "tag=$(tr -d '\000\r' < engine/release.txt | sed 's/^[[:space:]]*//; s/[[:space:]]*$//')" >> "$GITHUB_OUTPUT"
