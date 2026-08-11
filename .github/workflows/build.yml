@@ -39,9 +39,9 @@ jobs:
         id: engine
         run: echo "tag=$(tr -d '\000\r' < engine/release.txt | sed 's/^[[:space:]]*//; s/[[:space:]]*$//')" >> "$GITHUB_OUTPUT"
 
-      - name: Cache Gecko build
+      - name: Restore Gecko build cache
         id: gecko-cache
-        uses: actions/cache@v4
+        uses: actions/cache/restore@v4
         with:
           path: engine/firefox
           key: gecko-${{ runner.os }}-${{ steps.engine.outputs.tag }}-${{ hashFiles('patches/**') }}
@@ -57,6 +57,29 @@ jobs:
       - name: Build Gecko
         if: steps.gecko-cache.outputs.cache-hit != 'true'
         run: sh tools/development/build-gecko.sh
+
+      # Save immediately after a successful Gecko build (a ~3hr step) so a
+      # failure in a later, unrelated step (e.g. app signing) doesn't cost us
+      # the cache. The combined actions/cache action only saves as part of
+      # its post-job hook, which does not run reliably if a later step fails.
+      - name: Save Gecko build cache
+        if: steps.gecko-cache.outputs.cache-hit != 'true'
+        uses: actions/cache/save@v4
+        with:
+          path: engine/firefox
+          key: gecko-${{ runner.os }}-${{ steps.engine.outputs.tag }}-${{ hashFiles('patches/**') }}
+
+      - name: Disable code signing for CI archive
+        run: |
+          # The Gecko build's ldid re-signs the app for jailbroken/TrollStore
+          # install afterward (see create-ipa.sh); the initial archive step
+          # doesn't need real Apple Developer signing, which isn't available
+          # on a CI runner anyway.
+          cat >> browser/Configuration/Reynard.xcconfig <<'EOF'
+          CODE_SIGNING_ALLOWED = NO
+          CODE_SIGNING_REQUIRED = NO
+          CODE_SIGN_IDENTITY =
+          EOF
 
       - name: Build app
         run: sh tools/release/build-app.sh
