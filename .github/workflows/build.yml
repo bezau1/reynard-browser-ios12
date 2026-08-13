@@ -69,6 +69,9 @@ jobs:
           path: engine/firefox
           key: gecko-${{ runner.os }}-${{ steps.engine.outputs.tag }}-${{ hashFiles('patches/**') }}
 
+      - name: Build idevice FFI library (JIT support)
+        run: zsh tools/development/build-idevice.sh
+
       - name: Disable code signing for CI archive
         run: |
           # The Gecko build's ldid re-signs the app for jailbroken/TrollStore
