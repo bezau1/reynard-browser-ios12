@@ -83,6 +83,11 @@ jobs:
           CODE_SIGNING_REQUIRED = NO
           CODE_SIGN_IDENTITY =
           EOF
+          # AddGecko.sh's own codesign fallback defaults to "Apple Development"
+          # when EXPANDED_CODE_SIGN_IDENTITY(_NAME) are empty, which doesn't
+          # exist in a CI keychain either. Use ad-hoc signing ("-") instead;
+          # this is a runtime-only patch to this checkout, not committed.
+          sed -i '' 's/Apple Development"/-"/' browser/Scripts/AddGecko.sh
 
       - name: Build app
         run: sh tools/release/build-app.sh
