@@ -15,3 +15,9 @@ LIBRARY_SEARCH_PATHS = $(inherited) $(GECKO_DIST)/bin
 FRAMEWORK_SEARCH_PATHS = $(inherited) $(BUILT_PRODUCTS_DIR)
 LD_RUNPATH_SEARCH_PATHS = $(inherited) @executable_path/Frameworks @loader_path/Frameworks
 SWIFT_OBJC_BRIDGING_HEADER = $(SRCROOT)/Reynard/Bridging/Reynard-Bridging-Header.h
+
+// Swift's official concurrency back-deployment only guarantees iOS 13+; below that
+// the compiler hard-errors on async/await/@MainActor even though the back-deploy
+// runtime dylib bundled with the app actually runs fine on iOS 12. This flag tells
+// the frontend to stop enforcing the iOS 13 availability floor for these APIs.
+OTHER_SWIFT_FLAGS = $(inherited) -Xfrontend -disable-availability-checking
