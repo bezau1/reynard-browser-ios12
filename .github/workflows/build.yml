@@ -44,7 +44,7 @@ jobs:
         uses: actions/cache/restore@v4
         with:
           path: engine/firefox
-          key: gecko-${{ runner.os }}-${{ steps.engine.outputs.tag }}-${{ hashFiles('patches/**') }}
+          key: gecko-${{ runner.os }}-${{ steps.engine.outputs.tag }}-${{ hashFiles('patches/**', 'tools/development/build-gecko.sh') }}
 
       - name: Fetch Gecko source
         if: steps.gecko-cache.outputs.cache-hit != 'true'
@@ -67,7 +67,7 @@ jobs:
         uses: actions/cache/save@v4
         with:
           path: engine/firefox
-          key: gecko-${{ runner.os }}-${{ steps.engine.outputs.tag }}-${{ hashFiles('patches/**') }}
+          key: gecko-${{ runner.os }}-${{ steps.engine.outputs.tag }}-${{ hashFiles('patches/**', 'tools/development/build-gecko.sh') }}
 
       - name: Build idevice FFI library (JIT support)
         run: zsh tools/development/build-idevice.sh
