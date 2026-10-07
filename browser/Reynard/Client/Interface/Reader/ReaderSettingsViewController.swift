@@ -575,9 +575,7 @@ final class ReaderSettingsViewController: UIViewController, UIPopoverPresentatio
         let reachedMinimum = brightnessSlider.value <= UX.brightnessThreshold
         let reachedMaximum = brightnessSlider.value >= 1 - UX.brightnessThreshold
         let endpoint = reachedMinimum ? -1 : (reachedMaximum ? 1 : 0)
-        if #available(iOS 17.0, *), endpoint != 0, endpoint != lastBrightnessEndpoint, !UIAccessibility.isReduceMotionEnabled {
-            (endpoint < 0 ? minimumSun : maximumSun).addSymbolEffect(.bounce)
-        }
+        // See ToolBarButton.playDownloadBounceAnimation for why the iOS 17+ bounce effect is dropped on iOS 12.
         lastBrightnessEndpoint = endpoint
     }
     

@@ -215,6 +215,6 @@ extension LibraryViewController {
         updateNavigationTitle()
         removeNavigationActionsIfNeeded()
         bookmarksController.loadViewIfNeeded()
-        bookmarksController.setEditing(true, animated: true)
+        bookmarksController.setBookmarksEditing(true, animated: true)
     }
 }

@@ -138,7 +138,7 @@ final class BookmarksViewController: UIViewController, UITableViewDataSource, UI
         reloadBookmarkRows()
         updateToolbarItems(animated: false)
         if startsEditing {
-            setEditing(true, animated: false)
+            setBookmarksEditing(true, animated: false)
         }
     }
     
@@ -162,6 +162,18 @@ final class BookmarksViewController: UIViewController, UITableViewDataSource, UI
     
     override func setEditing(_ editing: Bool, animated: Bool) {
         super.setEditing(editing, animated: animated)
+        applyBookmarksEditingState(editing, animated: animated)
+    }
+
+    // Callers outside this class go through here instead of `setEditing` directly: naming the
+    // override at a call site hits an override-vs-UIKit-base ambiguity that
+    // `-disable-availability-checking` introduces for that identical-signature pair.
+    func setBookmarksEditing(_ editing: Bool, animated: Bool) {
+        super.setEditing(editing, animated: animated)
+        applyBookmarksEditingState(editing, animated: animated)
+    }
+
+    private func applyBookmarksEditingState(_ editing: Bool, animated: Bool) {
         tableView.setEditing(editing, animated: animated)
         updateToolbarItems(animated: animated)
         updateBookmarkMenu()
@@ -423,7 +435,7 @@ final class BookmarksViewController: UIViewController, UITableViewDataSource, UI
     
     @objc private func didTapBookmarkMenu() {
         if isEditing {
-            setEditing(false, animated: true)
+            setBookmarksEditing(false, animated: true)
             return
         }
         
@@ -435,7 +447,7 @@ final class BookmarksViewController: UIViewController, UITableViewDataSource, UI
     }
     
     @objc private func editBookmarksKeyCommand(_ sender: UIKeyCommand) {
-        setEditing(true, animated: true)
+        setBookmarksEditing(true, animated: true)
     }
     
     // MARK: - Menu
@@ -478,7 +490,7 @@ final class BookmarksViewController: UIViewController, UITableViewDataSource, UI
             },
             UIMenu(title: "", image: nil, identifier: nil, options: .displayInline, children: [
                 UIAction(title: NSLocalizedString("Edit Bookmarks", comment: ""), image: UIImage(named: "reynard.pencil")) { [weak self] _ in
-                    self?.setEditing(true, animated: true)
+                    self?.setBookmarksEditing(true, animated: true)
                 },
                 UIAction(title: NSLocalizedString("New Folder", comment: ""), image: UIImage(named: "reynard.folder.badge.plus")) { [weak self] _ in
                     self?.showNewFolderEditor()

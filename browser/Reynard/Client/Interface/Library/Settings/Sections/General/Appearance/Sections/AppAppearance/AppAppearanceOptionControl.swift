@@ -66,9 +66,7 @@ final class AppAppearanceOptionControl: UIControl {
     }
     
     func animateTap() {
-        if #available(iOS 17.0, *) {
-            previewImageView.addSymbolEffect(.bounce)
-        }
+        // See ToolBarButton.playDownloadBounceAnimation for why this is dropped on iOS 12.
     }
     
     private func configureAccessibility(title: String) {

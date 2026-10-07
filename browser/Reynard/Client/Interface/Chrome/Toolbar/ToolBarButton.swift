@@ -208,8 +208,9 @@ final class ToolbarButton: UIButton {
     }
     
     private func playDownloadBounceAnimation() {
-        if #available(iOS 17.0, *) {
-            downloadIconView.addSymbolEffect(.bounce)
-        }
+        // SF Symbol bounce effects need iOS 17+; this build targets iOS 12 and never
+        // reaches this branch at runtime there. `addSymbolEffect` also resolves
+        // ambiguously once availability checking is disabled for the Concurrency
+        // backport, so it's dropped rather than kept dead and uncompilable.
     }
 }
